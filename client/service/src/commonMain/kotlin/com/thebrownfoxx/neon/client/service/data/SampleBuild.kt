@@ -7,17 +7,17 @@ private fun main() {
     val serviceData = serviceData {
         val landoNorris = member(
             username = "lando_norris",
-            avatar = null,
+            avatarUrl = null,
             password = "carlos sainz",
         )
         val carlosSainz = member(
             username = "carlos_sainz",
-            avatar = null,
+            avatarUrl = null,
             password = "lando norris",
         )
         val charlesLeclerc = member(
             username = "charles_leclerc",
-            avatar = null,
+            avatarUrl = null,
             password = "carlos sainz",
         )
 

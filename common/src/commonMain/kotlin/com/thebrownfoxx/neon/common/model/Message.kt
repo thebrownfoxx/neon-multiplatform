@@ -5,13 +5,17 @@ import com.thebrownfoxx.neon.common.type.Uuid
 import kotlinx.datetime.Instant
 
 data class Message(
-    val id: MessageId,
-    val group: GroupId,
-    val sender: MemberId,
+    val id: MessageId = MessageId(),
+    val groupId: GroupId,
+    val senderId: MemberId,
     val content: String,
     val timestamp: Instant,
     val delivery: Delivery,
-)
+) {
+    fun ignoreId(): Message = copy(id = ignoredMessageId)
+}
+
+private val ignoredMessageId = MessageId(Uuid("IGNORED"))
 
 data class MessageId(override val uuid: Uuid = Uuid()) : Id
 

@@ -7,9 +7,7 @@ import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.model.MessageId
 import kotlinx.datetime.Instant
 
-fun interface ConversationBuilder {
-    fun ConversationBuilderScope.invoke()
-}
+typealias ConversationBuilder = ConversationBuilderScope.() -> Unit
 
 class ConversationBuilderScope internal constructor(private val groupId: GroupId) {
     private val messages = mutableListOf<Message>()
@@ -21,8 +19,8 @@ class ConversationBuilderScope internal constructor(private val groupId: GroupId
     ) {
         val message = Message(
             id = MessageId(),
-            group = groupId,
-            sender = this,
+            groupId = groupId,
+            senderId = this,
             content = content,
             timestamp = timestamp,
             delivery = delivery,
@@ -30,10 +28,5 @@ class ConversationBuilderScope internal constructor(private val groupId: GroupId
         messages.add(message)
     }
 
-    internal fun build() = Conversation(groupId, messages)
+    internal fun build() = messages.toList()
 }
-
-data class Conversation(
-    val group: GroupId,
-    val messages: List<Message>,
-)
