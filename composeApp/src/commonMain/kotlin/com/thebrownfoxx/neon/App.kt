@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.thebrownfoxx.neon.common.SAMPLE_TEXT
 import neon.composeapp.generated.resources.Res
 import neon.composeapp.generated.resources.compose_multiplatform
 import org.jetbrains.compose.resources.painterResource
@@ -32,7 +33,7 @@ fun App() {
                 val greeting = remember { Greeting().greet() }
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
+                    Text("Compose: $greeting. $SAMPLE_TEXT")
                 }
             }
         }

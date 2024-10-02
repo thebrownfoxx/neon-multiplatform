@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.client.service.data
 import com.thebrownfoxx.neon.common.extension.ago
 import kotlin.time.Duration.Companion.minutes
 
-fun main() {
+private fun main() {
     val serviceData = serviceData {
         val landoNorris = member(
             username = "lando_norris",

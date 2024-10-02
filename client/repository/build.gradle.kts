@@ -8,7 +8,6 @@ plugins {
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        nodejs()
         browser()
     }
 
@@ -16,8 +15,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
-            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
