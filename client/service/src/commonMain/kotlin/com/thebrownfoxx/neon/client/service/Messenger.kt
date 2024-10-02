@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface Messenger {
     val conversations: Flow<Conversations>
 
-    fun getMessage(id: MessageId): Flow<Message>
+    fun get(id: MessageId): Flow<Message>
     fun getConversationPreview(id: GroupId): Flow<MessageId>
     fun getMessages(groupId: GroupId): Flow<MessageId>
-    suspend fun sendMessage(message: Message)
+    suspend fun send(message: Message)
     suspend fun markAsRead(groupId: GroupId)
 }
