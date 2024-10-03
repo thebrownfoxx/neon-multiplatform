@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.service.model
+package com.thebrownfoxx.neon.client.service.messenger.model
 
 import com.thebrownfoxx.neon.common.model.GroupId
 
