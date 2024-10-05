@@ -19,6 +19,8 @@ ktor = "2.3.12"
 logback = "1.5.7"
 kotlinx-serialization = "1.7.2"
 kotlinx-datetime = "0.6.1"
+kotlincrypto-hash = "0.5.3"
+kotlincrypto-random = "0.3.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -41,6 +43,8 @@ ktor-server-tests = { module = "io.ktor:ktor-server-tests-jvm", version.ref = "k
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlincrypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "kotlincrypto-hash" }
+kotlincrypto-random = { module = "org.kotlincrypto:secure-random", version.ref = "kotlincrypto-random" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

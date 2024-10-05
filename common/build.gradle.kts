@@ -8,7 +8,6 @@ plugins {
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        nodejs()
         browser()
     }
 

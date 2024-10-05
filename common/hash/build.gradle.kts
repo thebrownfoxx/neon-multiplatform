@@ -17,8 +17,8 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
-            implementation(projects.common)
-            implementation(projects.common.hash)
+            implementation(libs.kotlincrypto.sha2)
+            implementation(libs.kotlincrypto.random)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
