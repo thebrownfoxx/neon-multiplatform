@@ -32,3 +32,13 @@ fun <R, T, E> Result<T, E>.map(transform: (T) -> R): Result<R, E> {
         is Failure -> this
     }
 }
+
+fun <RT, RE, T, E> Result<T, E>.map(
+    onSuccess: (T) -> RT,
+    onFailure: (E) -> RE,
+): Result<RT, RE> {
+    return when (this) {
+        is Success -> Success(onSuccess(value))
+        is Failure -> Failure(onFailure(error))
+    }
+}
