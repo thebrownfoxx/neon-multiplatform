@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.client.service.data
 
+import com.thebrownfoxx.neon.client.service.data.model.ChatGroupRecord
 import com.thebrownfoxx.neon.client.service.data.model.GroupRecord
 import com.thebrownfoxx.neon.client.service.data.model.MemberRecord
 import com.thebrownfoxx.neon.client.service.data.model.ServiceData
@@ -48,7 +49,7 @@ class ServiceDataBuilderScope internal constructor() {
 
     fun conversation(vararg members: MemberId, builder: ConversationBuilder) {
         val group = ChatGroup()
-        groups.add(GroupRecord(group, members.toList()))
+        groups.add(ChatGroupRecord(group, members.toList()))
         group.id.conversation(builder)
     }
 

@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.client.service.data
 
+import com.thebrownfoxx.neon.client.service.data.model.CommunityRecord
 import com.thebrownfoxx.neon.client.service.data.model.GroupRecord
 import com.thebrownfoxx.neon.client.service.data.model.MemberRecord
 import com.thebrownfoxx.neon.common.model.Community
@@ -29,7 +30,7 @@ class CommunityBuilderScope internal constructor(
     internal fun build(): CommunityBuilderData {
         val community = Community(name = name, inviteCode = inviteCode, avatarUrl = avatarUrl)
         val communityRecord =
-            GroupRecord(group = community, memberIds = members.map { it.member.id })
+            CommunityRecord(group = community, memberIds = members.map { it.member.id })
 
         return CommunityBuilderData(communityRecord, members)
     }

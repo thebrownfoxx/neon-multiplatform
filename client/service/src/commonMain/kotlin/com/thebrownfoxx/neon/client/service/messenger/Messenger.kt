@@ -6,6 +6,7 @@ import com.thebrownfoxx.neon.client.service.messenger.model.GetMessagesError
 import com.thebrownfoxx.neon.client.service.messenger.model.MarkConversationAsReadError
 import com.thebrownfoxx.neon.client.service.messenger.model.SendMessageError
 import com.thebrownfoxx.neon.common.model.GroupId
+import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.model.MessageId
 import com.thebrownfoxx.neon.common.model.Result
@@ -18,6 +19,7 @@ interface Messenger {
     fun getMessage(id: MessageId): Flow<Result<Message, GetMessageError>>
     fun getConversationPreview(id: GroupId): Flow<Result<MessageId?, GetMessageError>>
     fun getMessages(groupId: GroupId): Flow<Result<List<MessageId>, GetMessagesError>>
+    suspend fun newConversation(memberIds: List<MemberId>)
     suspend fun sendMessage(groupId: GroupId, content: String) : UnitResult<SendMessageError>
     suspend fun markConversationAsRead(groupId: GroupId) : UnitResult<MarkConversationAsReadError>
 }
