@@ -21,13 +21,19 @@ class ServiceDataBuilderTest {
         val actualMemberIds = mutableListOf<MemberId>()
 
         val serviceData = serviceData {
-            for (username in usernames) {
-                val memberId = member(
-                    username = username,
-                    avatarUrl = null,
-                    password = "",
-                )
-                actualMemberIds.add(memberId)
+            community(
+                name = "neon",
+                avatarUrl = Url("https://neon.thebrownfoxx.com/icon.png"),
+                inviteCode = "neon",
+            ) {
+                for (username in usernames) {
+                    val memberId = member(
+                        username = username,
+                        avatarUrl = null,
+                        password = "",
+                    )
+                    actualMemberIds.add(memberId)
+                }
             }
         }
 
@@ -38,12 +44,15 @@ class ServiceDataBuilderTest {
 
     @Test
     fun shouldAddMembersProperly() {
+        val inviteCode = "neon"
+
         val expectedMembers = listOf(
             MemberRecord(
                 member = Member(
                     username = "lando_norris",
                     avatarUrl = Url("https://example.com/lando.jpg"),
                 ).ignoreId(),
+                inviteCode = inviteCode,
                 password = "carlos sainz",
             ),
             MemberRecord(
@@ -51,17 +60,24 @@ class ServiceDataBuilderTest {
                     username = "carlos_sainz",
                     avatarUrl = Url("https://example.com/carlos.jpg"),
                 ).ignoreId(),
+                inviteCode = inviteCode,
                 password = "lando norris",
             ),
         )
 
         val serviceData = serviceData {
-            for (expectedMember in expectedMembers) {
-                member(
-                    username = expectedMember.member.username,
-                    avatarUrl = expectedMember.member.avatarUrl,
-                    password = expectedMember.password,
-                )
+            community(
+                name = "neon",
+                avatarUrl = Url("https://neon.thebrownfoxx.com/icon.png"),
+                inviteCode = "neon",
+            ) {
+                for (expectedMember in expectedMembers) {
+                    member(
+                        username = expectedMember.member.username,
+                        avatarUrl = expectedMember.member.avatarUrl,
+                        password = expectedMember.password,
+                    )
+                }
             }
         }
 
@@ -81,7 +97,7 @@ class ServiceDataBuilderTest {
                 val groupId = community(
                     name = communityName,
                     avatarUrl = Url("https://example.com/$communityName.jpg"),
-                    members = emptyList(),
+                    inviteCode = communityName,
                 )
                 actualGroupIds.add(groupId)
             }
@@ -98,10 +114,12 @@ class ServiceDataBuilderTest {
             Community(
                 name = "Formula 1",
                 avatarUrl = Url("https://example.com/formula1.jpg"),
+                inviteCode = "f1",
             ).ignoreId(),
             Community(
                 name = "Formula 2",
                 avatarUrl = Url("https://example.com/formula2.jpg"),
+                inviteCode = "f2",
             ).ignoreId(),
         )
 
@@ -110,7 +128,7 @@ class ServiceDataBuilderTest {
                 community(
                     name = expectedCommunity.name,
                     avatarUrl = expectedCommunity.avatarUrl,
-                    members = emptyList(),
+                    inviteCode = expectedCommunity.inviteCode,
                 )
             }
         }
@@ -124,17 +142,27 @@ class ServiceDataBuilderTest {
     fun shouldAddCommunityMembersProperly() {
         val community = Community(
             name = "Formula 1",
+            inviteCode = "f1",
             avatarUrl = Url("https://example.com/formula1.jpg"),
         )
 
-        val expectedMemberIds = listOf(MemberId(), MemberId(), MemberId())
+        val expectedMemberIds = mutableListOf<MemberId>()
 
         val serviceData = serviceData {
             community(
                 name = community.name,
                 avatarUrl = community.avatarUrl,
-                members = expectedMemberIds,
-            )
+                inviteCode = community.inviteCode,
+            ) {
+                for (index in 0..2) {
+                    val memberId = member(
+                        username = "member$index",
+                        avatarUrl = null,
+                        password = "password$index",
+                    )
+                    expectedMemberIds.add(memberId)
+                }
+            }
         }
 
         val actualMemberIds = serviceData.groupRecords.single().memberIds
