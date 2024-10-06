@@ -4,6 +4,8 @@ typealias UnitResult<E> = Result<Unit, E>
 
 sealed interface Result<out T, out E>
 
+fun UnitSuccess() = Success(Unit)
+
 data class Success<out T>(val value: T) : Result<T, Nothing>
 
 data class Failure<out E>(val error: E) : Result<Nothing, E>

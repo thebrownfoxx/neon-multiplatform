@@ -6,6 +6,6 @@ import com.thebrownfoxx.neon.common.hash.Hash
 import com.thebrownfoxx.neon.common.model.MemberId
 
 interface PasswordRepository {
-    fun getHash(memberId: MemberId): GetEntityResult<Hash>
-    fun add(memberId: MemberId, hash: Hash): AddEntityResult
+    suspend fun getHash(memberId: MemberId): GetEntityResult<Hash>
+    suspend fun add(memberId: MemberId, hash: Hash): AddEntityResult
 }

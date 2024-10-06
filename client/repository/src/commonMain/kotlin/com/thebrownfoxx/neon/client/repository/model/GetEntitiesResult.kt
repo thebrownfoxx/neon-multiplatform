@@ -2,9 +2,8 @@ package com.thebrownfoxx.neon.client.repository.model
 
 import com.thebrownfoxx.neon.common.model.Result
 
-typealias GetEntityResult<T> = Result<T, GetEntityError>
+typealias GetEntitiesResult<T> = Result<List<T>, GetEntitiesError>
 
-sealed interface GetEntityError {
-    data object NotFound : GetEntityError
+sealed interface GetEntitiesError {
     data object ConnectionError : GetEntityError
 }
