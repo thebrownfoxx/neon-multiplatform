@@ -1,40 +1,50 @@
 package com.thebrownfoxx.neon.client.repository.memory
 
-import com.thebrownfoxx.neon.client.repository.MessageRepository
-import com.thebrownfoxx.neon.client.repository.model.AddEntityError
-import com.thebrownfoxx.neon.client.repository.model.AddEntityResult
-import com.thebrownfoxx.neon.client.repository.model.GetEntitiesResult
-import com.thebrownfoxx.neon.client.repository.model.GetEntityError
-import com.thebrownfoxx.neon.client.repository.model.GetEntityResult
+import com.thebrownfoxx.neon.client.repository.group.GroupRepository
+import com.thebrownfoxx.neon.client.repository.message.MessageRepository
+import com.thebrownfoxx.neon.client.repository.message.model.AddMessageError
+import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.client.repository.message.model.GetConversationsError
+import com.thebrownfoxx.neon.client.repository.message.model.GetMessageError
 import com.thebrownfoxx.neon.common.model.Delivery
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.model.MessageId
+import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitSuccess
+import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.common.model.getOrElse
+import com.thebrownfoxx.neon.common.model.unitSuccess
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.update
 
-class InMemoryMessageRepository : MessageRepository {
-    private val messages = mutableMapOf<MessageId, Message>()
+@OptIn(ExperimentalCoroutinesApi::class)
+class InMemoryMessageRepository(private val groupRepository: GroupRepository) : MessageRepository {
+    private val messages = MutableStateFlow<Map<MessageId, Message>>(emptyMap())
 
-    override fun get(id: MessageId): Flow<GetEntityResult<Message>> {
-        val result = when (val message = messages[id]) {
-            null -> Failure(GetEntityError.NotFound)
-            else -> Success(message)
+    override fun get(id: MessageId): Flow<Result<Message, GetMessageError>> {
+        return messages.mapLatest { messages ->
+            when (val message = messages[id]) {
+                null -> Failure(GetMessageError.NotFound)
+                else -> Success(message)
+            }
         }
-
-        return flowOf(result)
     }
 
-    override suspend fun add(message: Message): AddEntityResult {
+    override suspend fun add(message: Message): UnitResult<AddMessageError> {
         val result = when {
-            messages.containsKey(message.id) -> Failure(AddEntityError.DuplicateId)
+            messages.value.containsKey(message.id) -> Failure(AddMessageError.DuplicateId)
             else -> {
-                messages[message.id] = message
-                UnitSuccess()
+                messages.update { it + (message.id to message) }
+                unitSuccess()
             }
         }
 
@@ -47,44 +57,62 @@ class InMemoryMessageRepository : MessageRepository {
         offset: Int,
         read: Boolean,
         descending: Boolean,
-    ): Flow<GetEntitiesResult<GroupId>> {
-        val messages = messages.values.filter {
-            val sent = it.senderId == memberId
-            val messageRead = it.delivery == Delivery.Read || sent
-            messageRead == read
-        }
-            .sortedBy { it.timestamp.toEpochMilliseconds() * if (descending) -1 else 1 }
-            .subList(offset, offset + count)
-            .map { it.groupId }
-            .distinct()
+    ): Flow<Result<Set<GroupId>, GetConversationsError>> {
+        // TODO: OMG this is crazy
 
-        return flowOf(Success(messages))
+        return messages.flatMapLatest { messages ->
+            val groupMemberIds = messages.values.map { message ->
+                groupRepository.getMembers(message.groupId).map { membersResult ->
+                    val members = membersResult.getOrElse { emptySet() }
+                    message to members
+                }
+            }
+
+            combine(groupMemberIds) {
+                Success(
+                    it
+                        .filter { (message, groupMemberIds) ->
+                            val sent = message.senderId == memberId
+                            val messageRead = message.delivery == Delivery.Read || sent
+                            messageRead == read && memberId in groupMemberIds
+                        }
+                        .sortedBy { (message) ->
+                            message.timestamp.toEpochMilliseconds() * if (descending) -1 else 1
+                        }
+                        .subList(offset, offset + count)
+                        .map { (message) -> message.groupId }
+                        .toSet()
+                )
+            }
+        }
     }
 
-    override fun getConversationPreview(id: GroupId): Flow<GetEntityResult<MessageId?>> {
-        val message = messages.values
-            .filter { it.groupId == id }
-            .maxByOrNull { it.timestamp }
+    override fun getConversationPreview(
+        id: GroupId,
+    ): Flow<Result<MessageId?, GetConversationPreviewError>> {
+        return messages.mapLatest { messages ->
+            val message = messages.values
+                .filter { it.groupId == id }
+                .maxByOrNull { it.timestamp }
 
-        val result = when (message) {
-            null -> Failure(GetEntityError.NotFound)
-            else -> Success(message.id)
+            Success(message?.id)
         }
-
-        return flowOf(result)
     }
 
     override fun getMessages(
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<GetEntitiesResult<MessageId>> {
-        val messages = messages.values
-            .filter { it.groupId == groupId }
-            .sortedByDescending { it.timestamp }
-            .subList(offset, offset + count)
-            .map { it.id }
+    ): Flow<Result<Set<MessageId>, GetMessageError>> {
+        return messages.mapLatest { messages ->
+            val messageIds = messages.values
+                .filter { it.groupId == groupId }
+                .sortedByDescending { it.timestamp }
+                .subList(offset, offset + count)
+                .map { it.id }
+                .toSet()
 
-        return flowOf(Success(messages))
+            Success(messageIds)
+        }
     }
 }

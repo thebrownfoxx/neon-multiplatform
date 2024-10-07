@@ -1,36 +1,40 @@
 package com.thebrownfoxx.neon.client.repository.memory
 
-import com.thebrownfoxx.neon.client.repository.MemberRepository
-import com.thebrownfoxx.neon.client.repository.model.AddEntityError
-import com.thebrownfoxx.neon.client.repository.model.AddEntityResult
-import com.thebrownfoxx.neon.client.repository.model.GetEntityError
-import com.thebrownfoxx.neon.client.repository.model.GetEntityResult
+import com.thebrownfoxx.neon.client.repository.member.MemberRepository
+import com.thebrownfoxx.neon.client.repository.member.model.AddMemberError
+import com.thebrownfoxx.neon.client.repository.member.model.GetMemberError
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
+import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitSuccess
+import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.common.model.unitSuccess
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.update
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class InMemoryMemberRepository : MemberRepository {
-    private val members = mutableMapOf<MemberId, Member>()
+    private val members = MutableStateFlow<Map<MemberId, Member>>(emptyMap())
 
-    override fun get(id: MemberId): Flow<GetEntityResult<Member>> {
-        val result = when (val member = members[id]) {
-            null -> Failure(GetEntityError.NotFound)
-            else -> Success(member)
+    override fun get(id: MemberId): Flow<Result<Member, GetMemberError>> {
+        return members.mapLatest { members ->
+            when (val member = members[id]) {
+                null -> Failure(GetMemberError.NotFound)
+                else -> Success(member)
+            }
         }
-
-        return flowOf(result)
     }
 
-    override suspend fun add(member: Member): AddEntityResult {
+    override suspend fun add(member: Member): UnitResult<AddMemberError> {
         return when {
-            members.containsKey(member.id) -> Failure(AddEntityError.DuplicateId)
+            members.value.containsKey(member.id) -> Failure(AddMemberError.DuplicateId)
             else -> {
-                members[member.id] = member
-                UnitSuccess()
+                members.update { it + (member.id to member) }
+                unitSuccess()
             }
         }
     }
