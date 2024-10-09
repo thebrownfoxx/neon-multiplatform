@@ -89,13 +89,16 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
 
     override fun getConversationPreview(
         id: GroupId,
-    ): Flow<Result<MessageId?, GetConversationPreviewError>> {
+    ): Flow<Result<MessageId, GetConversationPreviewError>> {
         return messages.mapLatest { messages ->
             val message = messages.values
                 .filter { it.groupId == id }
                 .maxByOrNull { it.timestamp }
 
-            Success(message?.id)
+            when (message) {
+                null -> Failure(GetConversationPreviewError.NotFound)
+                else -> Success(message.id)
+            }
         }
     }
 

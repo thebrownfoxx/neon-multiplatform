@@ -15,17 +15,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines)
-            implementation(libs.kotlinx.serialization)
-            implementation(libs.kotlinx.datetime)
-            implementation(projects.common)
-            implementation(projects.common.hash)
-            implementation(projects.client.repository)
-        }
-        commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlin.test.junit)
             implementation(libs.kotlinx.coroutines.test)
-            implementation(projects.client.repository.test)
+            implementation(projects.common)
+            implementation(projects.common.must)
+            implementation(projects.client.repository)
         }
     }
 }

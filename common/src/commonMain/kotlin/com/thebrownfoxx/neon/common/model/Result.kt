@@ -2,6 +2,8 @@ package com.thebrownfoxx.neon.common.model
 
 typealias UnitResult<E> = Result<Unit, E>
 
+typealias UnitSuccess = Success<Unit>
+
 sealed interface Result<out T, out E>
 
 fun unitSuccess() = Success(Unit)

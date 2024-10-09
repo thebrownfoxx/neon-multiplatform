@@ -25,7 +25,7 @@ interface MessageRepository {
         descending: Boolean = false,
     ): Flow<Result<Set<GroupId>, GetConversationsError>>
 
-    fun getConversationPreview(id: GroupId): Flow<Result<MessageId?, GetConversationPreviewError>>
+    fun getConversationPreview(id: GroupId): Flow<Result<MessageId, GetConversationPreviewError>>
 
     fun getMessages(
         groupId: GroupId,
