@@ -30,7 +30,7 @@ class CommunityBuilderScope internal constructor(
     internal fun build(): CommunityBuilderData {
         val community = Community(name = name, inviteCode = inviteCode, avatarUrl = avatarUrl)
         val communityRecord =
-            CommunityRecord(group = community, memberIds = members.map { it.member.id })
+            CommunityRecord(group = community, memberIds = members.map { it.member.id }.toSet())
 
         return CommunityBuilderData(communityRecord, members)
     }

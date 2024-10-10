@@ -13,7 +13,7 @@ infix fun <T> T.mustBe(expected: T) = assertEquals(expected, this)
 
 infix fun <T> T.mustNotBe(expected: T) = assertNotEquals(expected, this)
 
-infix fun <T: Iterable<T>> T.contentMustEquals(expected: T) = assertContentEquals(expected, this)
+infix fun <T> Iterable<T>.contentMustEqual(expected: Iterable<T>) = assertContentEquals(expected, this)
 
 infix fun <T> Iterable<T>.mustContain(expected: T) = assertContains(this, expected)
 

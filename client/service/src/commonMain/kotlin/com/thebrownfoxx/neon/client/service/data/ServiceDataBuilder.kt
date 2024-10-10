@@ -49,7 +49,7 @@ class ServiceDataBuilderScope internal constructor() {
 
     fun conversation(vararg members: MemberId, builder: ConversationBuilder) {
         val group = ChatGroup()
-        groups.add(ChatGroupRecord(group, members.toList()))
+        groups.add(ChatGroupRecord(group, members.toSet()))
         group.id.conversation(builder)
     }
 

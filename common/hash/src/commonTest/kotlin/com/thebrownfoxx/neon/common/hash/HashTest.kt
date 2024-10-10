@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.common.hash
 
+import com.thebrownfoxx.neon.must.mustBe
+import com.thebrownfoxx.neon.must.mustBeTrue
+import com.thebrownfoxx.neon.must.mustNotBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
 
 class HashTest : Hasher by MultiplatformHasher() {
     @Test
@@ -12,7 +12,7 @@ class HashTest : Hasher by MultiplatformHasher() {
         val salt = generateSalt()
         val hash1 = hash(string, salt)
         val hash2 = hash(string, salt)
-        assertEquals(hash1, hash2)
+        hash2 mustBe hash1
     }
 
     @Test
@@ -22,7 +22,7 @@ class HashTest : Hasher by MultiplatformHasher() {
         val salt = generateSalt()
         val hash1 = hash(string1, salt)
         val hash2 = hash(string2, salt)
-        assertNotEquals(hash1, hash2)
+        hash2 mustNotBe hash1
     }
 
     @Test
@@ -30,28 +30,28 @@ class HashTest : Hasher by MultiplatformHasher() {
         val string = "string"
         val hash1 = hash(string, generateSalt())
         val hash2 = hash(string, generateSalt())
-        assertNotEquals(hash1, hash2)
+        hash2 mustNotBe hash1
     }
 
     @Test
     fun matchesReturnsTrueIfHashesPlaintextMatch() {
         val string = "string"
         val hash = hash(string, generateSalt())
-        assertTrue(string matches hash)
+        (string matches hash).mustBeTrue()
     }
 
     @Test
     fun matchesReturnsFalseIfHashesPlaintextDoNotMatch() {
         val string = "string"
         val hash = hash(string, generateSalt())
-        assertTrue("hello" doesNotMatch hash)
+        ("hello" doesNotMatch hash).mustBeTrue()
     }
 
     @Test
     fun doesNotMatchIsInverseOfMatches() {
         val string = "string"
         val hash = hash(string, generateSalt())
-        assertTrue(string matches hash) // Infix notation
-        assertTrue("hello" doesNotMatch hash)
+        (string matches hash).mustBeTrue()
+        ("hello" doesNotMatch hash).mustBeTrue()
     }
 }

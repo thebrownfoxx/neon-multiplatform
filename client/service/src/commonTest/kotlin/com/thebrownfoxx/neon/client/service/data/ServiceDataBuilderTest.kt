@@ -8,17 +8,16 @@ import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.must.contentMustEqual
 import kotlinx.datetime.Instant
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
 
 class ServiceDataBuilderTest {
     @Test
     fun memberShouldReturnCorrectId() {
         val usernames = listOf("lando_norris", "carlos_sainz")
 
-        val actualMemberIds = mutableListOf<MemberId>()
+        val actualMemberIds = mutableSetOf<MemberId>()
 
         val serviceData = serviceData {
             community(
@@ -39,7 +38,7 @@ class ServiceDataBuilderTest {
 
         val expectedMemberIds = serviceData.memberRecords.map { it.member.id }
 
-        assertContentEquals(expectedMemberIds, actualMemberIds)
+        actualMemberIds contentMustEqual expectedMemberIds
     }
 
     @Test
@@ -83,14 +82,14 @@ class ServiceDataBuilderTest {
 
         val actualMembers = serviceData.memberRecords.map { it.copy(member = it.member.ignoreId()) }
 
-        assertContentEquals(expectedMembers, actualMembers)
+        actualMembers contentMustEqual expectedMembers
     }
 
     @Test
     fun communityShouldReturnCorrectId() {
         val communityNames = listOf("Formula 1", "Formula 2")
 
-        val actualGroupIds = mutableListOf<GroupId>()
+        val actualGroupIds = mutableSetOf<GroupId>()
 
         val serviceData = serviceData {
             for (communityName in communityNames) {
@@ -105,7 +104,7 @@ class ServiceDataBuilderTest {
 
         val expectedGroupIds = serviceData.groupRecords.map { it.group.id }
 
-        assertContentEquals(expectedGroupIds, actualGroupIds)
+        actualGroupIds contentMustEqual expectedGroupIds
     }
 
     @Test
@@ -135,7 +134,7 @@ class ServiceDataBuilderTest {
 
         val actualCommunities = serviceData.groupRecords.map { it.group.ignoreId() }
 
-        assertContentEquals(expectedCommunities, actualCommunities)
+        actualCommunities contentMustEqual expectedCommunities
     }
 
     @Test
@@ -146,7 +145,7 @@ class ServiceDataBuilderTest {
             avatarUrl = Url("https://example.com/formula1.jpg"),
         )
 
-        val expectedMemberIds = mutableListOf<MemberId>()
+        val expectedMemberIds = mutableSetOf<MemberId>()
 
         val serviceData = serviceData {
             community(
@@ -167,7 +166,7 @@ class ServiceDataBuilderTest {
 
         val actualMemberIds = serviceData.groupRecords.single().memberIds
 
-        assertContentEquals(expectedMemberIds, actualMemberIds)
+        actualMemberIds contentMustEqual expectedMemberIds
     }
 
     @Test
@@ -213,18 +212,18 @@ class ServiceDataBuilderTest {
 
         val actualMessages = serviceData.messages.map { it.ignoreId() }
 
-        assertContentEquals(expectedMessages, actualMessages)
+        actualMessages contentMustEqual expectedMessages
     }
 
     @Test
     fun grouplessConversationShouldCreateAGroup() {
-        val expectedMemberIds = listOf(MemberId(), MemberId())
+        val expectedMemberIds = setOf(MemberId(), MemberId())
 
         val serviceData = serviceData { conversation(*expectedMemberIds.toTypedArray()) {} }
 
         val actualMemberIds = serviceData.groupRecords.single().memberIds
 
-        assertEquals(expectedMemberIds, actualMemberIds)
+        actualMemberIds contentMustEqual expectedMemberIds
     }
 
     @Test
@@ -280,6 +279,6 @@ class ServiceDataBuilderTest {
             )
         }
 
-        assertContentEquals(expectedMessages, actualMessages)
+        actualMessages contentMustEqual expectedMessages
     }
 }

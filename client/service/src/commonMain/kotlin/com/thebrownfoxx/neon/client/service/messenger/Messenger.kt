@@ -18,8 +18,8 @@ interface Messenger {
 
     fun getMessage(id: MessageId): Flow<Result<Message, GetMessageError>>
     fun getConversationPreview(id: GroupId): Flow<Result<MessageId?, GetMessageError>>
-    fun getMessages(groupId: GroupId): Flow<Result<List<MessageId>, GetMessagesError>>
-    suspend fun newConversation(memberIds: List<MemberId>)
+    fun getMessages(groupId: GroupId): Flow<Result<Set<MessageId>, GetMessagesError>>
+    suspend fun newConversation(memberIds: Set<MemberId>)
     suspend fun sendMessage(groupId: GroupId, content: String) : UnitResult<SendMessageError>
     suspend fun markConversationAsRead(groupId: GroupId) : UnitResult<MarkConversationAsReadError>
 }
