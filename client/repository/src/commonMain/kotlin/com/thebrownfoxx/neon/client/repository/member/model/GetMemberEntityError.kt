@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.member.model
 
-enum class GetMemberError {
+enum class GetMemberEntityError {
     NotFound,
     ConnectionError,
 }

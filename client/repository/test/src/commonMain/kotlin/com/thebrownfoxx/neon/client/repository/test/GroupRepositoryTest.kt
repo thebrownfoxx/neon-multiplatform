@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.client.repository.test
 
 import com.thebrownfoxx.neon.client.repository.group.GroupRepository
-import com.thebrownfoxx.neon.client.repository.group.model.AddGroupError
-import com.thebrownfoxx.neon.client.repository.group.model.AddGroupMemberError
-import com.thebrownfoxx.neon.client.repository.group.model.GetGroupError
-import com.thebrownfoxx.neon.client.repository.group.model.GetGroupMembersError
+import com.thebrownfoxx.neon.client.repository.group.model.AddGroupEntityError
+import com.thebrownfoxx.neon.client.repository.group.model.AddGroupMemberEntityError
+import com.thebrownfoxx.neon.client.repository.group.model.GetGroupEntityError
+import com.thebrownfoxx.neon.client.repository.group.model.GetGroupMemberEntitiesError
 import com.thebrownfoxx.neon.common.model.ChatGroup
 import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Failure
@@ -29,7 +29,8 @@ abstract class GroupRepositoryTest {
             group = Community(
                 name = "Formula 1",
                 avatarUrl = Url("https://example.com/f1.png"),
-                inviteCode = "f1"
+                inviteCode = "f1",
+                god = true,
             ),
             memberIds = setOf(MemberId(), MemberId()),
         ),
@@ -37,7 +38,8 @@ abstract class GroupRepositoryTest {
             group = Community(
                 name = "Formula 2",
                 avatarUrl = Url("https://example.com/f2.png"),
-                inviteCode = "f2"
+                inviteCode = "f2",
+                god = false,
             ),
             memberIds = setOf(MemberId(), MemberId()),
         ),
@@ -76,7 +78,7 @@ abstract class GroupRepositoryTest {
     fun getShouldReturnNotFoundIfGroupDoesNotExist() {
         runTest {
             val actualGroupResult = groupRepository.get(GroupId()).first()
-            actualGroupResult mustBe Failure(GetGroupError.NotFound)
+            actualGroupResult mustBe Failure(GetGroupEntityError.NotFound)
         }
     }
 
@@ -94,7 +96,7 @@ abstract class GroupRepositoryTest {
     fun getMembersShouldReturnGroupNotFoundIfGroupDoesNotExist() {
         runTest {
             val actualMembersResult = groupRepository.getMembers(GroupId()).first()
-            actualMembersResult mustBe Failure(GetGroupMembersError.GroupNotFound)
+            actualMembersResult mustBe Failure(GetGroupMemberEntitiesError.GroupNotFound)
         }
     }
 
@@ -105,6 +107,7 @@ abstract class GroupRepositoryTest {
                 name = "Formula 3",
                 avatarUrl = Url("https://example.com/f3.png"),
                 inviteCode = "f3",
+                god = false,
             )
 
             val addResult = groupRepository.add(expectedGroup)
@@ -121,7 +124,7 @@ abstract class GroupRepositoryTest {
             val duplicateGroup = ChatGroup(id = initialGroups[0].group.id)
 
             val actualAddResult = groupRepository.add(duplicateGroup)
-            actualAddResult mustBe Failure(AddGroupError.DuplicateId)
+            actualAddResult mustBe Failure(AddGroupEntityError.DuplicateId)
         }
     }
 
@@ -150,7 +153,7 @@ abstract class GroupRepositoryTest {
                 MemberId(),
             )
 
-            actualAddMemberResult mustBe Failure(AddGroupMemberError.GroupNotFound)
+            actualAddMemberResult mustBe Failure(AddGroupMemberEntityError.GroupNotFound)
         }
     }
 }

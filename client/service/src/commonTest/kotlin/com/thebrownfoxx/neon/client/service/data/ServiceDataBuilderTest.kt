@@ -24,6 +24,7 @@ class ServiceDataBuilderTest {
                 name = "neon",
                 avatarUrl = Url("https://neon.thebrownfoxx.com/icon.png"),
                 inviteCode = "neon",
+                god = true,
             ) {
                 for (username in usernames) {
                     val memberId = member(
@@ -114,11 +115,13 @@ class ServiceDataBuilderTest {
                 name = "Formula 1",
                 avatarUrl = Url("https://example.com/formula1.jpg"),
                 inviteCode = "f1",
+                god = true,
             ).ignoreId(),
             Community(
                 name = "Formula 2",
                 avatarUrl = Url("https://example.com/formula2.jpg"),
                 inviteCode = "f2",
+                god = false,
             ).ignoreId(),
         )
 
@@ -128,6 +131,7 @@ class ServiceDataBuilderTest {
                     name = expectedCommunity.name,
                     avatarUrl = expectedCommunity.avatarUrl,
                     inviteCode = expectedCommunity.inviteCode,
+                    god = expectedCommunity.god,
                 )
             }
         }
@@ -143,6 +147,7 @@ class ServiceDataBuilderTest {
             name = "Formula 1",
             inviteCode = "f1",
             avatarUrl = Url("https://example.com/formula1.jpg"),
+            god = true,
         )
 
         val expectedMemberIds = mutableSetOf<MemberId>()
@@ -152,6 +157,7 @@ class ServiceDataBuilderTest {
                 name = community.name,
                 avatarUrl = community.avatarUrl,
                 inviteCode = community.inviteCode,
+                god = true,
             ) {
                 for (index in 0..2) {
                     val memberId = member(
@@ -219,7 +225,13 @@ class ServiceDataBuilderTest {
     fun grouplessConversationShouldCreateAGroup() {
         val expectedMemberIds = setOf(MemberId(), MemberId())
 
-        val serviceData = serviceData { conversation {} }
+        val serviceData = serviceData {
+            conversation {
+                for (memberId in expectedMemberIds) {
+                    memberId.said("", Instant.fromEpochSeconds(0))
+                }
+            }
+        }
 
         val actualMemberIds = serviceData.groupRecords.single().memberIds
 

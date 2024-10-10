@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.client.repository.test
 
 import com.thebrownfoxx.neon.client.repository.member.MemberRepository
-import com.thebrownfoxx.neon.client.repository.member.model.AddMemberError
-import com.thebrownfoxx.neon.client.repository.member.model.GetMemberError
+import com.thebrownfoxx.neon.client.repository.member.model.AddMemberEntityError
+import com.thebrownfoxx.neon.client.repository.member.model.GetMemberEntityError
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
@@ -57,7 +57,7 @@ abstract class MemberRepositoryTest {
     fun getShouldReturnNotFoundIfMemberDoesNotExist() {
         runTest {
             val actualMemberResult = memberRepository.get(MemberId()).first()
-            actualMemberResult mustBe Failure(GetMemberError.NotFound)
+            actualMemberResult mustBe Failure(GetMemberEntityError.NotFound)
         }
     }
 
@@ -87,7 +87,7 @@ abstract class MemberRepositoryTest {
             )
 
             val actualAddResult = memberRepository.add(duplicateMember)
-            actualAddResult mustBe Failure(AddMemberError.DuplicateId)
+            actualAddResult mustBe Failure(AddMemberEntityError.DuplicateId)
         }
     }
 }

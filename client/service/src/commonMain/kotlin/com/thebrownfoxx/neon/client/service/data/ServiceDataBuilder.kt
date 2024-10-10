@@ -23,12 +23,14 @@ class ServiceDataBuilderScope internal constructor() {
         name: String,
         avatarUrl: Url?,
         inviteCode: String,
+        god: Boolean = false,
         builder: CommunityBuilder = {},
     ): GroupId {
         val communityBuilderScope = CommunityBuilderScope(
             name = name,
             avatarUrl = avatarUrl,
             inviteCode = inviteCode,
+            god = god,
         ).apply(builder)
 
         val communityBuilderData = communityBuilderScope.build()

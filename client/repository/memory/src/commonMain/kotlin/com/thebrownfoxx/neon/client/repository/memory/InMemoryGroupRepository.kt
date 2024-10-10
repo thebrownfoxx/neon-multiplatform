@@ -1,11 +1,13 @@
 package com.thebrownfoxx.neon.client.repository.memory
 
 import com.thebrownfoxx.neon.client.repository.group.GroupRepository
-import com.thebrownfoxx.neon.client.repository.group.model.AddGroupError
-import com.thebrownfoxx.neon.client.repository.group.model.AddGroupMemberError
-import com.thebrownfoxx.neon.client.repository.group.model.GetGroupError
-import com.thebrownfoxx.neon.client.repository.group.model.GetGroupMembersError
+import com.thebrownfoxx.neon.client.repository.group.model.AddGroupEntityError
+import com.thebrownfoxx.neon.client.repository.group.model.AddGroupMemberEntityError
+import com.thebrownfoxx.neon.client.repository.group.model.GetGroupEntityError
+import com.thebrownfoxx.neon.client.repository.group.model.GetGroupMemberEntitiesError
+import com.thebrownfoxx.neon.client.repository.group.model.InGodCommunityError
 import com.thebrownfoxx.neon.common.annotation.TestApi
+import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.GroupId
@@ -27,27 +29,39 @@ class InMemoryGroupRepository : GroupRepository {
     @TestApi
     val groupList get() = inMemoryGroups.value.map { it.value.group }
 
-    override fun get(id: GroupId): Flow<Result<Group, GetGroupError>> {
+    override fun get(id: GroupId): Flow<Result<Group, GetGroupEntityError>> {
         return inMemoryGroups.mapLatest { inMemoryGroups ->
             when (val inMemoryGroup = inMemoryGroups[id]) {
-                null -> Failure(GetGroupError.NotFound)
+                null -> Failure(GetGroupEntityError.NotFound)
                 else -> Success(inMemoryGroup.group)
             }
         }
     }
 
-    override fun getMembers(id: GroupId): Flow<Result<Set<MemberId>, GetGroupMembersError>> {
+    override fun getMembers(id: GroupId): Flow<Result<Set<MemberId>, GetGroupMemberEntitiesError>> {
         return inMemoryGroups.mapLatest { groups ->
             when (val inMemoryGroup = groups[id]) {
-                null -> Failure(GetGroupMembersError.GroupNotFound)
+                null -> Failure(GetGroupMemberEntitiesError.GroupNotFound)
                 else -> Success(inMemoryGroup.members)
             }
         }
     }
 
-    override suspend fun add(group: Group): UnitResult<AddGroupError> {
+    override fun inGodCommunity(memberId: MemberId): Flow<Result<Boolean, InGodCommunityError>> {
+        return inMemoryGroups.mapLatest {
+            val inGodGroup = it.values.any { inMemoryGroup ->
+                inMemoryGroup.group is Community &&
+                        inMemoryGroup.group.god &&
+                        memberId in inMemoryGroup.members
+            }
+
+            Success(inGodGroup)
+        }
+    }
+
+    override suspend fun add(group: Group): UnitResult<AddGroupEntityError> {
         return when {
-            inMemoryGroups.value.containsKey(group.id) -> Failure(AddGroupError.DuplicateId)
+            inMemoryGroups.value.containsKey(group.id) -> Failure(AddGroupEntityError.DuplicateId)
             else -> {
                 inMemoryGroups.update { it + (group.id to InMemoryGroup(group, emptySet())) }
                 unitSuccess()
@@ -58,9 +72,9 @@ class InMemoryGroupRepository : GroupRepository {
     override suspend fun addMember(
         groupId: GroupId,
         memberId: MemberId,
-    ): UnitResult<AddGroupMemberError> {
+    ): UnitResult<AddGroupMemberEntityError> {
         return when {
-            !inMemoryGroups.value.containsKey(groupId) -> Failure(AddGroupMemberError.GroupNotFound)
+            !inMemoryGroups.value.containsKey(groupId) -> Failure(AddGroupMemberEntityError.GroupNotFound)
             else -> {
                 inMemoryGroups.update {
                     val inMemoryGroup = it[groupId]

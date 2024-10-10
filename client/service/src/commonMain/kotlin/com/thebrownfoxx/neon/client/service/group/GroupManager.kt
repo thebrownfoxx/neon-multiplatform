@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.service.group
 
-import com.thebrownfoxx.neon.client.service.group.model.AddMemberError
+import com.thebrownfoxx.neon.client.service.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.client.service.group.model.CreateCommunityError
 import com.thebrownfoxx.neon.client.service.group.model.GetGroupError
 import com.thebrownfoxx.neon.common.model.Group
@@ -18,5 +18,5 @@ interface GroupManager {
         inviteCode: String,
     ): Result<GroupId, CreateCommunityError>
 
-    suspend fun addMember(groupId: GroupId, memberId: MemberId): UnitResult<AddMemberError>
+    suspend fun addMember(groupId: GroupId, memberId: MemberId): UnitResult<AddGroupMemberError>
 }

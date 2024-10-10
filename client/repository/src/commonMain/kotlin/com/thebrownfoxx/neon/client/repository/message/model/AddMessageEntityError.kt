@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.message.model
 
-enum class AddMessageError {
+enum class AddMessageEntityError {
     DuplicateId,
     ConnectionError
 }

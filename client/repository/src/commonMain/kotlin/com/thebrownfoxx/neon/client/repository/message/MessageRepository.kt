@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.client.repository.message
 
-import com.thebrownfoxx.neon.client.repository.message.model.AddMessageError
-import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewError
-import com.thebrownfoxx.neon.client.repository.message.model.GetConversationsError
-import com.thebrownfoxx.neon.client.repository.message.model.GetMessageError
+import com.thebrownfoxx.neon.client.repository.message.model.AddMessageEntityError
+import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewEntityError
+import com.thebrownfoxx.neon.client.repository.message.model.GetConversationEntitiesError
+import com.thebrownfoxx.neon.client.repository.message.model.GetMessageEntityError
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Message
@@ -13,9 +13,9 @@ import com.thebrownfoxx.neon.common.model.UnitResult
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    fun get(id: MessageId): Flow<Result<Message, GetMessageError>>
+    fun get(id: MessageId): Flow<Result<Message, GetMessageEntityError>>
 
-    suspend fun add(message: Message): UnitResult<AddMessageError>
+    suspend fun add(message: Message): UnitResult<AddMessageEntityError>
 
     fun getConversations(
         memberId: MemberId,
@@ -23,13 +23,13 @@ interface MessageRepository {
         offset: Int,
         read: Boolean,
         descending: Boolean = false,
-    ): Flow<Result<Set<GroupId>, GetConversationsError>>
+    ): Flow<Result<Set<GroupId>, GetConversationEntitiesError>>
 
-    fun getConversationPreview(id: GroupId): Flow<Result<MessageId, GetConversationPreviewError>>
+    fun getConversationPreview(id: GroupId): Flow<Result<MessageId, GetConversationPreviewEntityError>>
 
     fun getMessages(
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<Result<Set<MessageId>, GetMessageError>>
+    ): Flow<Result<Set<MessageId>, GetMessageEntityError>>
 }

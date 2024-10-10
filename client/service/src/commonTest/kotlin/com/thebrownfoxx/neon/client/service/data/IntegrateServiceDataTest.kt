@@ -44,6 +44,7 @@ class IntegrateServiceDataTest {
             name = "Formula 1 Drivers",
             avatarUrl = Url("https://example.com/formula1.jpg"),
             inviteCode = "f1",
+            god = true,
         ) {
             lando = member(
                 username = "lando_norris",
@@ -128,11 +129,13 @@ class IntegrateServiceDataTest {
                 name = "Formula 1 Drivers",
                 avatarUrl = Url("https://example.com/formula1.jpg"),
                 inviteCode = "f1",
+                god = true,
             ).ignoreId(),
             Community(
                 name = "McLaren",
                 avatarUrl = Url("https://example.com/mclaren.jpg"),
                 inviteCode = "mclaren",
+                god = false,
             ).ignoreId(),
             ChatGroup().ignoreId(),
         )

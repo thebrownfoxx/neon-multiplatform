@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.message.model
 
-enum class GetConversationPreviewError {
+enum class GetConversationPreviewEntityError {
     NotFound,
     ConnectionError,
 }

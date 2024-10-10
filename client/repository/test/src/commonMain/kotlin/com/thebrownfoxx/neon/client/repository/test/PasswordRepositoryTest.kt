@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.repository.test
 
 import com.thebrownfoxx.neon.client.repository.password.PasswordRepository
-import com.thebrownfoxx.neon.client.repository.password.model.GetPasswordHashError
+import com.thebrownfoxx.neon.client.repository.password.model.GetPasswordHashEntityError
 import com.thebrownfoxx.neon.common.hash.Hasher
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
 import com.thebrownfoxx.neon.common.model.Failure
@@ -29,7 +29,7 @@ abstract class PasswordRepositoryTest : Hasher by MultiplatformHasher() {
             passwordRepository = createPasswordRepository()
 
             for ((memberId, password) in passwords) {
-                passwordRepository.set(memberId, hash(password))
+                passwordRepository.setHash(memberId, hash(password))
             }
         }
     }
@@ -49,7 +49,7 @@ abstract class PasswordRepositoryTest : Hasher by MultiplatformHasher() {
     fun getShouldReturnNotFoundIfPasswordHashDoesNotExist() {
         runTest {
             val actualHashResult = passwordRepository.getHash(MemberId())
-            actualHashResult mustBe Failure(GetPasswordHashError.NotFound)
+            actualHashResult mustBe Failure(GetPasswordHashEntityError.NotFound)
         }
     }
 
@@ -59,7 +59,7 @@ abstract class PasswordRepositoryTest : Hasher by MultiplatformHasher() {
             val memberId = MemberId()
             val password = "charles leclerc"
 
-            val setResult = passwordRepository.set(memberId, hash(password))
+            val setResult = passwordRepository.setHash(memberId, hash(password))
             setResult mustBe Success(Unit)
 
             val actualHashResult = passwordRepository.getHash(memberId)

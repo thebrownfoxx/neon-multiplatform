@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.member.model
 
-enum class AddMemberError {
+enum class AddMemberEntityError {
     DuplicateId,
     ConnectionError,
 }

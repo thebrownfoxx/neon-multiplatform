@@ -2,9 +2,9 @@ package com.thebrownfoxx.neon.client.repository.test
 
 import com.thebrownfoxx.neon.client.repository.group.GroupRepository
 import com.thebrownfoxx.neon.client.repository.message.MessageRepository
-import com.thebrownfoxx.neon.client.repository.message.model.AddMessageError
-import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewError
-import com.thebrownfoxx.neon.client.repository.message.model.GetMessageError
+import com.thebrownfoxx.neon.client.repository.message.model.AddMessageEntityError
+import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewEntityError
+import com.thebrownfoxx.neon.client.repository.message.model.GetMessageEntityError
 import com.thebrownfoxx.neon.common.model.ChatGroup
 import com.thebrownfoxx.neon.common.model.Delivery
 import com.thebrownfoxx.neon.common.model.Failure
@@ -92,7 +92,7 @@ abstract class MessageRepositoryTest {
     fun getShouldReturnNotFoundIfMessageDoesNotExist() {
         runTest {
             val actualMessageResult = messageRepository.get(MessageId()).first()
-            actualMessageResult mustBe Failure(GetMessageError.NotFound)
+            actualMessageResult mustBe Failure(GetMessageEntityError.NotFound)
         }
     }
 
@@ -122,7 +122,7 @@ abstract class MessageRepositoryTest {
             val duplicateMessage = initialMessages[0].copy()
 
             val actualAddResult = messageRepository.add(duplicateMessage)
-            actualAddResult mustBe Failure(AddMessageError.DuplicateId)
+            actualAddResult mustBe Failure(AddMessageEntityError.DuplicateId)
         }
     }
 
@@ -173,7 +173,7 @@ abstract class MessageRepositoryTest {
     fun getConversationPreviewShouldReturnNotFoundIfNoPreview() {
         runTest {
             val actualPreviewResult = messageRepository.getConversationPreview(GroupId()).first()
-            actualPreviewResult mustBe Failure(GetConversationPreviewError.NotFound)
+            actualPreviewResult mustBe Failure(GetConversationPreviewEntityError.NotFound)
         }
     }
 
