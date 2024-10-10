@@ -219,7 +219,7 @@ class ServiceDataBuilderTest {
     fun grouplessConversationShouldCreateAGroup() {
         val expectedMemberIds = setOf(MemberId(), MemberId())
 
-        val serviceData = serviceData { conversation(*expectedMemberIds.toTypedArray()) {} }
+        val serviceData = serviceData { conversation {} }
 
         val actualMemberIds = serviceData.groupRecords.single().memberIds
 
@@ -259,7 +259,7 @@ class ServiceDataBuilderTest {
         )
 
         val serviceData = serviceData {
-            conversation(*memberIds.toTypedArray()) {
+            conversation {
                 for (message in expectedMessages) {
                     message.senderId.said(
                         content = message.content,

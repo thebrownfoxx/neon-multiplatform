@@ -16,6 +16,7 @@ class CommunityBuilderScope internal constructor(
     private val inviteCode: String,
 ) {
     private val members = mutableListOf<MemberRecord>()
+    private val memberIds = mutableListOf<MemberId>()
 
     fun member(
         username: String,
@@ -27,10 +28,19 @@ class CommunityBuilderScope internal constructor(
         return member.id
     }
 
+    fun member(id: MemberId) {
+        memberIds.add(id)
+    }
+
     internal fun build(): CommunityBuilderData {
         val community = Community(name = name, inviteCode = inviteCode, avatarUrl = avatarUrl)
+        val memberIds = (members.map { it.member.id } + memberIds).toSet()
+
         val communityRecord =
-            CommunityRecord(group = community, memberIds = members.map { it.member.id }.toSet())
+            CommunityRecord(
+                group = community,
+                memberIds = memberIds,
+            )
 
         return CommunityBuilderData(communityRecord, members)
     }

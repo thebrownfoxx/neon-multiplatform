@@ -1,12 +1,9 @@
 package com.thebrownfoxx.neon.client.service.data
 
-import com.thebrownfoxx.neon.client.service.data.model.ChatGroupRecord
 import com.thebrownfoxx.neon.client.service.data.model.GroupRecord
 import com.thebrownfoxx.neon.client.service.data.model.MemberRecord
 import com.thebrownfoxx.neon.client.service.data.model.ServiceData
-import com.thebrownfoxx.neon.common.model.ChatGroup
 import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.type.Url
 
@@ -42,15 +39,15 @@ class ServiceDataBuilderScope internal constructor() {
         return communityBuilderData.communityRecord.group.id
     }
 
+    fun conversation(builder: DirectConversationBuilder) {
+        val directConversationRecord = DirectConversationBuilderScope().apply(builder).build()
+        groups.add(directConversationRecord.chatGroup)
+        messages.addAll(directConversationRecord.messages)
+    }
+
     fun GroupId.conversation(builder: ConversationBuilder) {
         val conversationBuilderScope = ConversationBuilderScope(this).apply(builder)
         messages.addAll(conversationBuilderScope.build())
-    }
-
-    fun conversation(vararg members: MemberId, builder: ConversationBuilder) {
-        val group = ChatGroup()
-        groups.add(ChatGroupRecord(group, members.toSet()))
-        group.id.conversation(builder)
     }
 
     internal fun build() = ServiceData(members, groups, messages)
