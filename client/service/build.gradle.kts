@@ -24,6 +24,9 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(projects.common.must)
+            implementation(projects.common.hash)
+            implementation(projects.client.repository)
+            implementation(projects.client.repository.memory)
         }
     }
 }

@@ -6,6 +6,7 @@ import com.thebrownfoxx.neon.client.repository.message.model.AddMessageError
 import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewError
 import com.thebrownfoxx.neon.client.repository.message.model.GetConversationsError
 import com.thebrownfoxx.neon.client.repository.message.model.GetMessageError
+import com.thebrownfoxx.neon.common.annotation.TestApi
 import com.thebrownfoxx.neon.common.extension.coercedSubList
 import com.thebrownfoxx.neon.common.model.Delivery
 import com.thebrownfoxx.neon.common.model.Failure
@@ -30,6 +31,9 @@ import kotlinx.coroutines.flow.update
 @OptIn(ExperimentalCoroutinesApi::class)
 class InMemoryMessageRepository(private val groupRepository: GroupRepository) : MessageRepository {
     private val messages = MutableStateFlow<Map<MessageId, Message>>(emptyMap())
+
+    @TestApi
+    val messageList = messages.value.map { it.value }
 
     override fun get(id: MessageId): Flow<Result<Message, GetMessageError>> {
         return messages.mapLatest { messages ->

@@ -5,6 +5,7 @@ import com.thebrownfoxx.neon.client.repository.group.model.AddGroupError
 import com.thebrownfoxx.neon.client.repository.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.client.repository.group.model.GetGroupError
 import com.thebrownfoxx.neon.client.repository.group.model.GetGroupMembersError
+import com.thebrownfoxx.neon.common.annotation.TestApi
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.GroupId
@@ -22,6 +23,9 @@ import kotlinx.coroutines.flow.update
 @OptIn(ExperimentalCoroutinesApi::class)
 class InMemoryGroupRepository : GroupRepository {
     private val inMemoryGroups = MutableStateFlow<Map<GroupId, InMemoryGroup>>(emptyMap())
+
+    @TestApi
+    val groupList get() = inMemoryGroups.value.map { it.value.group }
 
     override fun get(id: GroupId): Flow<Result<Group, GetGroupError>> {
         return inMemoryGroups.mapLatest { inMemoryGroups ->
@@ -73,7 +77,7 @@ class InMemoryGroupRepository : GroupRepository {
     }
 }
 
-private data class InMemoryGroup(
+data class InMemoryGroup(
     val group: Group,
     val members: Set<MemberId>,
 )

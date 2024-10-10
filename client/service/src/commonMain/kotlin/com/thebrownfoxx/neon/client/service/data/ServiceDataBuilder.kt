@@ -39,10 +39,11 @@ class ServiceDataBuilderScope internal constructor() {
         return communityBuilderData.communityRecord.group.id
     }
 
-    fun conversation(builder: DirectConversationBuilder) {
+    fun conversation(builder: DirectConversationBuilder): GroupId {
         val directConversationRecord = DirectConversationBuilderScope().apply(builder).build()
-        groups.add(directConversationRecord.chatGroup)
+        groups.add(directConversationRecord.chatGroupRecord)
         messages.addAll(directConversationRecord.messages)
+        return directConversationRecord.chatGroupRecord.group.id
     }
 
     fun GroupId.conversation(builder: ConversationBuilder) {

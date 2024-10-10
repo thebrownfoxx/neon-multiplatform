@@ -39,6 +39,6 @@ class DirectConversationBuilderScope internal constructor() {
 }
 
 internal data class DirectConversationRecord(
-    val chatGroup: ChatGroupRecord,
+    val chatGroupRecord: ChatGroupRecord,
     val messages: List<Message>,
 )

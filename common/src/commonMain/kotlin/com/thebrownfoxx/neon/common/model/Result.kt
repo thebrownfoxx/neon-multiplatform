@@ -30,6 +30,12 @@ fun <T, E> Result<T, E>.getOrNull(): T? {
     return getOrElse { null }
 }
 
+fun <T, E> Result<T, E>.get(): T {
+    return getOrElse {
+        throw IllegalArgumentException("Cannot get value from failure result $this")
+    }
+}
+
 fun <R, T, E> Result<T, E>.map(transform: (T) -> R): Result<R, E> {
     return when (this) {
         is Success -> Success(transform(value))

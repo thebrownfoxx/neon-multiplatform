@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.client.repository.memory
 import com.thebrownfoxx.neon.client.repository.member.MemberRepository
 import com.thebrownfoxx.neon.client.repository.member.model.AddMemberError
 import com.thebrownfoxx.neon.client.repository.member.model.GetMemberError
+import com.thebrownfoxx.neon.common.annotation.TestApi
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
@@ -19,6 +20,9 @@ import kotlinx.coroutines.flow.update
 @OptIn(ExperimentalCoroutinesApi::class)
 class InMemoryMemberRepository : MemberRepository {
     private val members = MutableStateFlow<Map<MemberId, Member>>(emptyMap())
+
+    @TestApi
+    val memberList get() = members.value.map { it.value }
 
     override fun get(id: MemberId): Flow<Result<Member, GetMemberError>> {
         return members.mapLatest { members ->
