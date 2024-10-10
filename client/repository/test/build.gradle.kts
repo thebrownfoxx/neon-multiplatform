@@ -16,11 +16,18 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlin.test)
-            implementation(libs.kotlin.test.junit)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotlinx.datetime)
             implementation(projects.common)
             implementation(projects.common.must)
+            implementation(projects.common.hash)
             implementation(projects.client.repository)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.kotlin.test.wasmjs)
+        }
+        jvmMain.dependencies {
+            implementation(libs.kotlin.test.junit)
         }
     }
 }

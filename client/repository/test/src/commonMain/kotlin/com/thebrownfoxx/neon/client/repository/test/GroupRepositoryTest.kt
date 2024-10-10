@@ -22,6 +22,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 abstract class GroupRepositoryTest {
+    // TODO: Test the flows for changes
+
     private val initialGroups = listOf(
         GroupWithMembers(
             group = Community(

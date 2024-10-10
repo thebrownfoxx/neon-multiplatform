@@ -6,6 +6,7 @@ import com.thebrownfoxx.neon.client.repository.message.model.AddMessageError
 import com.thebrownfoxx.neon.client.repository.message.model.GetConversationPreviewError
 import com.thebrownfoxx.neon.client.repository.message.model.GetConversationsError
 import com.thebrownfoxx.neon.client.repository.message.model.GetMessageError
+import com.thebrownfoxx.neon.common.extension.softSubList
 import com.thebrownfoxx.neon.common.model.Delivery
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.GroupId
@@ -79,7 +80,7 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
                         .sortedBy { (message) ->
                             message.timestamp.toEpochMilliseconds() * if (descending) -1 else 1
                         }
-                        .subList(offset, offset + count)
+                        .softSubList(offset..<offset + count)
                         .map { (message) -> message.groupId }
                         .toSet()
                 )
@@ -111,7 +112,7 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
             val messageIds = messages.values
                 .filter { it.groupId == groupId }
                 .sortedByDescending { it.timestamp }
-                .subList(offset, offset + count)
+                .softSubList(offset..<offset + count)
                 .map { it.id }
                 .toSet()
 
