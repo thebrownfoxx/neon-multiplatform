@@ -18,5 +18,9 @@ interface GroupManager {
         inviteCode: String,
     ): Result<GroupId, CreateCommunityError>
 
-    suspend fun addMember(groupId: GroupId, memberId: MemberId): UnitResult<AddGroupMemberError>
+    suspend fun addMember(
+        groupId: GroupId,
+        memberId: MemberId,
+        isAdmin: Boolean = false,
+    ): UnitResult<AddGroupMemberError>
 }

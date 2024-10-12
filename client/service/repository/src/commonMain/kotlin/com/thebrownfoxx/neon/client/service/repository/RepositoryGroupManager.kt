@@ -5,6 +5,7 @@ import com.thebrownfoxx.neon.client.repository.group.model.AddGroupEntityError
 import com.thebrownfoxx.neon.client.repository.group.model.AddGroupMemberEntityError
 import com.thebrownfoxx.neon.client.repository.group.model.GetGroupEntityError
 import com.thebrownfoxx.neon.client.repository.group.model.InGodCommunityError
+import com.thebrownfoxx.neon.client.repository.group.model.IsGroupAdminError
 import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.client.service.group.GroupManager
 import com.thebrownfoxx.neon.client.service.group.model.AddGroupMemberError
@@ -36,18 +37,17 @@ class RepositoryGroupManager(
         }
     }
 
+    private fun GetGroupEntityError.toGetGroupError() = when (this) {
+        GetGroupEntityError.NotFound -> GetGroupError.NotFound
+        GetGroupEntityError.ConnectionError -> GetGroupError.ConnectionError
+    }
+
     override suspend fun createCommunity(
         name: String,
         inviteCode: String,
     ): Result<GroupId, CreateCommunityError> {
-        val loggedInMember = authenticator.loggedInMemberId.value
-
-        if (loggedInMember == null) return Failure(CreateCommunityError.Unauthorized(null))
-
-        val inGodGroup = groupRepository.inGodCommunity(loggedInMember).first()
-            .getOrElse { return it.toCreateCommunityError() }
-
-        if (!inGodGroup) return Failure(CreateCommunityError.Unauthorized(loggedInMember))
+        val authorizationError = authorizeCreateCommunity()
+        if (authorizationError != null) return Failure(authorizationError)
 
         val community = Community(
             name = name,
@@ -62,34 +62,25 @@ class RepositoryGroupManager(
         )
     }
 
-    override suspend fun addMember(
-        groupId: GroupId,
-        memberId: MemberId,
-    ): UnitResult<AddGroupMemberError> {
+    private suspend fun authorizeCreateCommunity(): CreateCommunityError? {
         val loggedInMember = authenticator.loggedInMemberId.value
 
-        if (loggedInMember == null) return Failure(AddGroupMemberError.Unauthorized(null))
+        if (loggedInMember == null) return CreateCommunityError.ConnectionError
 
         val inGodGroup = groupRepository.inGodCommunity(loggedInMember).first()
-            .getOrElse { return Failure(it.toAddGroupMemberError()) }
+            .getOrElse { return it.toCreateCommunityError(loggedInMember) }
 
-        if (!inGodGroup) return Failure(AddGroupMemberError.Unauthorized(loggedInMember))
+        if (!inGodGroup) return CreateCommunityError.Unauthorized(loggedInMember)
 
-        // TODO: Also allow local admins to add members
-
-        return groupRepository.addMember(groupId, memberId).map(
-            onSuccess = { it },
-            onFailure = { it.toAddGroupMemberError() },
-        )
+        return null
     }
 
-    private fun GetGroupEntityError.toGetGroupError() = when (this) {
-        GetGroupEntityError.NotFound -> GetGroupError.NotFound
-        GetGroupEntityError.ConnectionError -> GetGroupError.ConnectionError
-    }
-
-    private fun InGodCommunityError.toCreateCommunityError() = when (this) {
-        InGodCommunityError.ConnectionError -> Failure(CreateCommunityError.ConnectionError)
+    private fun InGodCommunityError.toCreateCommunityError(
+        loggedInMember: MemberId,
+    ): CreateCommunityError {
+        return when (this) {
+            InGodCommunityError.ConnectionError -> CreateCommunityError.Unauthorized(loggedInMember)
+        }
     }
 
     private fun AddGroupEntityError.toCreateCommunityError() = when (this) {
@@ -97,8 +88,46 @@ class RepositoryGroupManager(
         AddGroupEntityError.ConnectionError -> CreateCommunityError.ConnectionError
     }
 
+    override suspend fun addMember(
+        groupId: GroupId,
+        memberId: MemberId,
+        isAdmin: Boolean,
+    ): UnitResult<AddGroupMemberError> {
+        val authorizationError = authorizeAddMember(groupId)
+
+        if (authorizationError != null) return Failure(authorizationError)
+
+        return groupRepository.addMember(groupId, memberId, isAdmin).map(
+            onSuccess = { it },
+            onFailure = { it.toAddGroupMemberError() },
+        )
+    }
+
+    private suspend fun authorizeAddMember(groupId: GroupId): AddGroupMemberError? {
+        val loggedInMember = authenticator.loggedInMemberId.value
+
+        if (loggedInMember == null) return AddGroupMemberError.Unauthorized(null)
+
+        val inGodGroup = groupRepository.inGodCommunity(loggedInMember).first()
+            .getOrElse { return it.toAddGroupMemberError() }
+
+        if (!inGodGroup) return AddGroupMemberError.Unauthorized(loggedInMember)
+
+        val isGroupAdmin = groupRepository.isGroupAdmin(groupId, loggedInMember).first()
+            .getOrElse { return it.toAddGroupMemberError() }
+
+        if (!isGroupAdmin) return AddGroupMemberError.Unauthorized(loggedInMember)
+
+        return null
+    }
+
     private fun InGodCommunityError.toAddGroupMemberError() = when (this) {
         InGodCommunityError.ConnectionError -> AddGroupMemberError.ConnectionError
+    }
+
+    private fun IsGroupAdminError.toAddGroupMemberError() = when (this) {
+        IsGroupAdminError.NotFound -> AddGroupMemberError.GroupNotFound
+        IsGroupAdminError.ConnectionError -> AddGroupMemberError.ConnectionError
     }
 
     private fun AddGroupMemberEntityError.toAddGroupMemberError() = when (this) {
