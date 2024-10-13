@@ -15,8 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.thebrownfoxx.neon.common.SAMPLE_TEXT
-import neon.composeapp.generated.resources.Res
-import neon.composeapp.generated.resources.compose_multiplatform
+import neon.client.application.generated.resources.Res
+import neon.client.application.generated.resources.compose_multiplatform
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 

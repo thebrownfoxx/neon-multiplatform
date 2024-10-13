@@ -1,0 +1,16 @@
+ktor:
+  application:
+    modules:
+      - com.thebrownfoxx.neon.server.ApplicationKt.module
+  deployment:
+    port: 8080
+jwt:
+  domain: "https://jwt-provider-domain/"
+  audience: "jwt-audience"
+  realm: "ktor sample app"
+
+storage:
+  driverClassName: "org.postgresql.Driver"
+  jdbcURL: "jdbc:postgresql://localhost:5432/ktor_tutorial_db"
+  user: "postgres"
+  password: "password"

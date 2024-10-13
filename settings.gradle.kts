@@ -28,12 +28,12 @@ dependencyResolutionManagement {
     }
 }
 
-include(":composeApp")
 include(":server")
 include(":shared")
 include(":common")
 include(":common:must")
 include(":common:hash")
+include(":client:application")
 include(":client:repository")
 include(":client:repository:test")
 include(":client:repository:memory")
