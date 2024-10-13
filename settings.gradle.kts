@@ -29,6 +29,11 @@ dependencyResolutionManagement {
 }
 
 include(":server")
+include(":server:repository")
+include(":server:repository:memory")
+include(":server:repository:test")
+include(":server:service")
+include(":server:service:repository")
 include(":shared")
 include(":common")
 include(":common:must")
