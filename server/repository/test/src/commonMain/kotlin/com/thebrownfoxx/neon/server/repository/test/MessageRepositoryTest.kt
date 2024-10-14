@@ -13,9 +13,9 @@ import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
-import com.thebrownfoxx.neon.server.repository.message.model.AddMessageEntityError
-import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewEntityError
-import com.thebrownfoxx.neon.server.repository.message.model.GetMessageEntityError
+import com.thebrownfoxx.neon.server.repository.message.model.AddMessageError
+import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.repository.message.model.GetMessageError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -92,7 +92,7 @@ abstract class MessageRepositoryTest {
     fun getShouldReturnNotFoundIfMessageDoesNotExist() {
         runTest {
             val actualMessageResult = messageRepository.get(MessageId()).first()
-            actualMessageResult mustBe Failure(GetMessageEntityError.NotFound)
+            actualMessageResult mustBe Failure(GetMessageError.NotFound)
         }
     }
 
@@ -122,7 +122,7 @@ abstract class MessageRepositoryTest {
             val duplicateMessage = initialMessages[0].copy()
 
             val actualAddResult = messageRepository.add(duplicateMessage)
-            actualAddResult mustBe Failure(AddMessageEntityError.DuplicateId)
+            actualAddResult mustBe Failure(AddMessageError.DuplicateId)
         }
     }
 
@@ -173,7 +173,7 @@ abstract class MessageRepositoryTest {
     fun getConversationPreviewShouldReturnNotFoundIfNoPreview() {
         runTest {
             val actualPreviewResult = messageRepository.getConversationPreview(GroupId()).first()
-            actualPreviewResult mustBe Failure(GetConversationPreviewEntityError.NotFound)
+            actualPreviewResult mustBe Failure(GetConversationPreviewError.NotFound)
         }
     }
 

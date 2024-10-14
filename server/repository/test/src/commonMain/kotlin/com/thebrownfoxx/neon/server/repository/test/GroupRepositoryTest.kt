@@ -12,10 +12,10 @@ import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMemberEntitiesError
+import com.thebrownfoxx.neon.server.repository.group.model.AddGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberError
+import com.thebrownfoxx.neon.server.repository.group.model.GetGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMembersError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -78,7 +78,7 @@ abstract class GroupRepositoryTest {
     fun getShouldReturnNotFoundIfGroupDoesNotExist() {
         runTest {
             val actualGroupResult = groupRepository.get(GroupId()).first()
-            actualGroupResult mustBe Failure(GetGroupEntityError.NotFound)
+            actualGroupResult mustBe Failure(GetGroupError.NotFound)
         }
     }
 
@@ -96,7 +96,7 @@ abstract class GroupRepositoryTest {
     fun getMembersShouldReturnGroupNotFoundIfGroupDoesNotExist() {
         runTest {
             val actualMembersResult = groupRepository.getMembers(GroupId()).first()
-            actualMembersResult mustBe Failure(GetGroupMemberEntitiesError.GroupNotFound)
+            actualMembersResult mustBe Failure(GetGroupMembersError.GroupNotFound)
         }
     }
 
@@ -124,7 +124,7 @@ abstract class GroupRepositoryTest {
             val duplicateGroup = ChatGroup(id = initialGroups[0].group.id)
 
             val actualAddResult = groupRepository.add(duplicateGroup)
-            actualAddResult mustBe Failure(AddGroupEntityError.DuplicateId)
+            actualAddResult mustBe Failure(AddGroupError.DuplicateId)
         }
     }
 
@@ -153,7 +153,7 @@ abstract class GroupRepositoryTest {
                 MemberId(),
             )
 
-            actualAddMemberResult mustBe Failure(AddGroupMemberEntityError.GroupNotFound)
+            actualAddMemberResult mustBe Failure(AddGroupMemberError.GroupNotFound)
         }
     }
 }

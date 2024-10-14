@@ -9,8 +9,8 @@ import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.server.repository.member.MemberRepository
-import com.thebrownfoxx.neon.server.repository.member.model.AddMemberEntityError
-import com.thebrownfoxx.neon.server.repository.member.model.GetMemberEntityError
+import com.thebrownfoxx.neon.server.repository.member.model.AddMemberError
+import com.thebrownfoxx.neon.server.repository.member.model.GetMemberError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,20 +24,20 @@ class InMemoryMemberRepository : MemberRepository {
     @TestApi
     val memberList get() = members.value.map { it.value }
 
-    override fun get(id: MemberId): Flow<Result<Member, GetMemberEntityError>> {
+    override fun get(id: MemberId): Flow<Result<Member, GetMemberError>> {
         return members.mapLatest { members ->
             when (val member = members[id]) {
-                null -> Failure(GetMemberEntityError.NotFound)
+                null -> Failure(GetMemberError.NotFound)
                 else -> Success(member)
             }
         }
     }
 
-    override suspend fun add(member: Member): UnitResult<AddMemberEntityError> {
+    override suspend fun add(member: Member): UnitResult<AddMemberError> {
         return when {
-            members.value.containsKey(member.id) -> Failure(AddMemberEntityError.DuplicateId)
+            members.value.containsKey(member.id) -> Failure(AddMemberError.DuplicateId)
             members.value.values.any { it.username == member.username } ->
-                Failure(AddMemberEntityError.DuplicateUsername)
+                Failure(AddMemberError.DuplicateUsername)
 
             else -> {
                 members.update { it + (member.id to member) }

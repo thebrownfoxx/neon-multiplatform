@@ -15,10 +15,10 @@ import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
-import com.thebrownfoxx.neon.server.repository.message.model.AddMessageEntityError
-import com.thebrownfoxx.neon.server.repository.message.model.GetConversationEntitiesError
-import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewEntityError
-import com.thebrownfoxx.neon.server.repository.message.model.GetMessageEntityError
+import com.thebrownfoxx.neon.server.repository.message.model.AddMessageError
+import com.thebrownfoxx.neon.server.repository.message.model.GetConversationsError
+import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.repository.message.model.GetMessageError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,18 +35,18 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
     @TestApi
     val messageList = messages.value.map { it.value }
 
-    override fun get(id: MessageId): Flow<Result<Message, GetMessageEntityError>> {
+    override fun get(id: MessageId): Flow<Result<Message, GetMessageError>> {
         return messages.mapLatest { messages ->
             when (val message = messages[id]) {
-                null -> Failure(GetMessageEntityError.NotFound)
+                null -> Failure(GetMessageError.NotFound)
                 else -> Success(message)
             }
         }
     }
 
-    override suspend fun add(message: Message): UnitResult<AddMessageEntityError> {
+    override suspend fun add(message: Message): UnitResult<AddMessageError> {
         val result = when {
-            messages.value.containsKey(message.id) -> Failure(AddMessageEntityError.DuplicateId)
+            messages.value.containsKey(message.id) -> Failure(AddMessageError.DuplicateId)
             else -> {
                 messages.update { it + (message.id to message) }
                 unitSuccess()
@@ -62,7 +62,7 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
         offset: Int,
         read: Boolean,
         descending: Boolean,
-    ): Flow<Result<Set<GroupId>, GetConversationEntitiesError>> {
+    ): Flow<Result<Set<GroupId>, GetConversationsError>> {
         // TODO: OMG this is crazy
 
         return messages.flatMapLatest { messages ->
@@ -94,14 +94,14 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
 
     override fun getConversationPreview(
         id: GroupId,
-    ): Flow<Result<MessageId, GetConversationPreviewEntityError>> {
+    ): Flow<Result<MessageId, GetConversationPreviewError>> {
         return messages.mapLatest { messages ->
             val message = messages.values
                 .filter { it.groupId == id }
                 .maxByOrNull { it.timestamp }
 
             when (message) {
-                null -> Failure(GetConversationPreviewEntityError.NotFound)
+                null -> Failure(GetConversationPreviewError.NotFound)
                 else -> Success(message.id)
             }
         }
@@ -111,7 +111,7 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<Result<Set<MessageId>, GetMessageEntityError>> {
+    ): Flow<Result<Set<MessageId>, GetMessageError>> {
         return messages.mapLatest { messages ->
             val messageIds = messages.values
                 .filter { it.groupId == groupId }

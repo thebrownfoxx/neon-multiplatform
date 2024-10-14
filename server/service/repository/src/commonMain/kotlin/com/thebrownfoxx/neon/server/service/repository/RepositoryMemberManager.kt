@@ -7,10 +7,10 @@ import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.map
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
-import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupEntityError
+import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupError
 import com.thebrownfoxx.neon.server.repository.member.MemberRepository
-import com.thebrownfoxx.neon.server.repository.member.model.AddMemberEntityError
-import com.thebrownfoxx.neon.server.repository.member.model.GetMemberEntityError
+import com.thebrownfoxx.neon.server.repository.member.model.AddMemberError
+import com.thebrownfoxx.neon.server.repository.member.model.GetMemberError as RepositoryGetMemberError
 import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
 import com.thebrownfoxx.neon.server.service.member.MemberManager
 import com.thebrownfoxx.neon.server.service.member.model.GetMemberError
@@ -39,9 +39,9 @@ class RepositoryMemberManager(
         }
     }
 
-    private fun GetMemberEntityError.toGetMemberError() = when (this) {
-        GetMemberEntityError.NotFound -> GetMemberError.NotFound
-        GetMemberEntityError.ConnectionError -> GetMemberError.ConnectionError
+    private fun RepositoryGetMemberError.toGetMemberError() = when (this) {
+        RepositoryGetMemberError.NotFound -> GetMemberError.NotFound
+        RepositoryGetMemberError.ConnectionError -> GetMemberError.ConnectionError
     }
 
     override suspend fun registerMember(
@@ -70,17 +70,17 @@ class RepositoryMemberManager(
 
         if (addMemberResult is Failure) {
             when (addMemberResult.error) {
-                AddMemberEntityError.DuplicateId -> TODO()
-                AddMemberEntityError.ConnectionError -> TODO()
-                AddMemberEntityError.DuplicateUsername -> TODO()
+                AddMemberError.DuplicateId -> TODO()
+                AddMemberError.ConnectionError -> TODO()
+                AddMemberError.DuplicateUsername -> TODO()
             }
         }
 
         TODO()
     }
 
-    private fun GetInviteCodeGroupEntityError.toRegisterMemberError() = when (this) {
-        GetInviteCodeGroupEntityError.NotFound -> RegisterMemberError.InvalidInviteCode
-        GetInviteCodeGroupEntityError.ConnectionError -> RegisterMemberError.ConnectionError
+    private fun GetInviteCodeGroupError.toRegisterMemberError() = when (this) {
+        GetInviteCodeGroupError.NotFound -> RegisterMemberError.InvalidInviteCode
+        GetInviteCodeGroupError.ConnectionError -> RegisterMemberError.ConnectionError
     }
 }

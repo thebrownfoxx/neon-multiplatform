@@ -10,9 +10,9 @@ import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.map
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupEntityError
+import com.thebrownfoxx.neon.server.repository.group.model.AddGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberError as RepositoryAddGroupMemberError
+import com.thebrownfoxx.neon.server.repository.group.model.GetGroupError as RepositoryGetGroupError
 import com.thebrownfoxx.neon.server.repository.group.model.InGodCommunityError
 import com.thebrownfoxx.neon.server.repository.group.model.IsGroupAdminError
 import com.thebrownfoxx.neon.server.service.authenticator.Authenticator
@@ -37,9 +37,9 @@ class RepositoryGroupManager(
         }
     }
 
-    private fun GetGroupEntityError.toGetGroupError() = when (this) {
-        GetGroupEntityError.NotFound -> GetGroupError.NotFound
-        GetGroupEntityError.ConnectionError -> GetGroupError.ConnectionError
+    private fun RepositoryGetGroupError.toGetGroupError() = when (this) {
+        RepositoryGetGroupError.NotFound -> GetGroupError.NotFound
+        RepositoryGetGroupError.ConnectionError -> GetGroupError.ConnectionError
     }
 
     override suspend fun createCommunity(
@@ -83,9 +83,9 @@ class RepositoryGroupManager(
         }
     }
 
-    private fun AddGroupEntityError.toCreateCommunityError() = when (this) {
-        AddGroupEntityError.DuplicateId -> error("Cannot add community with duplicate id")
-        AddGroupEntityError.ConnectionError -> CreateCommunityError.ConnectionError
+    private fun AddGroupError.toCreateCommunityError() = when (this) {
+        AddGroupError.DuplicateId -> error("Cannot add community with duplicate id")
+        AddGroupError.ConnectionError -> CreateCommunityError.ConnectionError
     }
 
     override suspend fun addMember(
@@ -130,8 +130,8 @@ class RepositoryGroupManager(
         IsGroupAdminError.ConnectionError -> AddGroupMemberError.ConnectionError
     }
 
-    private fun AddGroupMemberEntityError.toAddGroupMemberError() = when (this) {
-        AddGroupMemberEntityError.GroupNotFound -> AddGroupMemberError.GroupNotFound
-        AddGroupMemberEntityError.ConnectionError -> AddGroupMemberError.ConnectionError
+    private fun RepositoryAddGroupMemberError.toAddGroupMemberError() = when (this) {
+        RepositoryAddGroupMemberError.GroupNotFound -> AddGroupMemberError.GroupNotFound
+        RepositoryAddGroupMemberError.ConnectionError -> AddGroupMemberError.ConnectionError
     }
 }

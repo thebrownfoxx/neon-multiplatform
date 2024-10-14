@@ -11,11 +11,11 @@ import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupEntityError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMemberEntitiesError
-import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupEntityError
+import com.thebrownfoxx.neon.server.repository.group.model.AddGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberError
+import com.thebrownfoxx.neon.server.repository.group.model.GetGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMembersError
+import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupError
 import com.thebrownfoxx.neon.server.repository.group.model.InGodCommunityError
 import com.thebrownfoxx.neon.server.repository.group.model.IsGroupAdminError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,31 +31,31 @@ class InMemoryGroupRepository : GroupRepository {
     @TestApi
     val groupList get() = inMemoryGroups.value.map { it.value.group }
 
-    override fun get(id: GroupId): Flow<Result<Group, GetGroupEntityError>> {
+    override fun get(id: GroupId): Flow<Result<Group, GetGroupError>> {
         return inMemoryGroups.mapLatest { inMemoryGroups ->
             when (val inMemoryGroup = inMemoryGroups[id]) {
-                null -> Failure(GetGroupEntityError.NotFound)
+                null -> Failure(GetGroupError.NotFound)
                 else -> Success(inMemoryGroup.group)
             }
         }
     }
 
-    override fun getInviteCodeGroup(inviteCode: String): Flow<Result<GroupId, GetInviteCodeGroupEntityError>> {
+    override fun getInviteCodeGroup(inviteCode: String): Flow<Result<GroupId, GetInviteCodeGroupError>> {
         return inMemoryGroups.mapLatest { inMemoryGroups ->
             val community = inMemoryGroups.values.filterIsInstance<Community>()
                 .find { it.inviteCode == inviteCode }
 
             when (community) {
-                null -> Failure(GetInviteCodeGroupEntityError.NotFound)
+                null -> Failure(GetInviteCodeGroupError.NotFound)
                 else -> Success(community.id)
             }
         }
     }
 
-    override fun getMembers(id: GroupId): Flow<Result<Set<MemberId>, GetGroupMemberEntitiesError>> {
+    override fun getMembers(id: GroupId): Flow<Result<Set<MemberId>, GetGroupMembersError>> {
         return inMemoryGroups.mapLatest { groups ->
             when (val inMemoryGroup = groups[id]) {
-                null -> Failure(GetGroupMemberEntitiesError.GroupNotFound)
+                null -> Failure(GetGroupMembersError.GroupNotFound)
                 else -> Success(inMemoryGroup.members)
             }
         }
@@ -85,9 +85,9 @@ class InMemoryGroupRepository : GroupRepository {
         }
     }
 
-    override suspend fun add(group: Group): UnitResult<AddGroupEntityError> {
+    override suspend fun add(group: Group): UnitResult<AddGroupError> {
         return when {
-            inMemoryGroups.value.containsKey(group.id) -> Failure(AddGroupEntityError.DuplicateId)
+            inMemoryGroups.value.containsKey(group.id) -> Failure(AddGroupError.DuplicateId)
             else -> {
                 inMemoryGroups.update { it + (group.id to InMemoryGroup(group)) }
                 unitSuccess()
@@ -99,9 +99,9 @@ class InMemoryGroupRepository : GroupRepository {
         groupId: GroupId,
         memberId: MemberId,
         isAdmin: Boolean,
-    ): UnitResult<AddGroupMemberEntityError> {
+    ): UnitResult<AddGroupMemberError> {
         return when {
-            !inMemoryGroups.value.containsKey(groupId) -> Failure(AddGroupMemberEntityError.GroupNotFound)
+            !inMemoryGroups.value.containsKey(groupId) -> Failure(AddGroupMemberError.GroupNotFound)
             else -> {
                 inMemoryGroups.update {
                     val inMemoryGroup = it[groupId]
