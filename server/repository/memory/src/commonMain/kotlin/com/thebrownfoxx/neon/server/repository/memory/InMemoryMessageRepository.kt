@@ -13,11 +13,11 @@ import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.unitSuccess
-import com.thebrownfoxx.neon.server.repository.group.GroupRepository
+import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
 import com.thebrownfoxx.neon.server.repository.message.model.AddMessageError
-import com.thebrownfoxx.neon.server.repository.message.model.GetConversationsError
 import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.repository.message.model.GetConversationsError
 import com.thebrownfoxx.neon.server.repository.message.model.GetMessageError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +29,9 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class InMemoryMessageRepository(private val groupRepository: GroupRepository) : MessageRepository {
+class InMemoryMessageRepository(
+    private val groupMemberRepository: GroupMemberRepository,
+) : MessageRepository {
     private val messages = MutableStateFlow<Map<MessageId, Message>>(emptyMap())
 
     @TestApi
@@ -67,7 +69,7 @@ class InMemoryMessageRepository(private val groupRepository: GroupRepository) : 
 
         return messages.flatMapLatest { messages ->
             val groupMemberIds = messages.values.map { message ->
-                groupRepository.getMembers(message.groupId).map { membersResult ->
+                groupMemberRepository.getMembers(message.groupId).map { membersResult ->
                     val members = membersResult.getOrElse { emptySet() }
                     message to members
                 }

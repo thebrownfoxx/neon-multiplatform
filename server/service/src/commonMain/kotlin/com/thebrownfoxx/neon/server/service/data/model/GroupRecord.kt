@@ -13,6 +13,7 @@ data class ChatGroupRecord(
 data class CommunityRecord(
     override val group: Community,
     override val memberIds: Set<MemberId>,
+    val inviteCode: String,
 ) : GroupRecord
 
 sealed interface GroupRecord {

@@ -38,7 +38,6 @@ class CommunityBuilderScope internal constructor(
     internal fun build(): CommunityBuilderData {
         val community = Community(
             name = name,
-            inviteCode = inviteCode,
             avatarUrl = avatarUrl,
             god = god,
         )
@@ -48,6 +47,7 @@ class CommunityBuilderScope internal constructor(
             CommunityRecord(
                 group = community,
                 memberIds = memberIds,
+                inviteCode = inviteCode,
             )
 
         return CommunityBuilderData(communityRecord, members)

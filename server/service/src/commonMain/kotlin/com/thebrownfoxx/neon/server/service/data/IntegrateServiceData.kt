@@ -17,7 +17,7 @@ suspend fun ServiceData.integrate(
     for (communityRecord in communityRecords) {
         groupManager.createCommunity(
             name = communityRecord.group.name,
-            inviteCode = communityRecord.group.inviteCode,
+            inviteCode = communityRecord.inviteCode,
         )
     }
 

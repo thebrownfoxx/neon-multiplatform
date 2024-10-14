@@ -11,7 +11,7 @@ import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
-import com.thebrownfoxx.neon.server.repository.group.GroupRepository
+import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
 import com.thebrownfoxx.neon.server.repository.message.model.AddMessageError
 import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewError
@@ -56,21 +56,20 @@ abstract class MessageRepositoryTest {
         ),
     )
 
-    private lateinit var groupRepository: GroupRepository
+    private lateinit var groupMemberRepository: GroupMemberRepository
     private lateinit var messageRepository: MessageRepository
 
-    abstract fun createRepositories(): Pair<GroupRepository, MessageRepository>
+    abstract fun createRepositories(): Pair<GroupMemberRepository, MessageRepository>
 
     @BeforeTest
     fun setup() {
         runTest {
-            val (groupRepository, messageRepository) = createRepositories()
+            val (groupMemberRepository, messageRepository) = createRepositories()
 
-            this@MessageRepositoryTest.groupRepository = groupRepository
+            this@MessageRepositoryTest.groupMemberRepository = groupMemberRepository
             this@MessageRepositoryTest.messageRepository = messageRepository
 
-            groupRepository.add(groupX)
-            groupRepository.addMember(groupX.id, memberXId)
+            groupMemberRepository.addMember(groupX.id, memberXId)
 
             for (initialMessage in initialMessages) {
                 messageRepository.add(initialMessage)

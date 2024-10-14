@@ -3,9 +3,7 @@ package com.thebrownfoxx.neon.server.repository.test
 import com.thebrownfoxx.neon.common.model.ChatGroup
 import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitSuccess
 import com.thebrownfoxx.neon.common.type.Url
@@ -13,9 +11,7 @@ import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.group.model.AddGroupError
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.server.repository.group.model.GetGroupError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMembersError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -25,23 +21,15 @@ abstract class GroupRepositoryTest {
     // TODO: Test the flows for changes
 
     private val initialGroups = listOf(
-        GroupWithMembers(
-            group = Community(
-                name = "Formula 1",
-                avatarUrl = Url("https://example.com/f1.png"),
-                inviteCode = "f1",
-                god = true,
-            ),
-            memberIds = setOf(MemberId(), MemberId()),
+        Community(
+            name = "Formula 1",
+            avatarUrl = Url("https://example.com/f1.png"),
+            god = true,
         ),
-        GroupWithMembers(
-            group = Community(
-                name = "Formula 2",
-                avatarUrl = Url("https://example.com/f2.png"),
-                inviteCode = "f2",
-                god = false,
-            ),
-            memberIds = setOf(MemberId(), MemberId()),
+        Community(
+            name = "Formula 2",
+            avatarUrl = Url("https://example.com/f2.png"),
+            god = false,
         ),
     )
 
@@ -54,12 +42,8 @@ abstract class GroupRepositoryTest {
         runTest {
             groupRepository = createGroupRepository()
 
-            for ((initialGroup, memberIds) in initialGroups) {
+            for (initialGroup in initialGroups) {
                 groupRepository.add(initialGroup)
-
-                for (memberId in memberIds) {
-                    groupRepository.addMember(initialGroup.id, memberId)
-                }
             }
         }
     }
@@ -67,7 +51,7 @@ abstract class GroupRepositoryTest {
     @Test
     fun getShouldReturnGroup() {
         runTest {
-            for ((expectedGroup) in initialGroups) {
+            for (expectedGroup in initialGroups) {
                 val actualGroupResult = groupRepository.get(expectedGroup.id).first()
                 actualGroupResult mustBe Success(expectedGroup)
             }
@@ -83,30 +67,11 @@ abstract class GroupRepositoryTest {
     }
 
     @Test
-    fun getMembersShouldReturnMembers() {
-        runTest {
-            for ((initialGroup, memberIds) in initialGroups) {
-                val actualMembersResult = groupRepository.getMembers(initialGroup.id).first()
-                actualMembersResult mustBe Success(memberIds)
-            }
-        }
-    }
-
-    @Test
-    fun getMembersShouldReturnGroupNotFoundIfGroupDoesNotExist() {
-        runTest {
-            val actualMembersResult = groupRepository.getMembers(GroupId()).first()
-            actualMembersResult mustBe Failure(GetGroupMembersError.GroupNotFound)
-        }
-    }
-
-    @Test
     fun addShouldAddGroup() {
         runTest {
             val expectedGroup = Community(
                 name = "Formula 3",
                 avatarUrl = Url("https://example.com/f3.png"),
-                inviteCode = "f3",
                 god = false,
             )
 
@@ -121,44 +86,10 @@ abstract class GroupRepositoryTest {
     @Test
     fun addShouldReturnDuplicateIdIfGroupIdAlreadyExists() {
         runTest {
-            val duplicateGroup = ChatGroup(id = initialGroups[0].group.id)
+            val duplicateGroup = ChatGroup(id = initialGroups[0].id)
 
             val actualAddResult = groupRepository.add(duplicateGroup)
             actualAddResult mustBe Failure(AddGroupError.DuplicateId)
         }
     }
-
-    @Test
-    fun addMemberShouldAddMember() {
-        runTest {
-            val group = initialGroups[0]
-
-            val expectedMemberId = MemberId()
-            val addMemberResult = groupRepository.addMember(
-                group.group.id,
-                expectedMemberId,
-            )
-            addMemberResult.mustBeA<UnitSuccess>()
-
-            val actualMembersResult = groupRepository.getMembers(group.group.id).first()
-            actualMembersResult mustBe Success(group.memberIds + expectedMemberId)
-        }
-    }
-
-    @Test
-    fun addMemberShouldReturnGroupNotFoundIfGroupDoesNotExist() {
-        runTest {
-            val actualAddMemberResult = groupRepository.addMember(
-                GroupId(),
-                MemberId(),
-            )
-
-            actualAddMemberResult mustBe Failure(AddGroupMemberError.GroupNotFound)
-        }
-    }
 }
-
-private data class GroupWithMembers(
-    val group: Group,
-    val memberIds: Set<MemberId>,
-)

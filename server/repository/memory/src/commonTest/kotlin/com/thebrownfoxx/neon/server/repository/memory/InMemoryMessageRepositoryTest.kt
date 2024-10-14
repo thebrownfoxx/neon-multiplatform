@@ -1,13 +1,13 @@
 package com.thebrownfoxx.neon.server.repository.memory
 
-import com.thebrownfoxx.neon.server.repository.test.MessageRepositoryTest
-import com.thebrownfoxx.neon.server.repository.group.GroupRepository
+import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
+import com.thebrownfoxx.neon.server.repository.test.MessageRepositoryTest
 
 @Suppress("unused")
 class InMemoryMessageRepositoryTest : MessageRepositoryTest() {
-    override fun createRepositories(): Pair<GroupRepository, MessageRepository> {
-        val groupRepository = InMemoryGroupRepository()
+    override fun createRepositories(): Pair<GroupMemberRepository, MessageRepository> {
+        val groupRepository = TODO()
         val messageRepository = InMemoryMessageRepository(groupRepository)
         return groupRepository to messageRepository
     }

@@ -18,7 +18,6 @@ data class Community(
     override val id: GroupId = GroupId(),
     val name: String,
     val avatarUrl: Url?,
-    val inviteCode: String,
     val god: Boolean,
 ) : Group {
     override fun ignoreId() = copy(id = ignoredGroupId)

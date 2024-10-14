@@ -5,6 +5,7 @@ import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Success
+import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeTrue
 import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
@@ -60,7 +61,7 @@ abstract class PasswordRepositoryTest : Hasher by MultiplatformHasher() {
             val password = "charles leclerc"
 
             val setResult = passwordRepository.setHash(memberId, hash(password))
-            setResult mustBe Success(Unit)
+            setResult mustBe unitSuccess()
 
             val actualHashResult = passwordRepository.getHash(memberId)
             (actualHashResult is Success &&
