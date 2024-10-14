@@ -18,8 +18,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
             implementation(projects.common)
-            implementation(projects.client.service)
-            implementation(projects.client.repository)
+            implementation(projects.server.service)
+            implementation(projects.server.repository)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
