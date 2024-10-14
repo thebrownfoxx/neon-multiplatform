@@ -15,7 +15,7 @@ import com.thebrownfoxx.neon.server.repository.group.model.AddGroupEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.GetGroupEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMemberEntitiesError
-import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.InGodCommunityError
 import com.thebrownfoxx.neon.server.repository.group.model.IsGroupAdminError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,13 +40,13 @@ class InMemoryGroupRepository : GroupRepository {
         }
     }
 
-    override fun getInviteCodeGroup(inviteCode: String): Flow<Result<GroupId, GetInviteCodeGroupError>> {
+    override fun getInviteCodeGroup(inviteCode: String): Flow<Result<GroupId, GetInviteCodeGroupEntityError>> {
         return inMemoryGroups.mapLatest { inMemoryGroups ->
             val community = inMemoryGroups.values.filterIsInstance<Community>()
                 .find { it.inviteCode == inviteCode }
 
             when (community) {
-                null -> Failure(GetInviteCodeGroupError.NotFound)
+                null -> Failure(GetInviteCodeGroupEntityError.NotFound)
                 else -> Success(community.id)
             }
         }

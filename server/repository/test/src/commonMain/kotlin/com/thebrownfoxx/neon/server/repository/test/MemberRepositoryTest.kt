@@ -90,4 +90,17 @@ abstract class MemberRepositoryTest {
             actualAddResult mustBe Failure(AddMemberEntityError.DuplicateId)
         }
     }
+
+    @Test
+    fun addShouldReturnDuplicateUsernameIfUsernameAlreadyExists() {
+        runTest {
+            val duplicateMember = Member(
+                username = members[0].username,
+                avatarUrl = Url("https://example.com/charles_leclerc.png"),
+            )
+
+            val actualAddResult = memberRepository.add(duplicateMember)
+            actualAddResult mustBe Failure(AddMemberEntityError.DuplicateUsername)
+        }
+    }
 }

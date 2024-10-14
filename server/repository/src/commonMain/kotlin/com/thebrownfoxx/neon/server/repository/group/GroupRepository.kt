@@ -9,14 +9,14 @@ import com.thebrownfoxx.neon.server.repository.group.model.AddGroupEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.AddGroupMemberEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.GetGroupEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.GetGroupMemberEntitiesError
-import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.GetInviteCodeGroupEntityError
 import com.thebrownfoxx.neon.server.repository.group.model.InGodCommunityError
 import com.thebrownfoxx.neon.server.repository.group.model.IsGroupAdminError
 import kotlinx.coroutines.flow.Flow
 
 interface GroupRepository {
     fun get(id: GroupId): Flow<Result<Group, GetGroupEntityError>>
-    fun getInviteCodeGroup(inviteCode: String): Flow<Result<GroupId, GetInviteCodeGroupError>>
+    fun getInviteCodeGroup(inviteCode: String): Flow<Result<GroupId, GetInviteCodeGroupEntityError>>
     fun getMembers(id: GroupId): Flow<Result<Set<MemberId>, GetGroupMemberEntitiesError>>
     fun inGodCommunity(memberId: MemberId): Flow<Result<Boolean, InGodCommunityError>>
     fun isGroupAdmin(groupId: GroupId, memberId: MemberId): Flow<Result<Boolean, IsGroupAdminError>>

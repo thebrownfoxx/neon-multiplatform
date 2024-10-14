@@ -36,6 +36,9 @@ class InMemoryMemberRepository : MemberRepository {
     override suspend fun add(member: Member): UnitResult<AddMemberEntityError> {
         return when {
             members.value.containsKey(member.id) -> Failure(AddMemberEntityError.DuplicateId)
+            members.value.values.any { it.username == member.username } ->
+                Failure(AddMemberEntityError.DuplicateUsername)
+
             else -> {
                 members.update { it + (member.id to member) }
                 unitSuccess()

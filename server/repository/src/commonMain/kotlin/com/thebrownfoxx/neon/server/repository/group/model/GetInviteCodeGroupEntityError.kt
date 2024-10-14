@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.group.model
 
-enum class GetInviteCodeGroupError {
+enum class GetInviteCodeGroupEntityError {
     NotFound,
     ConnectionError,
 }
