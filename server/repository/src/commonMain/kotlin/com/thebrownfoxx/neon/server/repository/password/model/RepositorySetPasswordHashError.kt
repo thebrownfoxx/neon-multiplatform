@@ -1,5 +1,5 @@
 package com.thebrownfoxx.neon.server.repository.password.model
 
-enum class SetPasswordHashEntityError {
+enum class RepositorySetPasswordHashError {
     ConnectionError,
 }

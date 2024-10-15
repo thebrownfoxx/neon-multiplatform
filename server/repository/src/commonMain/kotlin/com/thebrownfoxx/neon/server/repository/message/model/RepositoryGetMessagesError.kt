@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.message.model
 
-enum class GetMessageError {
+enum class RepositoryGetMessagesError {
     NotFound,
     ConnectionError,
 }

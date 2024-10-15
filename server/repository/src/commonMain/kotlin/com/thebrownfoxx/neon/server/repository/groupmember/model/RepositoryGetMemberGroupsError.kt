@@ -1,5 +1,5 @@
 package com.thebrownfoxx.neon.server.repository.groupmember.model
 
-enum class GetMemberGroupsError {
+enum class RepositoryGetMemberGroupsError {
     ConnectionError,
 }

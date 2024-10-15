@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.groupmember.model
 
-enum class AddGroupMemberError {
+enum class RepositoryAddGroupMemberError {
     DuplicateMembership,
     ConnectionError,
 }

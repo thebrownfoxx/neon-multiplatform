@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.group.model
 
-enum class IsGroupAdminError {
-    NotFound,
+enum class RepositoryAddGroupError {
+    DuplicateId,
     ConnectionError,
 }

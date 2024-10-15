@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.password.model
 
-enum class GetPasswordHashEntityError {
+enum class RepositoryGetPasswordHashError {
     NotFound,
     ConnectionError,
 }

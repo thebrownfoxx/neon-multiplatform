@@ -15,13 +15,19 @@ interface GroupManager {
     fun getGroup(id: GroupId): Flow<Result<Group, GetGroupError>>
 
     suspend fun createCommunity(
+        actorId: MemberId,
         name: String,
         god: Boolean = false,
     ): Result<GroupId, CreateCommunityError>
 
-    suspend fun setInviteCode(groupId: GroupId, inviteCode: String): UnitResult<SetInviteCodeError>
+    suspend fun setInviteCode(
+        actorId: MemberId,
+        groupId: GroupId,
+        inviteCode: String,
+    ): UnitResult<SetInviteCodeError>
 
     suspend fun addMember(
+        actorId: MemberId,
         groupId: GroupId,
         memberId: MemberId,
         isAdmin: Boolean = false,

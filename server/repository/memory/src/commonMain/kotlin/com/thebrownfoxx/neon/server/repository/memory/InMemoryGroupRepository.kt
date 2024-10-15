@@ -9,8 +9,8 @@ import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.RepositoryGetGroupError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,18 +24,18 @@ class InMemoryGroupRepository : GroupRepository {
     @TestApi
     val groupList get() = groups.value.map { it.value }
 
-    override fun get(id: GroupId): Flow<Result<Group, GetGroupError>> {
+    override fun get(id: GroupId): Flow<Result<Group, RepositoryGetGroupError>> {
         return groups.mapLatest { groups ->
             when (val group = groups[id]) {
-                null -> Failure(GetGroupError.NotFound)
+                null -> Failure(RepositoryGetGroupError.NotFound)
                 else -> Success(group)
             }
         }
     }
 
-    override suspend fun add(group: Group): UnitResult<AddGroupError> {
+    override suspend fun add(group: Group): UnitResult<RepositoryAddGroupError> {
         return when {
-            groups.value.containsKey(group.id) -> Failure(AddGroupError.DuplicateId)
+            groups.value.containsKey(group.id) -> Failure(RepositoryAddGroupError.DuplicateId)
             else -> {
                 groups.update { it + (group.id to group) }
                 unitSuccess()

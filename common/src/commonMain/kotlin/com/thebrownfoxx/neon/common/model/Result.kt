@@ -4,9 +4,9 @@ typealias UnitResult<E> = Result<Unit, E>
 
 typealias UnitSuccess = Success<Unit>
 
-sealed interface Result<out T, out E>
-
 fun unitSuccess() = Success(Unit)
+
+sealed interface Result<out T, out E>
 
 data class Success<out T>(val value: T) : Result<T, Nothing>
 
@@ -51,4 +51,19 @@ inline fun <RT, RE, T, E> Result<T, E>.map(
         is Success -> Success(onSuccess(value))
         is Failure -> Failure(onFailure(error))
     }
+}
+
+inline fun <RE, T, E> Result<T, E>.mapError(onFailure: (E) -> RE): Result<T, RE> {
+    return when (this) {
+        is Success -> Success(value)
+        is Failure -> Failure(onFailure(error))
+    }
+}
+
+inline fun <T, E> Result<T, E>.onSuccess(function: (T) -> Unit) {
+    if (this is Success) function(value)
+}
+
+inline fun <T, E> Result<T, E>.onFailure(function: (E) -> Unit) {
+    if (this is Failure) function(error)
 }

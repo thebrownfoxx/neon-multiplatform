@@ -10,8 +10,8 @@ import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
-import com.thebrownfoxx.neon.server.repository.group.model.AddGroupError
-import com.thebrownfoxx.neon.server.repository.group.model.GetGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
+import com.thebrownfoxx.neon.server.repository.group.model.RepositoryGetGroupError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -62,7 +62,7 @@ abstract class GroupRepositoryTest {
     fun getShouldReturnNotFoundIfGroupDoesNotExist() {
         runTest {
             val actualGroupResult = groupRepository.get(GroupId()).first()
-            actualGroupResult mustBe Failure(GetGroupError.NotFound)
+            actualGroupResult mustBe Failure(RepositoryGetGroupError.NotFound)
         }
     }
 
@@ -89,7 +89,7 @@ abstract class GroupRepositoryTest {
             val duplicateGroup = ChatGroup(id = initialGroups[0].id)
 
             val actualAddResult = groupRepository.add(duplicateGroup)
-            actualAddResult mustBe Failure(AddGroupError.DuplicateId)
+            actualAddResult mustBe Failure(RepositoryAddGroupError.DuplicateId)
         }
     }
 }

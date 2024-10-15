@@ -9,8 +9,8 @@ import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.repository.member.MemberRepository
-import com.thebrownfoxx.neon.server.repository.member.model.AddMemberError
-import com.thebrownfoxx.neon.server.repository.member.model.GetMemberError
+import com.thebrownfoxx.neon.server.repository.member.model.RepositoryAddMemberError
+import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -57,7 +57,7 @@ abstract class MemberRepositoryTest {
     fun getShouldReturnNotFoundIfMemberDoesNotExist() {
         runTest {
             val actualMemberResult = memberRepository.get(MemberId()).first()
-            actualMemberResult mustBe Failure(GetMemberError.NotFound)
+            actualMemberResult mustBe Failure(RepositoryGetMemberError.NotFound)
         }
     }
 
@@ -87,7 +87,7 @@ abstract class MemberRepositoryTest {
             )
 
             val actualAddResult = memberRepository.add(duplicateMember)
-            actualAddResult mustBe Failure(AddMemberError.DuplicateId)
+            actualAddResult mustBe Failure(RepositoryAddMemberError.DuplicateId)
         }
     }
 
@@ -100,7 +100,7 @@ abstract class MemberRepositoryTest {
             )
 
             val actualAddResult = memberRepository.add(duplicateMember)
-            actualAddResult mustBe Failure(AddMemberError.DuplicateUsername)
+            actualAddResult mustBe Failure(RepositoryAddMemberError.DuplicateUsername)
         }
     }
 }

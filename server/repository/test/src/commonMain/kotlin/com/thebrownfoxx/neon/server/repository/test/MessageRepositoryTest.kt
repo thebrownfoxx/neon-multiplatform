@@ -13,9 +13,9 @@ import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
-import com.thebrownfoxx.neon.server.repository.message.model.AddMessageError
-import com.thebrownfoxx.neon.server.repository.message.model.GetConversationPreviewError
-import com.thebrownfoxx.neon.server.repository.message.model.GetMessageError
+import com.thebrownfoxx.neon.server.repository.message.model.RepositoryAddMessageError
+import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationPreviewError
+import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetMessageError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
@@ -91,7 +91,7 @@ abstract class MessageRepositoryTest {
     fun getShouldReturnNotFoundIfMessageDoesNotExist() {
         runTest {
             val actualMessageResult = messageRepository.get(MessageId()).first()
-            actualMessageResult mustBe Failure(GetMessageError.NotFound)
+            actualMessageResult mustBe Failure(RepositoryGetMessageError.NotFound)
         }
     }
 
@@ -121,7 +121,7 @@ abstract class MessageRepositoryTest {
             val duplicateMessage = initialMessages[0].copy()
 
             val actualAddResult = messageRepository.add(duplicateMessage)
-            actualAddResult mustBe Failure(AddMessageError.DuplicateId)
+            actualAddResult mustBe Failure(RepositoryAddMessageError.DuplicateId)
         }
     }
 
@@ -172,7 +172,7 @@ abstract class MessageRepositoryTest {
     fun getConversationPreviewShouldReturnNotFoundIfNoPreview() {
         runTest {
             val actualPreviewResult = messageRepository.getConversationPreview(GroupId()).first()
-            actualPreviewResult mustBe Failure(GetConversationPreviewError.NotFound)
+            actualPreviewResult mustBe Failure(RepositoryGetConversationPreviewError.NotFound)
         }
     }
 

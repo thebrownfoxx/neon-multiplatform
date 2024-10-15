@@ -6,9 +6,9 @@ import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.invite.model.GetInviteCodeError
-import com.thebrownfoxx.neon.server.repository.invite.model.GetInviteCodeGroupError
-import com.thebrownfoxx.neon.server.repository.invite.model.SetInviteCodeError
+import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeError
+import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeGroupError
+import com.thebrownfoxx.neon.server.repository.invite.model.RepositorySetInviteCodeError
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -44,7 +44,7 @@ abstract class InviteCodeRepositoryTest {
     @Test
     fun getShouldReturnNotFoundIfInviteCodeDoesNotExist() = runTest {
         val actualInviteCode = inviteCodeRepository.get(GroupId())
-        actualInviteCode mustBe Failure(GetInviteCodeError.NotFound)
+        actualInviteCode mustBe Failure(RepositoryGetInviteCodeError.NotFound)
     }
 
     @Test
@@ -58,7 +58,7 @@ abstract class InviteCodeRepositoryTest {
     @Test
     fun getGroupShouldReturnNotFoundIfInviteCodeDoesNotExist() = runTest {
         val actualGroupId = inviteCodeRepository.getGroup("invalid")
-        actualGroupId mustBe Failure(GetInviteCodeGroupError.NotFound)
+        actualGroupId mustBe Failure(RepositoryGetInviteCodeGroupError.NotFound)
     }
 
     @Test
@@ -79,7 +79,7 @@ abstract class InviteCodeRepositoryTest {
         val inviteCode = initialInviteCodes.first().value
 
         val setResult = inviteCodeRepository.set(groupId, inviteCode)
-        setResult mustBe Failure(SetInviteCodeError.DuplicateInviteCode)
+        setResult mustBe Failure(RepositorySetInviteCodeError.DuplicateInviteCode)
     }
 }
 

@@ -1,6 +1,8 @@
 package com.thebrownfoxx.neon.server.service.group.model
 
-enum class GetGroupError {
-    NotFound,
-    ConnectionError,
+import com.thebrownfoxx.neon.common.model.GroupId
+
+sealed interface GetGroupError {
+    data class NotFound(val groupId: GroupId) : GetGroupError
+    data object ConnectionError : GetGroupError
 }

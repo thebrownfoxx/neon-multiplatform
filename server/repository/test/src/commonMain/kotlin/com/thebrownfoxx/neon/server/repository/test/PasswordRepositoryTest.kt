@@ -9,7 +9,7 @@ import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeTrue
 import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
-import com.thebrownfoxx.neon.server.repository.password.model.GetPasswordHashEntityError
+import com.thebrownfoxx.neon.server.repository.password.model.RepositoryGetPasswordHashError
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -50,7 +50,7 @@ abstract class PasswordRepositoryTest : Hasher by MultiplatformHasher() {
     fun getShouldReturnNotFoundIfPasswordHashDoesNotExist() {
         runTest {
             val actualHashResult = passwordRepository.getHash(MemberId())
-            actualHashResult mustBe Failure(GetPasswordHashEntityError.NotFound)
+            actualHashResult mustBe Failure(RepositoryGetPasswordHashError.NotFound)
         }
     }
 
