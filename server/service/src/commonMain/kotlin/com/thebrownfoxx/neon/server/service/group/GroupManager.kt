@@ -8,6 +8,7 @@ import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.server.service.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.server.service.group.model.CreateCommunityError
 import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
+import com.thebrownfoxx.neon.server.service.group.model.SetInviteCodeError
 import kotlinx.coroutines.flow.Flow
 
 interface GroupManager {
@@ -15,8 +16,10 @@ interface GroupManager {
 
     suspend fun createCommunity(
         name: String,
-        inviteCode: String,
+        god: Boolean = false,
     ): Result<GroupId, CreateCommunityError>
+
+    suspend fun setInviteCode(groupId: GroupId, inviteCode: String): UnitResult<SetInviteCodeError>
 
     suspend fun addMember(
         groupId: GroupId,

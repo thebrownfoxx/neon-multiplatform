@@ -8,6 +8,7 @@ import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.invite.model.GetInviteCodeError
 import com.thebrownfoxx.neon.server.repository.invite.model.GetInviteCodeGroupError
+import com.thebrownfoxx.neon.server.repository.invite.model.SetInviteCodeError
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -70,6 +71,15 @@ abstract class InviteCodeRepositoryTest {
 
         val actualInviteCode = inviteCodeRepository.get(groupId)
         actualInviteCode mustBe Success(inviteCode)
+    }
+
+    @Test
+    fun setShouldReturnDuplicateInviteCodeIfInviteCodeAlreadyExists() = runTest {
+        val groupId = GroupId()
+        val inviteCode = initialInviteCodes.first().value
+
+        val setResult = inviteCodeRepository.set(groupId, inviteCode)
+        setResult mustBe Failure(SetInviteCodeError.DuplicateInviteCode)
     }
 }
 
