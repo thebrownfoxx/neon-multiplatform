@@ -18,6 +18,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
             implementation(projects.common)
+            implementation(projects.common.hash)
             implementation(projects.server.service)
             implementation(projects.server.repository)
         }

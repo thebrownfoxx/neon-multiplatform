@@ -77,7 +77,9 @@ class RepositoryGroupManager(
             onSuccess = { community.id },
             onFailure = {
                 when (it) {
-                    RepositoryAddGroupError.DuplicateId -> error("Cannot add community with duplicate id")
+                    RepositoryAddGroupError.DuplicateId ->
+                        error("Cannot add community with duplicate id")
+
                     RepositoryAddGroupError.ConnectionError -> CreateCommunityError.ConnectionError
                 }
             },
