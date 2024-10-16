@@ -24,6 +24,7 @@ kotlincrypto-random = "0.3.2"
 exposed = "0.52.0"
 h2 = "2.1.214"
 postgresql = "42.7.1"
+auth0-jwt = "4.4.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -66,6 +67,7 @@ h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host-jvm", version.ref = "ktor" }
+auth0-jwt = { module = "com.auth0:java-jwt", version.ref = "auth0-jwt" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

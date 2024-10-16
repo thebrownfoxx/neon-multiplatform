@@ -1,32 +1,18 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinx.serialization)
 }
 
-kotlin {
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
-
-    jvm()
-
-    sourceSets {
-        commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines)
-            implementation(libs.kotlinx.serialization)
-            implementation(libs.kotlinx.datetime)
-            implementation(projects.common)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(projects.common.must)
-            implementation(projects.common.hash)
-            implementation(projects.server.repository)
-            implementation(projects.server.repository.memory)
-        }
-    }
+dependencies {
+    implementation(libs.kotlinx.coroutines)
+    implementation(libs.kotlinx.serialization)
+    implementation(libs.kotlinx.datetime)
+    implementation(projects.common)
+    implementation(libs.auth0.jwt)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(projects.common.must)
+    testImplementation(projects.common.hash)
+    testImplementation(projects.server.repository)
+    testImplementation(projects.server.repository.memory)
 }
