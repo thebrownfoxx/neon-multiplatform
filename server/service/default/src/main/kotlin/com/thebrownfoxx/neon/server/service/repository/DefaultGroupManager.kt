@@ -37,10 +37,10 @@ import kotlinx.coroutines.flow.map
 
 class DefaultGroupManager(
     private val permissionChecker: PermissionChecker,
-    private val memberRepository: MemberRepository,
     private val groupRepository: GroupRepository,
-    private val inviteCodeRepository: InviteCodeRepository,
+    private val memberRepository: MemberRepository,
     private val groupMemberRepository: GroupMemberRepository,
+    private val inviteCodeRepository: InviteCodeRepository,
 ) : GroupManager {
     // TODO: Move this to a more central location
     private val maxCommunityNameLength = 16

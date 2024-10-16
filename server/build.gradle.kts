@@ -35,6 +35,13 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.server.config.yaml)
 
+    implementation(projects.common)
+    implementation(projects.common.hash)
+    implementation(projects.server.repository)
+    implementation(projects.server.repository.memory)
+    implementation(projects.server.service)
+    implementation(projects.server.service.default)
+
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
 }

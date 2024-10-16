@@ -1,5 +1,7 @@
 package com.thebrownfoxx.neon.server
 
+import com.thebrownfoxx.neon.server.dependency.DefaultDependencies
+import com.thebrownfoxx.neon.server.dependency.DependencyProvider
 import io.ktor.server.application.Application
 
 fun main(args: Array<String>) {
@@ -7,5 +9,6 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    DependencyProvider.init(DefaultDependencies())
     configureRouting()
 }
