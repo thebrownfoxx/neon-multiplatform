@@ -1,16 +1,13 @@
 package com.thebrownfoxx.neon.server.dependency
 
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
-import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.memory.InMemoryGroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.memory.InMemoryGroupRepository
 import com.thebrownfoxx.neon.server.repository.memory.InMemoryInviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.memory.InMemoryMemberRepository
 import com.thebrownfoxx.neon.server.repository.memory.InMemoryPasswordRepository
-import com.thebrownfoxx.neon.server.service.group.GroupManager
-import com.thebrownfoxx.neon.server.service.jwt.JwtProcessor
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
-import com.thebrownfoxx.neon.server.service.member.MemberManager
+import com.thebrownfoxx.neon.server.service.repository.DefaultAuthenticator
 import com.thebrownfoxx.neon.server.service.repository.DefaultGroupManager
 import com.thebrownfoxx.neon.server.service.repository.DefaultJwtProcessor
 import com.thebrownfoxx.neon.server.service.repository.DefaultMemberManager
@@ -35,8 +32,9 @@ class DefaultDependencies : Dependencies {
     private val inviteCodeRepository = InMemoryInviteCodeRepository()
     private val passwordRepository = InMemoryPasswordRepository()
     private val hasher = MultiplatformHasher()
-
     private val permissionChecker = DefaultPermissionChecker(groupMemberRepository)
+
+    override val authenticator = DefaultAuthenticator(memberRepository)
 
     override val groupManager = DefaultGroupManager(
         permissionChecker,
