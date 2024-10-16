@@ -15,7 +15,7 @@ import com.thebrownfoxx.neon.server.service.permission.model.IsGodError
 import com.thebrownfoxx.neon.server.service.permission.model.IsGroupAdminError
 import kotlinx.coroutines.flow.first
 
-class RepositoryPermissionChecker(
+class DefaultPermissionChecker(
     private val groupMemberRepository: GroupMemberRepository,
 ) : PermissionChecker {
     override suspend fun isGod(memberId: MemberId): Result<Boolean, IsGodError> {

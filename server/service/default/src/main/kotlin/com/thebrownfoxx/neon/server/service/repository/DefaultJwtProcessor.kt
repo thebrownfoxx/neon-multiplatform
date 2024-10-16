@@ -1,8 +1,9 @@
-package com.thebrownfoxx.neon.server.service.jwt
+package com.thebrownfoxx.neon.server.service.repository
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.Payload
+import com.thebrownfoxx.neon.server.service.jwt.JwtProcessor
 import com.thebrownfoxx.neon.server.service.jwt.model.Jwt
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaim
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaimKey

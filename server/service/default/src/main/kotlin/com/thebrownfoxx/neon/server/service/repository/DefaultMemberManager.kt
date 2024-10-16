@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class RepositoryMemberManager(
+class DefaultMemberManager(
     private val memberRepository: MemberRepository,
     private val passwordRepository: PasswordRepository,
     private val inviteCodeRepository: InviteCodeRepository,
