@@ -5,7 +5,7 @@ plugins {
     application
 }
 
-group = "com.thebrownfoxx.neon"
+group = "com.thebrownfoxx.neon.server.application"
 version = "1.0.0"
 
 application {
@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.server.config.yaml)
 
+    implementation(libs.kotlinx.datetime)
     implementation(projects.common)
     implementation(projects.common.hash)
     implementation(projects.server.repository)

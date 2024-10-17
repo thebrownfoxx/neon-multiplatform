@@ -18,7 +18,7 @@ suspend fun ServiceData.integrate(
     groupMemberRepository: GroupMemberRepository,
     inviteCodeRepository: InviteCodeRepository,
     passwordRepository: PasswordRepository,
-    messageRepository: MessageRepository,
+//    messageRepository: MessageRepository,
     hasher: Hasher,
 ) {
     for (groupRecord in groupRecords) {
@@ -46,9 +46,10 @@ suspend fun ServiceData.integrate(
         passwordRepository.setHash(member.id, hasher.hash(password))
     }
 
-    for (message in messages) {
-        messageRepository.add(message)
-    }
+    // TODO: Enable this once you have a message repository
+//    for (message in messages) {
+//        messageRepository.add(message)
+//    }
 }
 
 private fun ServiceData.error(): Nothing {

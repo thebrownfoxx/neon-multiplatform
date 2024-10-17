@@ -28,7 +28,7 @@ dependencyResolutionManagement {
     }
 }
 
-include(":server")
+include(":server:application")
 include(":server:repository")
 include(":server:repository:test")
 include(":server:repository:memory")

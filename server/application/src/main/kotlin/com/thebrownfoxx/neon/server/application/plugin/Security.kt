@@ -1,11 +1,11 @@
-package com.thebrownfoxx.neon.server.plugin
+package com.thebrownfoxx.neon.server.application.plugin
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.type.Uuid
-import com.thebrownfoxx.neon.server.dependency.DependencyProvider
+import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaimKey
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
 import io.ktor.server.application.Application
@@ -46,7 +46,7 @@ private fun AuthenticationConfig.basicAuthentication() {
 
 private fun AuthenticationConfig.jwtAuthentication() {
     with(DependencyProvider.dependencies) {
-        jwt(AuthenticationType.Jwt.name) {
+        jwt(com.thebrownfoxx.neon.server.application.plugin.AuthenticationType.Jwt.name) {
             with(jwtProcessor.config) {
                 this@jwt.realm = realm
 
@@ -69,7 +69,7 @@ private fun JWTAuthenticationProvider.Config.validate(jwtConfig: JwtConfig) {
         validate { credentials ->
             val memberIdClaim = jwtProcessor.getClaim(
                 credentials.payload,
-                MemberIdClaim,
+                com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim,
             )
 
             val memberId = memberIdClaim?.value?.let { MemberId(Uuid(it)) }

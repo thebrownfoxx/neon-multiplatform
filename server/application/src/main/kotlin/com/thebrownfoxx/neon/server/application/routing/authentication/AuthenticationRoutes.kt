@@ -1,8 +1,7 @@
-package com.thebrownfoxx.neon.server.routing.authentication
+package com.thebrownfoxx.neon.server.application.routing.authentication
 
 import com.thebrownfoxx.neon.common.model.getOrElse
-import com.thebrownfoxx.neon.server.dependency.DependencyProvider
-import com.thebrownfoxx.neon.server.plugin.MemberIdClaim
+import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
 import com.thebrownfoxx.neon.server.service.jwt.model.claimedAs
 import io.ktor.http.HttpStatusCode
@@ -40,7 +39,7 @@ fun Route.login() {
                 }
             }
 
-            val jwt = jwtProcessor.generateJwt(MemberIdClaim claimedAs memberId.value)
+            val jwt = jwtProcessor.generateJwt(com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim claimedAs memberId.value)
 
             call.respond(
                 HttpStatusCode.OK,

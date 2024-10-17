@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.dependency
+package com.thebrownfoxx.neon.server.application.dependency
 
 import com.thebrownfoxx.neon.server.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.server.service.group.GroupManager

@@ -1,7 +1,7 @@
 ktor:
   application:
     modules:
-      - com.thebrownfoxx.neon.server.ApplicationKt.module
+      - com.thebrownfoxx.neon.server.application.ApplicationKt.module
   deployment:
     port: 8080
 jwt:

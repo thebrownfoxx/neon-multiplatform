@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.routing
+package com.thebrownfoxx.neon.server.application.routing
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.resources.Resource
