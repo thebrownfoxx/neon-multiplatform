@@ -12,7 +12,7 @@ import kotlinx.serialization.encoding.Encoder
 data class Jwt(val value: String)
 
 object JwtSerializer : KSerializer<Jwt> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("jwt", PrimitiveKind.STRING)
 
     override fun serialize(
         encoder: Encoder,

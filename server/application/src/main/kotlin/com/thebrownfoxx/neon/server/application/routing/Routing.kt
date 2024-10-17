@@ -1,11 +1,12 @@
 package com.thebrownfoxx.neon.server.application.routing
 
-import io.ktor.http.HttpStatusCode
+import com.thebrownfoxx.neon.server.application.routing.authentication.login
 import io.ktor.resources.Resource
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
-import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.resources.Resources
 import io.ktor.server.resources.get
 import io.ktor.server.response.respondText
@@ -13,13 +14,13 @@ import io.ktor.server.routing.routing
 
 fun Application.configureRouting() {
     install(Resources)
-    install(StatusPages) {
-        exception<Throwable> { call, cause ->
-            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
-        }
+
+    install(ContentNegotiation) {
+        json()
     }
     routing {
         get<HelloWorld> { call.respondText("Hello, world!") }
+        login()
     }
 }
 
