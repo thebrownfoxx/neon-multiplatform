@@ -1,12 +1,12 @@
-package com.thebrownfoxx.neon.server.service.data
+package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.type.Url
-import com.thebrownfoxx.neon.server.service.data.model.CommunityRecord
-import com.thebrownfoxx.neon.server.service.data.model.GroupRecord
-import com.thebrownfoxx.neon.server.service.data.model.MemberRecord
+import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
+import com.thebrownfoxx.neon.server.repository.data.model.GroupRecord
+import com.thebrownfoxx.neon.server.repository.data.model.MemberRecord
 
 typealias CommunityBuilder = CommunityBuilderScope.() -> Unit
 

@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.service.data.model
+package com.thebrownfoxx.neon.server.repository.data.model
 
 import com.thebrownfoxx.neon.common.model.Message
 

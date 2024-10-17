@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.service.data
+package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.model.Delivery
 import com.thebrownfoxx.neon.common.model.GroupId
