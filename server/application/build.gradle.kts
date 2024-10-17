@@ -39,7 +39,7 @@ dependencies {
     implementation(projects.common)
     implementation(projects.common.hash)
     implementation(projects.server.repository)
-    implementation(projects.server.repository.memory)
+    implementation(projects.server.repository.inmemory)
     implementation(projects.server.service)
     implementation(projects.server.service.default)
 

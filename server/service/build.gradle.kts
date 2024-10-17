@@ -14,5 +14,5 @@ dependencies {
     testImplementation(projects.common.must)
     testImplementation(projects.common.hash)
     testImplementation(projects.server.repository)
-    testImplementation(projects.server.repository.memory)
+    testImplementation(projects.server.repository.inmemory)
 }

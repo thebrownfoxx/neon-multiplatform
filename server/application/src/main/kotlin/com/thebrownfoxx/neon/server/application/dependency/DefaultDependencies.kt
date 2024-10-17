@@ -5,11 +5,11 @@ import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.server.repository.data.integrate
 import com.thebrownfoxx.neon.server.repository.data.serviceData
-import com.thebrownfoxx.neon.server.repository.memory.InMemoryGroupMemberRepository
-import com.thebrownfoxx.neon.server.repository.memory.InMemoryGroupRepository
-import com.thebrownfoxx.neon.server.repository.memory.InMemoryInviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.memory.InMemoryMemberRepository
-import com.thebrownfoxx.neon.server.repository.memory.InMemoryPasswordRepository
+import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupMemberRepository
+import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupRepository
+import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryInviteCodeRepository
+import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryMemberRepository
+import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryPasswordRepository
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
 import com.thebrownfoxx.neon.server.service.repository.DefaultAuthenticator
 import com.thebrownfoxx.neon.server.service.repository.DefaultGroupManager
