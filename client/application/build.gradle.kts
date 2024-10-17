@@ -72,7 +72,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.thebrownfoxx.neon"
+    namespace = "com.thebrownfoxx.neon.client.application"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -80,7 +80,7 @@ android {
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
-        applicationId = "com.thebrownfoxx.neon"
+        applicationId = "com.thebrownfoxx.neon.client.application"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -110,7 +110,7 @@ android {
 
 compose.desktop {
     application {
-        mainClass = "com.thebrownfoxx.neon.MainKt"
+        mainClass = "com.thebrownfoxx.neon.client.application.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

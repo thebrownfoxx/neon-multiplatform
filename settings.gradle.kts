@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 rootProject.name = "Neon"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
@@ -29,6 +31,7 @@ dependencyResolutionManagement {
 }
 
 include(":server:application")
+include(":server:content")
 include(":server:repository")
 include(":server:repository:test")
 include(":server:repository:inmemory")
