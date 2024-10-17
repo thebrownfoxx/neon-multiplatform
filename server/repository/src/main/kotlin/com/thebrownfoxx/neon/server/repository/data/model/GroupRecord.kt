@@ -13,10 +13,13 @@ data class ChatGroupRecord(
 data class CommunityRecord(
     override val group: Community,
     override val memberIds: Set<MemberId>,
-    val inviteCode: String,
+    val inviteCode: String?,
 ) : GroupRecord
 
 sealed interface GroupRecord {
     val group: Group
     val memberIds: Set<MemberId>
+
+    operator fun component1() = group
+    operator fun component2() = memberIds
 }

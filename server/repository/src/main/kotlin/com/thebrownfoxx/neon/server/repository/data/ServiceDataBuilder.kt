@@ -22,23 +22,37 @@ class ServiceDataBuilderScope internal constructor() {
     fun community(
         name: String,
         avatarUrl: Url?,
-        inviteCode: String,
         god: Boolean = false,
         builder: CommunityBuilder = {},
     ): GroupId {
         val communityBuilderScope = CommunityBuilderScope(
             name = name,
             avatarUrl = avatarUrl,
+            god = god,
+        ).apply(builder)
+        return communityBuilderScope.build().apply()
+    }
+
+    fun community(
+        name: String,
+        avatarUrl: Url?,
+        inviteCode: String,
+        god: Boolean = false,
+        builder: OpenCommunityBuilder = {},
+    ): GroupId {
+        val communityBuilderScope = OpenCommunityBuilderScope(
+            name = name,
+            avatarUrl = avatarUrl,
             inviteCode = inviteCode,
             god = god,
         ).apply(builder)
+        return communityBuilderScope.build().apply()
+    }
 
-        val communityBuilderData = communityBuilderScope.build()
-
-        groups.add(communityBuilderData.communityRecord)
-        members.addAll(communityBuilderData.memberRecords)
-
-        return communityBuilderData.communityRecord.group.id
+    private fun CommunityBuilderData.apply(): GroupId {
+        groups.add(communityRecord)
+        members.addAll(memberRecords)
+        return communityRecord.group.id
     }
 
     fun conversation(builder: DirectConversationBuilder): GroupId {

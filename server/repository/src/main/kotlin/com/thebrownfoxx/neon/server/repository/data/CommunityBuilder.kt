@@ -1,7 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.model.Community
-import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
@@ -10,47 +9,33 @@ import com.thebrownfoxx.neon.server.repository.data.model.MemberRecord
 
 typealias CommunityBuilder = CommunityBuilderScope.() -> Unit
 
-class CommunityBuilderScope internal constructor(
-    private val name: String,
-    private val avatarUrl: Url?,
-    private val inviteCode: String,
-    private val god: Boolean,
+open class CommunityBuilderScope internal constructor(
+    protected val name: String,
+    protected val avatarUrl: Url?,
+    protected val god: Boolean,
 ) {
-    private val members = mutableListOf<MemberRecord>()
-    private val memberIds = mutableListOf<MemberId>()
-
-    fun member(
-        username: String,
-        avatarUrl: Url?,
-        password: String,
-    ): MemberId {
-        val member = Member(username = username, avatarUrl = avatarUrl)
-        members.add(MemberRecord(member = member, inviteCode = inviteCode, password = password))
-        return member.id
-    }
+    private val memberIds = mutableSetOf<MemberId>()
 
     fun member(id: MemberId): MemberId {
         memberIds.add(id)
         return id
     }
 
-
-    internal fun build(): CommunityBuilderData {
+    internal open fun build(): CommunityBuilderData {
         val community = Community(
             name = name,
             avatarUrl = avatarUrl,
             god = god,
         )
-        val memberIds = (members.map { it.member.id } + memberIds).toSet()
 
         val communityRecord =
             CommunityRecord(
                 group = community,
                 memberIds = memberIds,
-                inviteCode = inviteCode,
+                inviteCode = null,
             )
 
-        return CommunityBuilderData(communityRecord, members)
+        return CommunityBuilderData(communityRecord, emptyList())
     }
 }
 

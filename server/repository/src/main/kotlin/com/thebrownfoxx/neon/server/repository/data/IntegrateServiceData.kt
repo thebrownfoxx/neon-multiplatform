@@ -1,13 +1,15 @@
 package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.hash.Hasher
-import com.thebrownfoxx.neon.server.repository.data.model.ChatGroupRecord
+import com.thebrownfoxx.neon.common.model.getOrElse
+import com.thebrownfoxx.neon.common.model.onFailure
 import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.member.MemberRepository
+import com.thebrownfoxx.neon.server.repository.message.MessageRepository
 import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
 
 suspend fun ServiceData.integrate(
@@ -16,31 +18,39 @@ suspend fun ServiceData.integrate(
     groupMemberRepository: GroupMemberRepository,
     inviteCodeRepository: InviteCodeRepository,
     passwordRepository: PasswordRepository,
+    messageRepository: MessageRepository,
     hasher: Hasher,
 ) {
-    val communityRecords = groupRecords.filterIsInstance<CommunityRecord>()
+    for (groupRecord in groupRecords) {
+        val (group, memberIds) = groupRecord
 
-    for (communityRecord in communityRecords) {
-        groupManager.createCommunity(
-            name = communityRecord.group.name,
-        )
+        groupRepository.add(groupRecord.group).onFailure { error() }
+
+        for (memberId in memberIds) {
+            groupMemberRepository.addMember(group.id, memberId).onFailure { error() }
+        }
+
+        if (groupRecord is CommunityRecord) {
+            val inviteCode = groupRecord.inviteCode
+
+            if (inviteCode != null) {
+                inviteCodeRepository.set(group.id, inviteCode).onFailure { error() }
+            }
+        }
     }
 
-    for (memberRecords in memberRecords) {
-        memberManager.registerMember(
-            inviteCode = memberRecords.inviteCode,
-            username = memberRecords.member.username,
-            password = memberRecords.password,
-        )
-    }
-
-    val chatGroupRecords = groupRecords.filterIsInstance<ChatGroupRecord>()
-
-    for (chatGroupRecord in chatGroupRecords) {
-        messenger.newConversation(chatGroupRecord.memberIds)
+    for ((member, inviteCode, password) in memberRecords) {
+        memberRepository.add(member).onFailure { error() }
+        val groupId = inviteCodeRepository.getGroup(inviteCode).getOrElse { error() }
+        groupMemberRepository.addMember(groupId, member.id)
+        passwordRepository.setHash(member.id, hasher.hash(password))
     }
 
     for (message in messages) {
-        messenger.sendMessage(message.groupId, message.content)
+        messageRepository.add(message)
     }
+}
+
+private fun ServiceData.error(): Nothing {
+    error("Illegal service data $this")
 }
