@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.service.jwt.model
+package com.thebrownfoxx.neon.common.model
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -12,16 +12,14 @@ import kotlinx.serialization.encoding.Encoder
 data class Jwt(val value: String)
 
 object JwtSerializer : KSerializer<Jwt> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("jwt", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Jwt,
-    ) {
-        encoder.encodeString(value.value)
-    }
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("jwt", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): Jwt {
         return Jwt(decoder.decodeString())
+    }
+
+    override fun serialize(encoder: Encoder, value: Jwt) {
+        encoder.encodeString(value.value)
     }
 }

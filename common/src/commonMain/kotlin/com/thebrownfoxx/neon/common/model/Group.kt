@@ -4,7 +4,13 @@ import com.thebrownfoxx.neon.common.type.Id
 import com.thebrownfoxx.neon.common.type.IgnoredUuid
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.Uuid
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class ChatGroup(
@@ -31,5 +37,18 @@ sealed interface Group {
 
 private val ignoredGroupId = GroupId(IgnoredUuid)
 
-@Serializable
+@Serializable(with = GroupIdSerializer::class)
 data class GroupId(override val uuid: Uuid = Uuid()) : Id
+
+object GroupIdSerializer : KSerializer<GroupId> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("groupId", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): GroupId {
+        return GroupId(Uuid(decoder.decodeString()))
+    }
+
+    override fun serialize(encoder: Encoder, value: GroupId) {
+        return encoder.encodeString(value.value)
+    }
+}

@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
-import com.thebrownfoxx.neon.server.service.jwt.model.Jwt
+import com.thebrownfoxx.neon.common.model.Jwt
 import com.thebrownfoxx.neon.server.service.jwt.model.claimedAs
 import io.ktor.http.HttpStatusCode
 import io.ktor.resources.Resource
