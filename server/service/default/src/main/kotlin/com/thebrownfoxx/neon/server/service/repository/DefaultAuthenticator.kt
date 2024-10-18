@@ -21,7 +21,7 @@ class DefaultAuthenticator(
     private val passwordRepository: PasswordRepository,
     private val hasher: Hasher,
 ) : Authenticator {
-    override suspend fun authenticate(memberId: MemberId): Result<Boolean, AuthenticationError> {
+    override suspend fun exists(memberId: MemberId): Result<Boolean, AuthenticationError> {
         return when (val memberResult = memberRepository.get(memberId).first()) {
             is Success -> return Success(true)
             is Failure -> when (memberResult.error) {

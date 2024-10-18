@@ -46,7 +46,7 @@ private fun AuthenticationConfig.basicAuthentication() {
 
 private fun AuthenticationConfig.jwtAuthentication() {
     with(DependencyProvider.dependencies) {
-        jwt(com.thebrownfoxx.neon.server.application.plugin.AuthenticationType.Jwt.name) {
+        jwt(AuthenticationType.Jwt.name) {
             with(jwtProcessor.config) {
                 this@jwt.realm = realm
 
@@ -69,14 +69,14 @@ private fun JWTAuthenticationProvider.Config.validate(jwtConfig: JwtConfig) {
         validate { credentials ->
             val memberIdClaim = jwtProcessor.getClaim(
                 credentials.payload,
-                com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim,
+                MemberIdClaim,
             )
 
             val memberId = memberIdClaim?.value?.let { MemberId(Uuid(it)) }
 
             val authenticated = jwtConfig.audience in credentials.payload.audience &&
                     memberId != null &&
-                    authenticator.authenticate(memberId).getOrElse { false }
+                    authenticator.exists(memberId).getOrElse { false }
 
             when {
                 authenticated -> JWTPrincipal(credentials.payload)

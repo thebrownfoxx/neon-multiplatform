@@ -6,6 +6,6 @@ import com.thebrownfoxx.neon.server.service.authenticator.model.AuthenticationEr
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
 
 interface Authenticator {
-    suspend fun authenticate(memberId: MemberId): Result<Boolean, AuthenticationError>
+    suspend fun exists(memberId: MemberId): Result<Boolean, AuthenticationError>
     suspend fun login(username: String, password: String): Result<MemberId, LoginError>
 }

@@ -31,7 +31,7 @@ dependencyResolutionManagement {
 }
 
 include(":server:application")
-include(":server:content")
+include(":server:model")
 include(":server:repository")
 include(":server:repository:test")
 include(":server:repository:inmemory")

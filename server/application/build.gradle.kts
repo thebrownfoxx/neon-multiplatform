@@ -34,12 +34,13 @@ dependencies {
     implementation(libs.ktor.server.netty)
     implementation(libs.logback)
     implementation(libs.ktor.server.config.yaml)
-
     implementation(libs.kotlinx.datetime)
+
     implementation(projects.common)
     implementation(projects.common.hash)
     implementation(projects.server.repository)
     implementation(projects.server.repository.inmemory)
+    implementation(projects.server.model)
     implementation(projects.server.service)
     implementation(projects.server.service.default)
 
