@@ -208,7 +208,7 @@ private val singleAvatarState = SingleAvatarState(
 @Composable
 private fun LargePreview() {
     NeonTheme {
-        SingleLargeAvatar(
+        LargeAvatar(
             avatar = singleAvatarState,
             modifier = Modifier.padding(16.dp),
         )
@@ -242,7 +242,7 @@ private fun SmallPreview() {
 private fun GroupPreview() {
     NeonTheme {
         Surface {
-            GroupLargeAvatar(
+            LargeAvatar(
                 avatar = GroupAvatarState(
                     front = singleAvatarState,
                     back = singleAvatarState,

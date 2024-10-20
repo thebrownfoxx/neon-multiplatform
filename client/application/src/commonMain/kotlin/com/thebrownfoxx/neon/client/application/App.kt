@@ -3,29 +3,45 @@ package com.thebrownfoxx.neon.client.application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.thebrownfoxx.neon.common.type.Url
-import com.thebrownfoxx.neon.client.application.ui.component.avatar.LargeAvatar
-import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thebrownfoxx.neon.client.application.ui.extension.LocalWindowSizeClass
+import com.thebrownfoxx.neon.client.application.ui.extension.calculateWindowSizeClass
 import com.thebrownfoxx.neon.client.application.ui.screen.login.LoginScreen
+import com.thebrownfoxx.neon.client.application.ui.screen.login.LoginViewModel
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenEventHandler
-import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenState
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 @Preview
 fun App() {
-    NeonTheme {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            LoginScreen(
-                state = LoginScreenState(),
-                eventHandler = LoginScreenEventHandler.Blank,
-            )
+    CompositionLocalProvider(LocalWindowSizeClass provides calculateWindowSizeClass()) {
+        NeonTheme {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                val loginViewModel = viewModel { LoginViewModel() }
+                val loginScreenState by loginViewModel.state.collectAsStateWithLifecycle()
+                val loginScreenEventHandler = with(loginViewModel) {
+                    LoginScreenEventHandler(
+                        onUsernameChange = ::onUsernameChange,
+                        onPasswordChange = ::onPasswordChange,
+                        onLogin = ::onLogin,
+                        onJoin = ::onJoin,
+                    )
+                }
+
+                LoginScreen(
+                    state = loginScreenState,
+                    eventHandler = loginScreenEventHandler,
+                )
+            }
         }
     }
 }

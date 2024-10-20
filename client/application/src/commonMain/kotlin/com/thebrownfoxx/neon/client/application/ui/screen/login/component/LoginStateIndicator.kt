@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.login
+package com.thebrownfoxx.neon.client.application.ui.screen.login.component
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
