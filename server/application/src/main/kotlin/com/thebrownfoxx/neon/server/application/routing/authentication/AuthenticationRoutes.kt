@@ -9,14 +9,13 @@ import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
 import com.thebrownfoxx.neon.server.service.jwt.model.claimedAs
 import io.ktor.http.HttpStatusCode
 import io.ktor.resources.Resource
-import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 
 @Resource("/login")
-class Login
+private class Login
 
 fun Route.login() {
     with(DependencyProvider.dependencies) {

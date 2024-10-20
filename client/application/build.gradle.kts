@@ -41,12 +41,6 @@ kotlin {
     
     sourceSets {
         val desktopMain by getting
-        
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.ktx)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.compose.material3)
-        }
 
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -62,7 +56,16 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.kotlinx.datetime)
             implementation(libs.coil)
+            implementation(libs.ktor.client.core)
             implementation(projects.common)
+            implementation(projects.client.service)
+            implementation(projects.client.service.default)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.ktx)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.compose.material3)
         }
 
         desktopMain.dependencies {

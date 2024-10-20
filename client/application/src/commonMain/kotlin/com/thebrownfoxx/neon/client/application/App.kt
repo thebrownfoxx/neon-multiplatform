@@ -16,6 +16,9 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScree
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
+import com.thebrownfoxx.neon.client.service.default.InMemoryTokenStorage
+import io.ktor.client.HttpClient
 
 @Composable
 @Preview
@@ -26,7 +29,13 @@ fun App() {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                val loginViewModel = viewModel { LoginViewModel() }
+                val loginViewModel = viewModel {
+                    val authenticator = DefaultAuthenticator(
+                        HttpClient(),
+                        InMemoryTokenStorage(),
+                    )
+                    LoginViewModel(authenticator)
+                }
                 val loginScreenState by loginViewModel.state.collectAsStateWithLifecycle()
                 val loginScreenEventHandler = with(loginViewModel) {
                     LoginScreenEventHandler(

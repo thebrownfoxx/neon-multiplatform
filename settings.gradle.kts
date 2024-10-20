@@ -27,6 +27,7 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
     }
 }
 
@@ -43,3 +44,4 @@ include(":server:service:test")
 include(":server:service:default")
 include(":client:application")
 include(":client:service")
+include(":client:service:default")
