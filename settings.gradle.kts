@@ -30,6 +30,9 @@ dependencyResolutionManagement {
     }
 }
 
+include(":common")
+include(":common:must")
+include(":common:hash")
 include(":server:application")
 include(":server:model")
 include(":server:repository")
@@ -38,8 +41,5 @@ include(":server:repository:inmemory")
 include(":server:service")
 include(":server:service:test")
 include(":server:service:default")
-include(":shared")
-include(":common")
-include(":common:must")
-include(":common:hash")
 include(":client:application")
+include(":client:service")

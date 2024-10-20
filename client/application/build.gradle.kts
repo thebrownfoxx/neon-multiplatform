@@ -62,7 +62,6 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.kotlinx.datetime)
             implementation(libs.coil)
-            implementation(projects.shared)
             implementation(projects.common)
         }
 
