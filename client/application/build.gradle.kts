@@ -33,7 +33,7 @@ kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
     
@@ -57,6 +57,9 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.coil)
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.resources)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
             implementation(projects.common)
             implementation(projects.client.service)
             implementation(projects.client.service.default)
@@ -66,11 +69,13 @@ kotlin {
             implementation(libs.androidx.activity.ktx)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.compose.material3)
+            implementation(libs.ktor.client.cio)
         }
 
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.ktor.client.cio)
         }
     }
 }
@@ -101,8 +106,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true

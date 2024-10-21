@@ -11,5 +11,4 @@ dependencies {
     implementation(projects.common.must)
     implementation(projects.common.hash)
     implementation(projects.server.service)
-    implementation(libs.kotlin.test.junit)
 }

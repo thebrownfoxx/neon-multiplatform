@@ -16,9 +16,9 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScree
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.thebrownfoxx.neon.client.application.http.HttpClient
 import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.client.service.default.InMemoryTokenStorage
-import io.ktor.client.HttpClient
 
 @Composable
 @Preview

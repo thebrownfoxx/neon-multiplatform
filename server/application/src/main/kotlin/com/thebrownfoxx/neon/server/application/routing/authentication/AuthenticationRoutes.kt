@@ -23,18 +23,15 @@ fun Route.login() {
             val (username, password) = call.receive<LoginBody>()
             val memberId = authenticator.login(username, password).getOrElse {
                 return@post when (it) {
-                    LoginError.InvalidCredentials -> {
-                        call.respond(
-                            HttpStatusCode.Unauthorized,
-                            LoginResponse.InvalidCredentials(),
-                        )
-                    }
-                    LoginError.ConnectionError -> {
-                        call.respond(
-                            HttpStatusCode.InternalServerError,
-                            LoginResponse.ConnectionError(),
-                        )
-                    }
+                    LoginError.InvalidCredentials -> call.respond(
+                        HttpStatusCode.Unauthorized,
+                        LoginResponse.InvalidCredentials(),
+                    )
+
+                    LoginError.ConnectionError -> call.respond(
+                        HttpStatusCode.InternalServerError,
+                        LoginResponse.ConnectionError(),
+                    )
                 }
             }
 

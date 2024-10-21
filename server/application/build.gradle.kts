@@ -43,8 +43,4 @@ dependencies {
     implementation(projects.server.model)
     implementation(projects.server.service)
     implementation(projects.server.service.default)
-
-    testImplementation(libs.ktor.server.tests)
-    testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.kotlin.test.junit)
 }
