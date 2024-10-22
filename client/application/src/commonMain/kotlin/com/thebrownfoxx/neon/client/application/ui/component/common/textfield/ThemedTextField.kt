@@ -30,7 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
@@ -135,6 +135,7 @@ fun ThemedTextField(
                 minWidth = TextFieldDefaults.MinWidth,
                 minHeight = TextFieldDefaults.MinHeight,
             )
+            .focusProperties { canFocus = false }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -195,8 +196,7 @@ fun ThemedTextField(
                     cursorBrush = SolidColor(accentColor),
                     onTextLayout = { textLayoutResult = it },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester),
+                        .fillMaxWidth(),
                 ) { innerTextField ->
                     DecorationBox(
                         value = textFieldValue.text,

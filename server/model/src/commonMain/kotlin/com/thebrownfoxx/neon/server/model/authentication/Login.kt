@@ -3,7 +3,11 @@ package com.thebrownfoxx.neon.server.model.authentication
 import com.thebrownfoxx.neon.common.model.Jwt
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.server.model.Response
+import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
+
+@Resource("/login")
+class Login
 
 @Serializable
 data class LoginBody(val username: String, val password: String)

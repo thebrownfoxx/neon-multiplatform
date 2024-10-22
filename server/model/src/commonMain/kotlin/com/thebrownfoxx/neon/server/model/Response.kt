@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 open class Response(
     val status: String,
-    val description: String,
+    @Suppress("unused") val description: String,
 )

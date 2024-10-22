@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.application.http
 
 import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.resources.Resources
@@ -9,9 +9,7 @@ import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-expect fun baseHttpClient(block: HttpClientConfig<*>.() -> Unit = {}): HttpClient
-
-fun HttpClient() = baseHttpClient {
+fun HttpClient() = HttpClient(CIO) {
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
     }

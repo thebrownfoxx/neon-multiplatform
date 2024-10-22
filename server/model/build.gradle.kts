@@ -10,6 +10,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
+            implementation(libs.ktor.resources)
             implementation(projects.common)
         }
         commonTest.dependencies {

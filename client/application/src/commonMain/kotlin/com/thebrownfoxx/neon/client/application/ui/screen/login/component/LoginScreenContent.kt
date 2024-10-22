@@ -1,6 +1,12 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.login.component
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -25,7 +31,11 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScree
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import neon.client.application.generated.resources.*
+import neon.client.application.generated.resources.Res
+import neon.client.application.generated.resources.join
+import neon.client.application.generated.resources.login
+import neon.client.application.generated.resources.password
+import neon.client.application.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 

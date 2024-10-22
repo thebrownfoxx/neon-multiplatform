@@ -48,7 +48,7 @@ fun MediumLoginScreen(
                 .consumeWindowInsets(WindowInsets.navigationBars),
         ) {
             Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.Center)

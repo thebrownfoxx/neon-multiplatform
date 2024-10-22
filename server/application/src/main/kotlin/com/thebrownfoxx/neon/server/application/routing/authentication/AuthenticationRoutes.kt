@@ -3,19 +3,16 @@ package com.thebrownfoxx.neon.server.application.routing.authentication
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim
+import com.thebrownfoxx.neon.server.model.authentication.Login
 import com.thebrownfoxx.neon.server.model.authentication.LoginBody
 import com.thebrownfoxx.neon.server.model.authentication.LoginResponse
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
 import com.thebrownfoxx.neon.server.service.jwt.model.claimedAs
 import io.ktor.http.HttpStatusCode
-import io.ktor.resources.Resource
 import io.ktor.server.request.receive
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-
-@Resource("/login")
-private class Login
 
 fun Route.login() {
     with(DependencyProvider.dependencies) {

@@ -39,6 +39,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(projects.common)
             implementation(projects.client.service)
@@ -49,13 +50,11 @@ kotlin {
             implementation(libs.androidx.activity.ktx)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.compose.material3)
-            implementation(libs.ktor.client.cio)
         }
 
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.ktor.client.cio)
         }
     }
 }
