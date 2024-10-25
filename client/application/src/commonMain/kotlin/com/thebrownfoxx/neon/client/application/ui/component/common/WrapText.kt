@@ -1,7 +1,5 @@
 package com.thebrownfoxx.neon.client.application.ui.component.common
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,8 +15,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.ceil
 
 // From https://stackoverflow.com/a/69947555/5860729
@@ -79,16 +75,4 @@ fun WrapText(
             placeable.place(0, 0)
         }
     }
-}
-
-@Preview
-@Composable
-private fun Preview() {
-    WrapText(
-        "Box around text with a very very very very longlonglonglongwordsefuefuweyfwefweuyfwegfuweugfuewgfuewgufgweugfyuwegfyuwegyfgu wefyewfyu wgeugf",
-        color = Color.White,
-        modifier = Modifier
-            .border(width = 2.dp, color = Color.Red)
-            .background(Color.DarkGray)
-    )
 }

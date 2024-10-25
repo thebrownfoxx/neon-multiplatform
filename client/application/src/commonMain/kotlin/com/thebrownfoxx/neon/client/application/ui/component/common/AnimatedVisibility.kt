@@ -29,7 +29,7 @@ enum class ExpandAxis {
 
 // TODO: Fix clipping
 @Composable
-fun ThemedAnimatedVisibility(
+fun AnimatedVisibility(
     visible: Boolean,
     modifier: Modifier = Modifier,
     expandAxis: ExpandAxis = ExpandAxis.Both,
@@ -76,7 +76,7 @@ fun ThemedAnimatedVisibility(
 
 @Suppress("UnusedReceiverParameter")
 @Composable
-fun ColumnScope.ThemedAnimatedVisibility(
+fun ColumnScope.AnimatedVisibility(
     visible: Boolean,
     modifier: Modifier = Modifier,
     expandAxis: ExpandAxis = ExpandAxis.Vertical,
@@ -84,7 +84,7 @@ fun ColumnScope.ThemedAnimatedVisibility(
     scale: Boolean = true,
     content: @Composable AnimatedVisibilityScope.() -> Unit,
 ) {
-    com.thebrownfoxx.neon.client.application.ui.component.common.ThemedAnimatedVisibility(
+    com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility(
         visible = visible,
         modifier = modifier,
         expandAxis = expandAxis,
@@ -96,7 +96,7 @@ fun ColumnScope.ThemedAnimatedVisibility(
 
 @Suppress("UnusedReceiverParameter")
 @Composable
-fun RowScope.ThemedAnimatedVisibility(
+fun RowScope.AnimatedVisibility(
     visible: Boolean,
     modifier: Modifier = Modifier,
     expandAxis: ExpandAxis = ExpandAxis.Horizontal,
@@ -104,7 +104,7 @@ fun RowScope.ThemedAnimatedVisibility(
     scale: Boolean = true,
     content: @Composable AnimatedVisibilityScope.() -> Unit,
 ) {
-    com.thebrownfoxx.neon.client.application.ui.component.common.ThemedAnimatedVisibility(
+    com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility(
         visible = visible,
         modifier = modifier,
         expandAxis = expandAxis,

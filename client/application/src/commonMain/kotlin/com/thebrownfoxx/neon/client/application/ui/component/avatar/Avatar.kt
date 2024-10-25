@@ -3,7 +3,6 @@ package com.thebrownfoxx.neon.client.application.ui.component.avatar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -24,8 +23,6 @@ import com.thebrownfoxx.neon.client.application.ui.component.loader.LargeAvatarL
 import com.thebrownfoxx.neon.client.application.ui.component.loader.MediumAvatarLoader
 import com.thebrownfoxx.neon.client.application.ui.component.loader.SmallAvatarLoader
 import com.thebrownfoxx.neon.common.type.Url
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class AvatarSize(val dp: Dp) {
     Large(dp = 40.dp),
@@ -197,58 +194,4 @@ fun SmallAvatar(
         error = { SmallPlaceholderAvatar(placeholder = avatar?.placeholder) },
         modifier = modifier,
     )
-}
-
-private val singleAvatarState = SingleAvatarState(
-    url = null,
-    placeholder = "W",
-)
-
-@Preview
-@Composable
-private fun LargePreview() {
-    NeonTheme {
-        LargeAvatar(
-            avatar = singleAvatarState,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun MediumPreview() {
-    NeonTheme {
-        MediumAvatar(
-            avatar = singleAvatarState,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun SmallPreview() {
-    NeonTheme {
-        SmallAvatar(
-            avatar = singleAvatarState,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun GroupPreview() {
-    NeonTheme {
-        Surface {
-            LargeAvatar(
-                avatar = GroupAvatarState(
-                    front = singleAvatarState,
-                    back = singleAvatarState,
-                ),
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
 }

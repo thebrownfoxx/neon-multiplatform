@@ -11,11 +11,6 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.Person
-import androidx.compose.material.icons.twotone.VisibilityOff
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
@@ -35,12 +30,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.thebrownfoxx.neon.client.application.ui.component.InternalComponentApi
 import com.thebrownfoxx.neon.client.application.ui.component.scrim.GradientDirection
 import com.thebrownfoxx.neon.client.application.ui.component.scrim.GradientScrimBox
 import com.thebrownfoxx.neon.client.application.ui.extension.end
@@ -48,24 +43,23 @@ import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
 import com.thebrownfoxx.neon.client.application.ui.extension.start
 import com.thebrownfoxx.neon.client.application.ui.extension.vertical
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 // TODO: Add vertical scrims
 @OptIn(ExperimentalFoundationApi::class)
+@InternalComponentApi
 @Composable
-fun ThemedTextField(
+fun TextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = LocalThemedTextFieldEnabled.current,
+    enabled: Boolean = true,
     readOnly: Boolean = false,
     placeholder: String? = null,
     label: String? = null,
     leadingIcon: @Composable () -> Unit = {},
     trailingIcon: @Composable () -> Unit = {},
     iconAlignment: Alignment = Alignment.Center,
-    isError: Boolean = LocalThemedTextFieldIsError.current,
+    isError: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -73,7 +67,7 @@ fun ThemedTextField(
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: ThemedTextFieldStateColors = LocalThemedTextFieldColors.currentOrDefault,
+    colors: ThemedTextFieldStateColors = TextFieldDefaults.ThemedColors,
 ) {
     val focusRequester = FocusRequester()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -98,6 +92,10 @@ fun ThemedTextField(
 
     val leadingIconWithScrim = @Composable {
         IconScrim(
+            colors = colors,
+            focused = focused,
+            enabled = enabled,
+            isError = isError,
             gradientDirection = GradientDirection.StartEnd,
             contentAlignment = iconAlignment,
             content = leadingIcon,
@@ -106,6 +104,10 @@ fun ThemedTextField(
 
     val trailingIconWithScrim = @Composable {
         IconScrim(
+            colors = colors,
+            focused = focused,
+            enabled = enabled,
+            isError = isError,
             gradientDirection = GradientDirection.EndStart,
             contentAlignment = iconAlignment,
             content = trailingIcon,
@@ -145,14 +147,8 @@ fun ThemedTextField(
                 keyboardController?.show()
             },
     ) {
-        CompositionLocalProvider(
-            LocalThemedTextFieldFocused provides focused,
-            LocalThemedTextFieldEnabled provides enabled,
-            LocalThemedTextFieldIsError provides isError,
-            LocalThemedTextFieldColors provides colors,
-            LocalContentColor provides contentColor,
-        ) {
-            ThemedTextFieldLayout(
+        CompositionLocalProvider(LocalContentColor provides contentColor) {
+            TextFieldLayout(
                 leadingIcon = leadingIconWithScrim,
                 trailingIcon = trailingIconWithScrim,
             ) { innerPadding ->
@@ -200,7 +196,7 @@ fun ThemedTextField(
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
                 ) { innerTextField ->
-                    DecorationBox(
+                    TextFieldDecorationBox(
                         value = textFieldValue.text,
                         enabled = enabled,
                         placeholder = placeholder,
@@ -222,16 +218,20 @@ fun ThemedTextField(
 
 @Composable
 private fun IconScrim(
+    colors: ThemedTextFieldStateColors,
+    focused: Boolean,
+    enabled: Boolean,
+    isError: Boolean,
     gradientDirection: GradientDirection,
     contentAlignment: Alignment,
     content: @Composable () -> Unit,
 ) {
     val scrimColor by animateColorAsState(
-        targetValue = LocalThemedTextFieldColors.currentOrDefault
+        targetValue = colors
             .getStateColors(
-                focused = LocalThemedTextFieldFocused.current,
-                enabled = LocalThemedTextFieldEnabled.current,
-                isError = LocalThemedTextFieldIsError.current,
+                focused = focused,
+                enabled = enabled,
+                isError = isError,
             ).containerColor,
         label = "scrimColor",
     )
@@ -246,113 +246,5 @@ private fun IconScrim(
         Box(modifier = Modifier.align(contentAlignment)) {
             content()
         }
-    }
-}
-
-@Preview
-@Composable
-private fun InteractivePreview() {
-    val focusManager = LocalFocusManager.current
-
-    NeonTheme {
-        Box(
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { focusManager.clearFocus() }
-        ) {
-            var value by remember { mutableStateOf("") }
-
-            ThemedTextField(
-                label = "Label",
-                value = value,
-                onValueChange = { value = it },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun PlainEmptyPreview() {
-    NeonTheme {
-        ThemedTextField(
-            value = "",
-            onValueChange = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun LabeledPreview() {
-    NeonTheme {
-        ThemedTextField(
-            label = "Label",
-            value = "",
-            onValueChange = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun LabeledWithContentPreview() {
-    NeonTheme {
-        ThemedTextField(
-            label = "Label",
-            value = "Content",
-            onValueChange = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun WithPlaceholderPreview() {
-    NeonTheme {
-        ThemedTextField(
-            placeholder = "Placeholder",
-            value = "",
-            onValueChange = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun WithLeadingIconPreview() {
-    NeonTheme {
-        ThemedTextField(
-            label = "Username",
-            leadingIcon = {
-                ThemedTextFieldLeadingIcon {
-                    Icon(imageVector = Icons.TwoTone.Person, contentDescription = null)
-                }
-            },
-            value = "",
-            onValueChange = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun WithTrailingIconPreview() {
-    NeonTheme {
-        ThemedTextField(
-            label = "Password",
-            trailingIcon = {
-                ThemedTextFieldTrailingIcon {
-                    IconButton(onClick = {}) {
-                        Icon(imageVector = Icons.TwoTone.VisibilityOff, contentDescription = null)
-                    }
-                }
-            },
-            value = "u3egfuyuygfuyegfyuegfgegfegfgeuigfeygfigyegfegfierigferufdfhuwiehfeuf",
-            onValueChange = {},
-        )
     }
 }

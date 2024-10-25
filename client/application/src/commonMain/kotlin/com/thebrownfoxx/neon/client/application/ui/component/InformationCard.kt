@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.thebrownfoxx.neon.client.application.ui.component.common.ThemedAnimatedVisibility
+import com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility
 import com.thebrownfoxx.neon.client.application.ui.extension.RoundedCorners
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -34,7 +34,7 @@ fun InformationCardProgressIndicator(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    ThemedAnimatedVisibility(
+    AnimatedVisibility(
         visible = visible,
         scale = false,
         modifier = modifier,

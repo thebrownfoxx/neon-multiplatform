@@ -29,7 +29,7 @@ import com.thebrownfoxx.neon.client.application.ui.extension.vertical
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
-fun DecorationBox(
+fun TextFieldDecorationBox(
     value: String,
     enabled: Boolean,
     placeholder: String?,

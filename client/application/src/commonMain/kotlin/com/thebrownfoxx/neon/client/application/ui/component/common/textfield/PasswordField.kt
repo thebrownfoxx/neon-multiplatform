@@ -15,8 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.thebrownfoxx.neon.client.application.ui.component.InternalComponentApi
 import com.thebrownfoxx.neon.client.application.ui.extension.rememberMutableStateOf
 
+@InternalComponentApi
 @Composable
 fun PasswordField(
     label: String,
@@ -36,7 +38,7 @@ fun PasswordField(
             else -> PasswordVisualTransformation()
         }
 
-        ThemedTextField(
+        TextField(
             value = value,
             onValueChange = onValueChange,
             label = label,

@@ -11,7 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Composable
-fun ThemedTextFieldLayout(
+fun TextFieldLayout(
     leadingIcon: @Composable () -> Unit,
     trailingIcon: @Composable () -> Unit,
     modifier: Modifier = Modifier,

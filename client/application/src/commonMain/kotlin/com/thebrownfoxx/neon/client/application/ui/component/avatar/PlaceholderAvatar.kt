@@ -15,10 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.extension.isLight
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.random.Random
 
 @Composable
@@ -121,69 +118,4 @@ fun SmallPlaceholderAvatar(
         size = AvatarSize.Small,
         modifier = modifier,
     )
-}
-
-@Preview
-@Composable
-private fun NullPreview() {
-    NeonTheme {
-        Surface {
-            LargePlaceholderAvatar(
-                placeholder = null,
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun DarkPreview() {
-    NeonTheme(darkTheme = true) {
-        Surface {
-            LargePlaceholderAvatar(
-                placeholder = "landooo",
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun LargePreview() {
-    NeonTheme {
-        Surface {
-            LargePlaceholderAvatar(
-                placeholder = "landooo",
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun MediumPreview() {
-    NeonTheme {
-        Surface {
-            MediumPlaceholderAvatar(
-                placeholder = "landooo",
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun SmallPreview() {
-    NeonTheme {
-        Surface {
-            SmallPlaceholderAvatar(
-                placeholder = "landooo",
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
 }

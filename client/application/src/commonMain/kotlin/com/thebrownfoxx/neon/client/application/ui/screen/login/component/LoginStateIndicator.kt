@@ -20,7 +20,7 @@ import com.thebrownfoxx.neon.client.application.ui.component.InformationCard
 import com.thebrownfoxx.neon.client.application.ui.component.InformationCardIconText
 import com.thebrownfoxx.neon.client.application.ui.component.InformationCardProgressIndicator
 import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
-import com.thebrownfoxx.neon.client.application.ui.component.common.ThemedAnimatedVisibility
+import com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.rememberCache
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
@@ -46,7 +46,7 @@ fun LoginStateIndicator(
 ) {
     val cachedStatus = rememberCache(target = state) { state != Idle }
 
-    ThemedAnimatedVisibility(
+    AnimatedVisibility(
         visible = state != Idle,
         modifier = modifier,
         expandAxis = ExpandAxis.Vertical,
