@@ -27,6 +27,7 @@
     <string name="profile">Profile</string>
     <string name="deleted_community">Deleted Community</string>
     <string name="deleted_member">Deleted Member</string>
+    <string name="deleted_group">Deleted Group</string>
     <string name="close">Close</string>
     <string name="message">Message</string>
     <string name="send">Send</string>

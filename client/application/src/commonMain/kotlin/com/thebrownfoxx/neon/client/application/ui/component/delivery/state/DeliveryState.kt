@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.state.delivery
+package com.thebrownfoxx.neon.client.application.ui.component.delivery.state
 
 sealed interface DeliveryState {
     data object Sending : DeliveryState

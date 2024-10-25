@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.component
+package com.thebrownfoxx.neon.client.application.ui.component.delivery
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -30,7 +30,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.thebrownfoxx.neon.client.application.ui.state.delivery.DeliveryState
+import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.delivered
