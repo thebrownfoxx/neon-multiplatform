@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,8 +25,6 @@ import com.thebrownfoxx.neon.client.application.ui.extension.bottomPadding
 import com.thebrownfoxx.neon.client.application.ui.extension.paddingExcept
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
 import com.thebrownfoxx.neon.client.application.ui.extension.topPadding
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 object AppBarDefaults {
     val ContainerColor
@@ -113,34 +110,4 @@ fun AppBar(
         shape = MaterialTheme.shapes.medium,
         content = content,
     )
-}
-
-@Preview
-@Composable
-private fun TopBarPreview() {
-    NeonTheme {
-        TopBarScrim {
-            AppBar(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Top bar",
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun BottomBarPreview() {
-    NeonTheme {
-        BottomBarScrim {
-            AppBar(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Bottom bar",
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-        }
-    }
 }

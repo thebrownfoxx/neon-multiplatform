@@ -4,14 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.Info
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
@@ -25,8 +21,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility
 import com.thebrownfoxx.neon.client.application.ui.extension.RoundedCorners
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun InformationCardProgressIndicator(
@@ -88,44 +82,6 @@ fun InformationCard(
             Box(modifier = Modifier.align(Alignment.BottomStart)) {
                 progressIndicator()
             }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun NoProgressPreview() {
-    NeonTheme {
-        InformationCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        ) {
-            InformationCardIconText(
-                icon = Icons.TwoTone.Info,
-                iconContentDescription = null,
-                text = "Did you know that skibidi wah pow pow",
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun ProgressPreview() {
-    NeonTheme {
-        InformationCard(
-            progressIndicator = {
-                LinearProgressIndicator(
-                    progress = { 0.8f },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        ) {
-            Text(text = "Rizzmaxxing...")
         }
     }
 }

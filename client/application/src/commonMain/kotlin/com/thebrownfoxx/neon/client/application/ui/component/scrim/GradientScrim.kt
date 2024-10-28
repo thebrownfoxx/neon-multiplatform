@@ -2,14 +2,10 @@ package com.thebrownfoxx.neon.client.application.ui.component.scrim
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class GradientDirection {
     StartEnd,
@@ -74,16 +70,4 @@ fun gradientScrimBrush(
             1f to maxAlphaColor,
         )
     }
-}
-
-@Preview
-@Composable
-private fun Preview() {
-    GradientScrim(
-        direction = GradientDirection.TopBottom,
-        color = Color.Black,
-        modifier = Modifier
-            .height(16.dp)
-            .fillMaxWidth(),
-    )
 }

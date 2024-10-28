@@ -3,7 +3,6 @@ package com.thebrownfoxx.neon.client.application.ui.component.delivery
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -31,7 +30,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.delivered
 import neon.client.application.generated.resources.failed
@@ -39,7 +37,6 @@ import neon.client.application.generated.resources.read
 import neon.client.application.generated.resources.sending
 import neon.client.application.generated.resources.sent
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun DeliveryIndicator(
@@ -134,60 +131,5 @@ private fun ReactionEmoji(
                 )
             }
         }
-    }
-}
-
-@Preview
-@Composable
-private fun SentPreview() {
-    NeonTheme {
-        DeliveryIndicator(
-            delivery = DeliveryState.Sent,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun DeliveredPreview() {
-    NeonTheme {
-        DeliveryIndicator(
-            delivery = DeliveryState.Delivered,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun ReadPreview() {
-    NeonTheme {
-        DeliveryIndicator(
-            delivery = DeliveryState.Read,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun ReactedPreview() {
-    NeonTheme {
-        DeliveryIndicator(
-            delivery = DeliveryState.Reacted("😆"),
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun FailedPreview() {
-    NeonTheme {
-        DeliveryIndicator(
-            delivery = DeliveryState.Failed,
-            modifier = Modifier.padding(16.dp),
-        )
     }
 }
