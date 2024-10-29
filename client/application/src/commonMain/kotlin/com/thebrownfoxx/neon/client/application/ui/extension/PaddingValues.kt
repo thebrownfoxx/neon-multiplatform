@@ -108,3 +108,11 @@ fun PaddingValues.copy(
     end = end,
     bottom = bottom,
 )
+
+@Composable
+fun PaddingValues.except(vararg sides: PaddingSide) = copy(
+    start = if (PaddingSide.Start in sides) 0.dp else start,
+    top = if (PaddingSide.Top in sides) 0.dp else top,
+    end = if (PaddingSide.End in sides) 0.dp else end,
+    bottom = if (PaddingSide.Bottom in sides) 0.dp else bottom,
+)

@@ -21,7 +21,7 @@ import neon.client.application.generated.resources.unread_conversations
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ConversationList(
+fun ConversationPreviews(
     nudgedConversations: List<ConversationPreviewState>,
     unreadConversations: List<ConversationPreviewState>,
     readConversations: List<ConversationPreviewState>,
@@ -108,60 +108,3 @@ fun ConversationList(
         }
     }
 }
-
-// TODO: This. Think if it's even worth making dummy objects like before
-//@Preview
-//@Composable
-//private fun Preview() {
-//    NeonTheme {
-//        ConversationList(
-//            nudgedConversations = ConversationsDummy.ScreenState.nudgedConversations,
-//            unreadConversations = ConversationsDummy.ScreenState.unreadConversations,
-//            readConversations = ConversationsDummy.ScreenState.readConversations,
-//            onConversationClick = {},
-//            onLoadMore = {},
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun NoCatchupPreview() {
-//    NeonTheme {
-//        ConversationList(
-//            nudgedConversations = emptyList(),
-//            unreadConversations = ConversationsDummy.ScreenState.unreadConversations,
-//            readConversations = ConversationsDummy.ScreenState.readConversations,
-//            onConversationClick = {},
-//            onLoadMore = {},
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun NoUnreadMessagesPreview() {
-//    NeonTheme {
-//        ConversationList(
-//            nudgedConversations = emptyList(),
-//            unreadConversations = emptyList(),
-//            readConversations = ConversationsDummy.ScreenState.readConversations,
-//            onConversationClick = {},
-//            onLoadMore = {},
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun NoReadMessagesPreview() {
-//    NeonTheme {
-//        ConversationList(
-//            nudgedConversations = emptyList(),
-//            unreadConversations = ConversationsDummy.ScreenState.unreadConversations,
-//            readConversations = emptyList(),
-//            onConversationClick = {},
-//            onLoadMore = {},
-//        )
-//    }
-//}

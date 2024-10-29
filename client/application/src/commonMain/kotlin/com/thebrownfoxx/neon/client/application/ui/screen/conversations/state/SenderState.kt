@@ -4,6 +4,8 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.Single
 
 sealed interface SenderState
 
-data object SentBySelfState : SenderState
+data object SentState : SenderState
 
-data class SentByOtherState(val avatar: SingleAvatarState) : SenderState
+data object ReceivedDirectState : SenderState
+
+data class ReceivedCommunityState(val senderAvatar: SingleAvatarState) : SenderState

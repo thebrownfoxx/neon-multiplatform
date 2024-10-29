@@ -22,23 +22,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.SmallAvatar
-import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.ConversationPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.PreviewContentState
+import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.SenderState
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.SentByOtherState
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.SentBySelfState
-import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import com.thebrownfoxx.neon.common.extension.toLocalDateTime
-import kotlinx.datetime.Clock
+import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.SentState
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.deleted_group
 import neon.client.application.generated.resources.from
 import neon.client.application.generated.resources.start_a_conversation
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ConversationPreview(
@@ -151,94 +145,19 @@ private fun PreviewContent(
 
 @Composable
 private fun SenderIcon(senderState: SenderState?) {
-    if (senderState is SentBySelfState) {
+    if (senderState is SentState) {
         Icon(
             imageVector = Icons.AutoMirrored.TwoTone.Reply,
             contentDescription = "From you: ",
             modifier = Modifier.size(16.dp),
         )
-    } else if (senderState is SentByOtherState) {
+    } else if (senderState is ReceivedCommunityState) {
         SmallAvatar(
-            avatar = senderState.avatar,
+            avatar = senderState.senderAvatar,
             contentDescription = stringResource(
                 Res.string.from,
-                senderState.avatar.placeholder,
+                senderState.senderAvatar.placeholder,
             ),
         )
     }
 }
-
-// TODO: Previews
-@Preview
-@Composable
-private fun SentDirectPreview() {
-    NeonTheme {
-        ConversationPreview(
-            conversationPreview = ConversationPreviewState(
-                avatar = SingleAvatarState(url = null, placeholder = "John"),
-                name = "John",
-                content = PreviewContentState(
-                    message = "Hello",
-                    timestamp = Clock.System.now().toLocalDateTime(),
-                    delivery = DeliveryState.Delivered,
-                    senderState = SentBySelfState,
-                ),
-            ),
-            read = true,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {},
-        )
-    }
-}
-
-//@Preview
-//@Composable
-//private fun ReceivedDirectPreview() {
-//    NeonTheme {
-//        ConversationListItem(
-//            conversationWithPreview = ConversationsDummy.ReceivedDirectConversation,
-//            read = true,
-//            modifier = Modifier.fillMaxWidth(),
-//            onClick = {},
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun SentCommunityPreview() {
-//    NeonTheme {
-//        ConversationListItem(
-//            conversationWithPreview = ConversationsDummy.SentCommunityConversation,
-//            read = true,
-//            modifier = Modifier.fillMaxWidth(),
-//            onClick = {},
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun ReceivedCommunityPreview() {
-//    NeonTheme {
-//        ConversationListItem(
-//            conversationWithPreview = ConversationsDummy.ReceivedCommunityConversation,
-//            read = true,
-//            modifier = Modifier.fillMaxWidth(),
-//            onClick = {},
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun UnreadPreview() {
-//    NeonTheme {
-//        ConversationListItem(
-//            conversationWithPreview = ConversationsDummy.ReceivedDirectConversation,
-//            read = false,
-//            modifier = Modifier.fillMaxWidth(),
-//            onClick = {},
-//        )
-//    }
-//}

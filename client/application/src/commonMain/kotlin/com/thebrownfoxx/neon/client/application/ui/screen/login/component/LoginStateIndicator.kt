@@ -19,13 +19,16 @@ import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.InformationCard
 import com.thebrownfoxx.neon.client.application.ui.component.InformationCardIconText
 import com.thebrownfoxx.neon.client.application.ui.component.InformationCardProgressIndicator
-import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 import com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility
+import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.rememberCache
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
-import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.*
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.ConnectionError
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.CredentialsIncorrect
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.CredentialsMissing
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.Idle
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.LoggingIn
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.connection_error
 import neon.client.application.generated.resources.connection_error_message
@@ -36,7 +39,6 @@ import neon.client.application.generated.resources.logging_in_message
 import neon.client.application.generated.resources.password_missing_message
 import neon.client.application.generated.resources.username_missing_message
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun LoginStateIndicator(
@@ -133,63 +135,5 @@ fun LoginStateIndicator(
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-private fun IdleLoginPreview() {
-    NeonTheme {
-        LoginStateIndicator(
-            state = Idle,
-            padding = 16.dp.padding,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun CredentialsMissingPreview() {
-    NeonTheme {
-        LoginStateIndicator(
-            state = CredentialsMissing(
-                usernameMissing = true,
-                passwordMissing = true,
-            ),
-            padding = 16.dp.padding,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun LoggingInPreview() {
-    NeonTheme {
-        LoginStateIndicator(
-            state = LoggingIn,
-            padding = 16.dp.padding,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun CredentialsIncorrectPreview() {
-    NeonTheme {
-        LoginStateIndicator(
-            state = CredentialsIncorrect,
-            padding = 16.dp.padding,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun ConnectionErrorPreview() {
-    NeonTheme {
-        LoginStateIndicator(
-            state = ConnectionError,
-            padding = 16.dp.padding,
-        )
     }
 }
