@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.conversations.component
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +23,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.SmallAvatar
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.ConversationPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.PreviewContentState
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.SenderState
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.SentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SenderState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.deleted_group
 import neon.client.application.generated.resources.from
@@ -35,14 +35,14 @@ import neon.client.application.generated.resources.start_a_conversation
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ConversationPreview(
-    conversationPreview: ConversationPreviewState,
+fun ChatPreview(
+    chatPreview: ChatPreviewState,
     read: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // TODO: This should ID if it is a deleted community or member
-    val conversationName = conversationPreview.name ?: stringResource(Res.string.deleted_group)
+    val conversationName = chatPreview.name ?: stringResource(Res.string.deleted_group)
 
     Surface(modifier = modifier) {
         Surface(
@@ -56,8 +56,8 @@ fun ConversationPreview(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 AvatarWithDelivery(
-                    avatar = conversationPreview.avatar,
-                    delivery = conversationPreview.content?.delivery,
+                    avatar = chatPreview.avatar,
+                    delivery = chatPreview.content?.delivery,
                 )
                 Column {
                     Row(
@@ -71,16 +71,16 @@ fun ConversationPreview(
                                 read = read,
                             )
                         }
-                        if (conversationPreview.content?.timestamp != null) {
+                        if (chatPreview.content?.timestamp != null) {
                             Text(
-                                text = conversationPreview.content.timestamp.toReadableTime(),
+                                text = chatPreview.content.timestamp.toReadableTime(),
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.alpha(0.8f),
                             )
                         }
                     }
                     PreviewContent(
-                        content = conversationPreview.content,
+                        content = chatPreview.content,
                         read = read,
                     )
                 }
@@ -110,7 +110,7 @@ private fun ConversationName(
 
 @Composable
 private fun PreviewContent(
-    content: PreviewContentState?,
+    content: ChatPreviewContentState?,
     read: Boolean,
 ) {
     val defaultTextStyle = MaterialTheme.typography.bodySmall

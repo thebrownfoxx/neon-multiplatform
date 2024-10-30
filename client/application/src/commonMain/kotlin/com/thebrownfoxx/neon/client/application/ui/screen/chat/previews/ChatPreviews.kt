@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.conversations.component
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -12,7 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.extension.copy
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
-import com.thebrownfoxx.neon.client.application.ui.screen.conversations.state.ConversationPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreview
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.conversations
 import neon.client.application.generated.resources.nudged_conversations
@@ -21,11 +22,11 @@ import neon.client.application.generated.resources.unread_conversations
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ConversationPreviews(
-    nudgedConversations: List<ConversationPreviewState>,
-    unreadConversations: List<ConversationPreviewState>,
-    readConversations: List<ConversationPreviewState>,
-    onConversationClick: (ConversationPreviewState) -> Unit,
+fun ChatPreviews(
+    nudgedConversations: List<ChatPreviewState>,
+    unreadConversations: List<ChatPreviewState>,
+    readConversations: List<ChatPreviewState>,
+    onConversationClick: (ChatPreviewState) -> Unit,
     onLoadMore: () -> Unit, // TODO: Implement this
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
@@ -47,8 +48,8 @@ fun ConversationPreviews(
                 items = nudgedConversations,
                 key = { conversation -> conversation.groupId.value },
             ) { conversation ->
-                ConversationPreview(
-                    conversationPreview = conversation,
+                ChatPreview(
+                    chatPreview = conversation,
                     read = false,
                     onClick = { onConversationClick(conversation) },
                 )
@@ -73,8 +74,8 @@ fun ConversationPreviews(
                 items = unreadConversations,
                 key = { it.groupId.value },
             ) { conversation ->
-                ConversationPreview(
-                    conversationPreview = conversation,
+                ChatPreview(
+                    chatPreview = conversation,
                     read = false,
                     onClick = { onConversationClick(conversation) },
                 )
@@ -99,8 +100,8 @@ fun ConversationPreviews(
                 items = readConversations,
                 key = { it.groupId.value },
             ) { conversation ->
-                ConversationPreview(
-                    conversationPreview = conversation,
+                ChatPreview(
+                    chatPreview = conversation,
                     read = true,
                     onClick = { onConversationClick(conversation) },
                 )

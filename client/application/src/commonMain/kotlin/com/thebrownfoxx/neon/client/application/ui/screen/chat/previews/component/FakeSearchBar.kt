@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.conversations.component
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons

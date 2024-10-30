@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.conversations.state
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state
 
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 
