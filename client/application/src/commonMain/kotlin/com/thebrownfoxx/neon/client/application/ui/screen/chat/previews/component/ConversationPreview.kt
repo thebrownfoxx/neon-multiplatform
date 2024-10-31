@@ -23,10 +23,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.SmallAvatar
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewSenderState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SenderState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.deleted_group
@@ -144,7 +144,7 @@ private fun PreviewContent(
 }
 
 @Composable
-private fun SenderIcon(senderState: SenderState?) {
+private fun SenderIcon(senderState: ChatPreviewSenderState?) {
     if (senderState is SentState) {
         Icon(
             imageVector = Icons.AutoMirrored.TwoTone.Reply,

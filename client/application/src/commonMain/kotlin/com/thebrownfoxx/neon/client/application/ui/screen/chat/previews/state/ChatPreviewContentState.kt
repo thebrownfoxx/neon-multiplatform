@@ -7,5 +7,5 @@ data class ChatPreviewContentState(
     val message: String,
     val timestamp: LocalDateTime,
     val delivery: DeliveryState?,
-    val senderState: SenderState,
+    val senderState: ChatPreviewSenderState,
 )
