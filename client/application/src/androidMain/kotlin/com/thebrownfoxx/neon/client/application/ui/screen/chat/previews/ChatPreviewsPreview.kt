@@ -7,6 +7,8 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.Single
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewsState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
@@ -210,25 +212,27 @@ private val readConversations = listOf(
 private fun Preview() {
     NeonTheme {
         ChatPreviews(
-            nudgedConversations = nudgedConversations,
-            unreadConversations = unreadConversations,
-            readConversations = readConversations,
-            onConversationClick = {},
-            onLoadMore = {},
+            state = LoadedChatPreviewsState(
+                nudgedConversations = nudgedConversations,
+                unreadConversations = unreadConversations,
+                readConversations = readConversations,
+            ),
+            eventHandler = ChatPreviewsEventHandler.Blank,
         )
     }
 }
 
 @Preview
 @Composable
-private fun NoCatchupPreview() {
+private fun NoNudgedPreview() {
     NeonTheme {
         ChatPreviews(
-            nudgedConversations = emptyList(),
-            unreadConversations = unreadConversations,
-            readConversations = readConversations,
-            onConversationClick = {},
-            onLoadMore = {},
+            state = LoadedChatPreviewsState(
+                nudgedConversations = emptyList(),
+                unreadConversations = unreadConversations,
+                readConversations = readConversations,
+            ),
+            eventHandler = ChatPreviewsEventHandler.Blank,
         )
     }
 }
@@ -238,11 +242,12 @@ private fun NoCatchupPreview() {
 private fun NoUnreadMessagesPreview() {
     NeonTheme {
         ChatPreviews(
-            nudgedConversations = emptyList(),
-            unreadConversations = emptyList(),
-            readConversations = readConversations,
-            onConversationClick = {},
-            onLoadMore = {},
+            state = LoadedChatPreviewsState(
+                nudgedConversations = emptyList(),
+                unreadConversations = emptyList(),
+                readConversations = readConversations,
+            ),
+            eventHandler = ChatPreviewsEventHandler.Blank,
         )
     }
 }
@@ -252,11 +257,12 @@ private fun NoUnreadMessagesPreview() {
 private fun NoReadMessagesPreview() {
     NeonTheme {
         ChatPreviews(
-            nudgedConversations = emptyList(),
-            unreadConversations = unreadConversations,
-            readConversations = emptyList(),
-            onConversationClick = {},
-            onLoadMore = {},
+            state = LoadedChatPreviewsState(
+                nudgedConversations = emptyList(),
+                unreadConversations = unreadConversations,
+                readConversations = emptyList(),
+            ),
+            eventHandler = ChatPreviewsEventHandler.Blank,
         )
     }
 }
