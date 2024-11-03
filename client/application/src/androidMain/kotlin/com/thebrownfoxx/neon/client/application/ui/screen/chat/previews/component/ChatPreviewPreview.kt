@@ -7,8 +7,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.GroupAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
@@ -21,17 +21,16 @@ import kotlinx.datetime.Clock
 private fun SentDirectPreview() {
     NeonTheme {
         ChatPreview(
-            chatPreview = ChatPreviewState(
+            state = ChatPreviewState(
                 avatar = SingleAvatarState(url = null, placeholder = "carlito"),
                 name = "carlito",
                 content = ChatPreviewContentState(
                     message = "i'm ready 😉",
                     timestamp = Clock.System.now().toLocalDateTime(),
                     delivery = DeliveryState.Delivered,
-                    senderState = SentState,
+                    sender = SentState,
                 ),
             ),
-            read = true,
             modifier = Modifier.fillMaxWidth(),
             onClick = {},
         )
@@ -43,17 +42,16 @@ private fun SentDirectPreview() {
 private fun ReceivedDirectPreview() {
     NeonTheme {
         ChatPreview(
-            chatPreview = ChatPreviewState(
+            state = ChatPreviewState(
                 avatar = SingleAvatarState(url = null, placeholder = "carlito"),
                 name = "carlito",
                 content = ChatPreviewContentState(
                     message = "i'm ready 😉",
                     timestamp = Clock.System.now().toLocalDateTime(),
-                    delivery = null,
-                    senderState = ReceivedDirectState,
+                    delivery = DeliveryState.Delivered,
+                    sender = ReceivedDirectState,
                 ),
             ),
-            read = true,
             modifier = Modifier.fillMaxWidth(),
             onClick = {},
         )
@@ -65,7 +63,7 @@ private fun ReceivedDirectPreview() {
 private fun SentCommunityPreview() {
     NeonTheme {
         ChatPreview(
-            chatPreview = ChatPreviewState(
+            state = ChatPreviewState(
                 avatar = GroupAvatarState(
                     front = SingleAvatarState(url = null, placeholder = "SharlLeclaire"),
                     back = SingleAvatarState(url = null, placeholder = "little_lando"),
@@ -74,11 +72,10 @@ private fun SentCommunityPreview() {
                 content = ChatPreviewContentState(
                     message = "yall ready bois?",
                     timestamp = Clock.System.now().toLocalDateTime(),
-                    delivery = DeliveryState.Sent,
-                    senderState = SentState,
+                    delivery = DeliveryState.Read,
+                    sender = SentState,
                 ),
             ),
-            read = true,
             modifier = Modifier.fillMaxWidth(),
             onClick = {},
         )
@@ -90,7 +87,7 @@ private fun SentCommunityPreview() {
 private fun ReceivedCommunityPreview() {
     NeonTheme {
         ChatPreview(
-            chatPreview = ChatPreviewState(
+            state = ChatPreviewState(
                 avatar = GroupAvatarState(
                     front = SingleAvatarState(url = null, placeholder = "SharlLeclaire"),
                     back = SingleAvatarState(url = null, placeholder = "carlito"),
@@ -99,13 +96,12 @@ private fun ReceivedCommunityPreview() {
                 content = ChatPreviewContentState(
                     message = "yall ready?",
                     timestamp = Clock.System.now().toLocalDateTime(),
-                    delivery = null,
-                    senderState = ReceivedCommunityState(
+                    delivery = DeliveryState.Read,
+                    sender = ReceivedCommunityState(
                         senderAvatar = SingleAvatarState(url = null, placeholder = "carlito"),
                     ),
                 ),
             ),
-            read = true,
             modifier = Modifier.fillMaxWidth(),
             onClick = {},
         )
@@ -117,17 +113,17 @@ private fun ReceivedCommunityPreview() {
 private fun UnreadPreview() {
     NeonTheme {
         ChatPreview(
-            chatPreview = ChatPreviewState(
+            state = ChatPreviewState(
                 avatar = SingleAvatarState(url = null, placeholder = "SharlLeclerc"),
                 name = "SharlLeclerc",
                 content = ChatPreviewContentState(
                     message = "is that 🕳️ ready?",
                     timestamp = Clock.System.now().toLocalDateTime(),
-                    delivery = null,
-                    senderState = ReceivedDirectState,
+                    delivery = DeliveryState.Delivered,
+                    sender = ReceivedDirectState,
                 ),
+                emphasized = true,
             ),
-            read = true,
             modifier = Modifier.fillMaxWidth(),
             onClick = {},
         )

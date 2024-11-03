@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state
 
-class MessagesScreenEventHandler(
+class ConversationPaneEventHandler(
     val onCall: () -> Unit,
     val onMarkAsRead: () -> Unit,
     val onMessageChange: (String) -> Unit,
@@ -8,7 +8,7 @@ class MessagesScreenEventHandler(
     val onClose: () -> Unit,
 ) {
     companion object {
-        val Blank = MessagesScreenEventHandler(
+        val Blank = ConversationPaneEventHandler(
             onCall = {},
             onMarkAsRead = {},
             onMessageChange = {},

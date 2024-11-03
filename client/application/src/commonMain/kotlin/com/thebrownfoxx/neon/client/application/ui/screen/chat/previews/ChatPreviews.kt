@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,11 +13,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.extension.copy
+import com.thebrownfoxx.neon.client.application.ui.extension.loaderContentTransition
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreview
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreviewsLoader
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewsState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewsState
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.conversations
 import neon.client.application.generated.resources.nudged_conversations
@@ -26,6 +31,48 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ChatPreviews(
+    state: ChatPreviewsState,
+    eventHandler: ChatPreviewsEventHandler,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+) {
+    AnimatedContent(
+        targetState = state,
+        label = "contentLoad",
+        contentKey = { it::class },
+        transitionSpec = { loaderContentTransition() },
+    ) {
+        when (state) {
+            is LoadingChatPreviewsState -> LoadingChatPreviews(
+                modifier = modifier,
+                contentPadding = contentPadding,
+            )
+            is LoadedChatPreviewsState -> LoadedChatPreviews(
+                state = state,
+                eventHandler = eventHandler,
+                modifier = modifier,
+                contentPadding = contentPadding,
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingChatPreviews(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+) {
+    ChatPreviewsLoader(
+        nudgedConversationsCount = 2,
+        unreadConversationsCount = 4,
+        readConversationsCount = 10,
+        modifier = modifier,
+        contentPadding = contentPadding,
+    )
+}
+
+@Composable
+private fun LoadedChatPreviews(
     state: LoadedChatPreviewsState,
     eventHandler: ChatPreviewsEventHandler,
     modifier: Modifier = Modifier,
@@ -65,8 +112,7 @@ private fun LazyListScope.nudgedConversations(
         key = { conversation -> conversation.groupId.value },
     ) { conversation ->
         ChatPreview(
-            chatPreview = conversation,
-            read = false,
+            state = conversation,
             onClick = { onConversationClick(conversation) },
         )
     }
@@ -87,8 +133,7 @@ private fun LazyListScope.unreadConversations(
         key = { it.groupId.value },
     ) { conversation ->
         ChatPreview(
-            chatPreview = conversation,
-            read = false,
+            state = conversation,
             onClick = { onConversationClick(conversation) },
         )
     }
@@ -118,8 +163,7 @@ private fun LazyListScope.readConversations(
         key = { it.groupId.value },
     ) { conversation ->
         ChatPreview(
-            chatPreview = conversation,
-            read = true,
+            state = conversation,
             onClick = { onConversationClick(conversation) },
         )
     }

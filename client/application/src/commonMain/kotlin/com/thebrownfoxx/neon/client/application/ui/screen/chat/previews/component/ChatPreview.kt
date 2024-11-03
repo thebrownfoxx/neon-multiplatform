@@ -28,6 +28,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Ch
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
+import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.deleted_group
 import neon.client.application.generated.resources.from
@@ -36,52 +37,31 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ChatPreview(
-    chatPreview: ChatPreviewState,
-    read: Boolean,
+    state: ChatPreviewState,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // TODO: This should ID if it is a deleted community or member
-    val conversationName = chatPreview.name ?: stringResource(Res.string.deleted_group)
-
-    Surface(modifier = modifier) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.padding(horizontal = 8.dp),
-            shape = MaterialTheme.shapes.medium,
-        ) {
-            Row(
-                modifier = Modifier.padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+    with(state) {
+        Surface(modifier = modifier) {
+            Surface(
+                onClick = onClick,
+                modifier = Modifier.padding(horizontal = 8.dp),
+                shape = MaterialTheme.shapes.medium,
             ) {
-                AvatarWithDelivery(
-                    avatar = chatPreview.avatar,
-                    delivery = chatPreview.content?.delivery,
-                )
-                Column {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            ConversationName(
-                                name = conversationName,
-                                read = read,
-                            )
-                        }
-                        if (chatPreview.content?.timestamp != null) {
-                            Text(
-                                text = chatPreview.content.timestamp.toReadableTime(),
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.alpha(0.8f),
-                            )
-                        }
-                    }
-                    PreviewContent(
-                        content = chatPreview.content,
-                        read = read,
+                Row(
+                    modifier = Modifier.padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    AvatarWithDelivery(
+                        avatar = avatar,
+                        delivery = content?.delivery,
+                    )
+                    PreviewTexts(
+                        // TODO: This should ID if it is a deleted community or member
+                        conversationName = name ?: stringResource(Res.string.deleted_group),
+                        emphasized = emphasized,
+                        content = content,
                     )
                 }
             }
@@ -90,14 +70,41 @@ fun ChatPreview(
 }
 
 @Composable
+private fun PreviewTexts(
+    conversationName: String,
+    emphasized: Boolean,
+    content: ChatPreviewContentState?,
+) {
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                ConversationName(
+                    name = conversationName,
+                    emphasized = emphasized,
+                )
+            }
+            if (content?.timestamp != null) Timestamp(content.timestamp)
+        }
+        PreviewContent(
+            content = content,
+            emphasized = emphasized,
+        )
+    }
+}
+
+@Composable
 private fun ConversationName(
     name: String,
-    read: Boolean,
+    emphasized: Boolean,
 ) {
     val defaultNameStyle = MaterialTheme.typography.titleMedium
     val nameStyle = when {
-        read -> defaultNameStyle
-        else -> defaultNameStyle.copy(fontWeight = FontWeight.Bold)
+        emphasized -> defaultNameStyle.copy(fontWeight = FontWeight.Bold)
+        else -> defaultNameStyle
     }
 
     Text(
@@ -109,15 +116,24 @@ private fun ConversationName(
 }
 
 @Composable
+private fun Timestamp(timestamp: LocalDateTime) {
+    Text(
+        text = timestamp.toReadableTime(),
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.alpha(0.8f),
+    )
+}
+
+@Composable
 private fun PreviewContent(
     content: ChatPreviewContentState?,
-    read: Boolean,
+    emphasized: Boolean,
 ) {
     val defaultTextStyle = MaterialTheme.typography.bodySmall
 
     val textStyle = when {
-        read -> defaultTextStyle
-        else -> defaultTextStyle.copy(fontWeight = FontWeight.SemiBold)
+        emphasized -> defaultTextStyle.copy(fontWeight = FontWeight.SemiBold)
+        else -> defaultTextStyle
     }
 
     Box(
@@ -138,25 +154,25 @@ private fun PreviewContent(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            SenderIcon(content?.senderState)
+            SenderIcon(content?.sender)
         }
     }
 }
 
 @Composable
-private fun SenderIcon(senderState: ChatPreviewSenderState?) {
-    if (senderState is SentState) {
+private fun SenderIcon(sender: ChatPreviewSenderState?) {
+    if (sender is SentState) {
         Icon(
             imageVector = Icons.AutoMirrored.TwoTone.Reply,
             contentDescription = "From you: ",
             modifier = Modifier.size(16.dp),
         )
-    } else if (senderState is ReceivedCommunityState) {
+    } else if (sender is ReceivedCommunityState) {
         SmallAvatar(
-            avatar = senderState.senderAvatar,
+            avatar = sender.senderAvatar,
             contentDescription = stringResource(
                 Res.string.from,
-                senderState.senderAvatar.placeholder,
+                sender.senderAvatar.placeholder,
             ),
         )
     }

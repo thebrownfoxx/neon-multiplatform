@@ -8,7 +8,7 @@ data class MessageState(
     val id: MessageId = MessageId(),
     val content: String,
     val timestamp: LocalDateTime,
-    val deliveryState: DeliveryState?,
+    val deliveryState: DeliveryState,
     val groupPosition: GroupPosition,
-    val senderState: MessageSenderState,
+    val sender: MessageSenderState,
 )

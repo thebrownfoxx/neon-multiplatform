@@ -6,6 +6,6 @@ import kotlinx.datetime.LocalDateTime
 data class ChatPreviewContentState(
     val message: String,
     val timestamp: LocalDateTime,
-    val delivery: DeliveryState?,
-    val senderState: ChatPreviewSenderState,
+    val delivery: DeliveryState,
+    val sender: ChatPreviewSenderState,
 )

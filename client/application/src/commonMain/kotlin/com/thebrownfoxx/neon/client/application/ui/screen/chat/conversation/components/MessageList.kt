@@ -80,7 +80,7 @@ private fun LazyListScope.entries(entries: List<MessageListEntry>) {
         Column {
             when (entry) {
                 is ChunkTimestamp -> ChunkTimestampLabel(timestamp = entry.timestamp)
-                is MessageEntry -> when (val senderState = entry.message.senderState) {
+                is MessageEntry -> when (val sender = entry.message.sender) {
                     SentState -> SentMessageListBubble(
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
@@ -91,7 +91,7 @@ private fun LazyListScope.entries(entries: List<MessageListEntry>) {
                         read = entry.message.deliveryState == DeliveryState.Read,
                     )
                     is ReceivedCommunityState -> ReceivedCommunityMessageListBubble(
-                        senderAvatar = senderState.senderAvatar,
+                        senderAvatar = sender.senderAvatar,
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
                         read = entry.message.deliveryState == DeliveryState.Read,

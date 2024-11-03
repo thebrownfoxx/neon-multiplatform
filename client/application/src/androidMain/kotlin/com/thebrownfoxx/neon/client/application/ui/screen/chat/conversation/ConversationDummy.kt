@@ -3,18 +3,17 @@ package com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessagesScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentState
 import com.thebrownfoxx.neon.common.extension.ago
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
 import com.thebrownfoxx.neon.common.type.Loaded
-import com.thebrownfoxx.neon.common.type.Url
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.minutes
 
@@ -24,13 +23,13 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Hey, man. Are you okay?",
             timestamp = 10.minutes.ago,
-            lastInGroup = true,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         sentDirectMessage(
             content = "are you kidding me?",
             timestamp = 9.minutes.ago,
-            firstInGroup = true,
+            groupPosition = GroupPosition.First,
         ),
         sentDirectMessage(
             content = "what do you think?",
@@ -44,13 +43,13 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Come, on, mate.",
             timestamp = 8.minutes.ago,
-            lastInGroup = true,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         sentDirectMessage(
             content = "i was not informed the rollercoasters here require kissing",
             timestamp = 7.minutes.ago,
-            firstInGroup = true,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         receivedDirectMessage(
@@ -72,14 +71,14 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Come on, now, mate.",
             timestamp = 6.minutes.ago,
-            lastInGroup = true,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         timestamp(5.minutes.ago),
         sentDirectMessage(
             content = "just",
             timestamp = 5.minutes.ago,
-            firstInGroup = true,
+            groupPosition = GroupPosition.First,
         ),
         sentDirectMessage(
             content = "GET TF AWAY FROM CARLOS",
@@ -95,7 +94,7 @@ object ConversationDummy {
             content = "I'm sorry.",
             timestamp = 3.minutes.ago,
             read = false,
-            lastInGroup = true,
+            groupPosition = GroupPosition.Last,
         ),
     ).reversed()
 
@@ -108,18 +107,18 @@ object ConversationDummy {
         entries = Loaded(DirectMessageEntries),
     )
 
-    val MemberScreenState = MessagesScreenState(
-        messages = DirectMessages,
+    val MemberScreenState = ConversationPaneState(
+        conversation = Loaded(DirectMessages),
         message = "",
     )
 
     private val oscar = SingleAvatarState(
-        url = Url("https://instagram.fmnl4-3.fna.fbcdn.net/v/t51.2885-19/357879596_666316468195257_2748958035059823106_n.jpg?stp=dst-jpg_s150x150&_nc_ht=instagram.fmnl4-3.fna.fbcdn.net&_nc_cat=109&_nc_ohc=Xj_if46SCbUQ7kNvgExdigi&edm=AAGeoI8BAAAA&ccb=7-5&oh=00_AYARW6qNsqlZKR16tuaNlIvRxe2KceOOZiXUT5dp4-klIQ&oe=66CAD6D7&_nc_sid=b0e1a0"),
+        url = null,
         placeholder = "oscoala",
     )
 
     private val stella = SingleAvatarState(
-        url = Url("https://sportsbase.io/images/gpfans/copy_1200x800/1bfb2b6af70c6bca2456de50f4f160079cbf886a.png"),
+        url = null,
         placeholder = "andreastella",
     )
 
@@ -128,28 +127,27 @@ object ConversationDummy {
         sentCommunityMessage(
             content = "What the fuck just happened?",
             timestamp = 10.minutes.ago,
-            firstInGroup = true,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         sentCommunityMessage(
             content = "🍿🍿",
             timestamp = 9.minutes.ago,
             senderAvatar = stella,
-            firstInGroup = true,
-            lastInGroup = true,
+            groupPosition = GroupPosition.Alone,
             mustSpace = true,
         ),
         sentCommunityMessage(
             content = "I'm sorry, Lando",
             timestamp = 8.minutes.ago,
             senderAvatar = oscar,
-            firstInGroup = true,
+            groupPosition = GroupPosition.First,
         ),
         sentCommunityMessage(
             content = "really sorry",
             timestamp = 8.minutes.ago,
             senderAvatar = oscar,
-            lastInGroup = true,
+            groupPosition = GroupPosition.Last,
         ),
     ).reversed()
 
@@ -173,15 +171,15 @@ object ConversationDummy {
         content: String,
         timestamp: Instant,
         deliveryState: DeliveryState = DeliveryState.Read,
-        firstInGroup: Boolean = false,
+        groupPosition: GroupPosition = GroupPosition.Middle,
         mustSpace: Boolean = false,
     ) = MessageEntry(
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
             deliveryState = deliveryState,
-            groupPosition = if (firstInGroup) GroupPosition.First else GroupPosition.Middle,
-            senderState = SentState,
+            groupPosition = groupPosition,
+            sender = SentState,
         ),
         mustSpace = mustSpace,
     )
@@ -190,15 +188,15 @@ object ConversationDummy {
         content: String,
         timestamp: Instant,
         read: Boolean = true,
-        lastInGroup: Boolean = false,
+        groupPosition: GroupPosition = GroupPosition.Middle,
         mustSpace: Boolean = false,
     ) = MessageEntry(
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
             deliveryState = if (read) DeliveryState.Read else DeliveryState.Delivered,
-            groupPosition = if (lastInGroup) GroupPosition.Last else GroupPosition.Middle,
-            senderState = ReceivedDirectState,
+            groupPosition = groupPosition,
+            sender = ReceivedDirectState,
         ),
         mustSpace = mustSpace,
     )
@@ -207,15 +205,15 @@ object ConversationDummy {
         content: String,
         timestamp: Instant,
         deliveryState: DeliveryState = DeliveryState.Read,
-        firstInGroup: Boolean = false,
+        groupPosition: GroupPosition = GroupPosition.Middle,
         mustSpace: Boolean = false,
     ) = MessageEntry(
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
             deliveryState = deliveryState,
-            groupPosition = if (firstInGroup) GroupPosition.First else GroupPosition.Middle,
-            senderState = SentState,
+            groupPosition = groupPosition,
+            sender = SentState,
         ),
         mustSpace = mustSpace,
     )
@@ -225,20 +223,15 @@ object ConversationDummy {
         timestamp: Instant,
         senderAvatar: SingleAvatarState,
         read: Boolean = true,
-        firstInGroup: Boolean = false,
-        lastInGroup: Boolean = false,
+        groupPosition: GroupPosition = GroupPosition.Middle,
         mustSpace: Boolean = false,
     ) = MessageEntry(
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
             deliveryState = if (read) DeliveryState.Read else DeliveryState.Delivered,
-            groupPosition = when {
-                firstInGroup -> GroupPosition.First
-                lastInGroup -> GroupPosition.Last
-                else -> GroupPosition.Middle
-            },
-            senderState = ReceivedCommunityState(senderAvatar),
+            groupPosition = groupPosition,
+            sender = ReceivedCommunityState(senderAvatar),
         ),
         mustSpace = mustSpace,
     )

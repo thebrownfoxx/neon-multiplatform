@@ -8,4 +8,5 @@ data class ChatPreviewState(
     val avatar: AvatarState?,
     val name: String?,
     val content: ChatPreviewContentState?,
+    val emphasized: Boolean = false,
 )
