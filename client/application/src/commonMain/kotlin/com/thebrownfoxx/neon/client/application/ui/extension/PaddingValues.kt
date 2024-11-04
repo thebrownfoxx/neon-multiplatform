@@ -6,49 +6,54 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-val PaddingValues.left @Composable get() = calculateLeftPadding(LocalLayoutDirection.current)
-val PaddingValues.right @Composable get() = calculateRightPadding(LocalLayoutDirection.current)
+val PaddingValues.startDp @Composable get() = calculateStartPadding(LocalLayoutDirection.current)
+val PaddingValues.topDp get() = calculateTopPadding()
+val PaddingValues.endDp @Composable get() = calculateEndPadding(LocalLayoutDirection.current)
+val PaddingValues.bottomDp get() = calculateBottomPadding()
 
-val PaddingValues.start @Composable get() = calculateStartPadding(LocalLayoutDirection.current)
-val PaddingValues.top get() = calculateTopPadding()
-val PaddingValues.end @Composable get() = calculateEndPadding(LocalLayoutDirection.current)
-val PaddingValues.bottom get() = calculateBottomPadding()
+val PaddingValues.start @Composable get() = startDp.startPadding
+val PaddingValues.top @Composable get() = topDp.topPadding
+val PaddingValues.end @Composable get() = endDp.endPadding
+val PaddingValues.bottom @Composable get() = bottomDp.bottomPadding
 
 val StatusBarPadding @Composable get() = WindowInsets.statusBars.asPaddingValues()
 val NavigationBarPadding @Composable get() = WindowInsets.navigationBars.asPaddingValues()
-val StatusBarHeight @Composable get() = StatusBarPadding.top
-val NavigationBarHeight @Composable get() = NavigationBarPadding.bottom
+val StatusBarHeight @Composable get() = StatusBarPadding.topDp
+val NavigationBarHeight @Composable get() = NavigationBarPadding.bottomDp
+
+val SafeDrawingPadding @Composable get() = WindowInsets.safeDrawing.asPaddingValues()
 
 val PaddingValues.horizontal @Composable get() = PaddingValues(
-    start = start,
-    end = end,
+    start = startDp,
+    end = endDp,
 )
 
 val PaddingValues.vertical get() = PaddingValues(
-    top = top,
-    bottom = bottom,
+    top = topDp,
+    bottom = bottomDp,
 )
 
 @Composable
 operator fun PaddingValues.plus(other: PaddingValues) = PaddingValues(
-    start = start + other.start,
-    top = top + other.top,
-    end = end + other.end,
-    bottom = bottom + other.bottom,
+    start = startDp + other.startDp,
+    top = topDp + other.topDp,
+    end = endDp + other.endDp,
+    bottom = bottomDp + other.bottomDp,
 )
 
 @Composable
 operator fun PaddingValues.minus(other: PaddingValues) = PaddingValues(
-    start = start - other.start,
-    top = top - other.top,
-    end = end - other.end,
-    bottom = bottom - other.bottom,
+    start = startDp - other.startDp,
+    top = topDp - other.topDp,
+    end = endDp - other.endDp,
+    bottom = bottomDp - other.bottomDp,
 )
 
 enum class PaddingSide {
@@ -98,10 +103,10 @@ fun Dp.paddingExcept(vararg sides: PaddingSide): PaddingValues {
 
 @Composable
 fun PaddingValues.copy(
-    start: Dp = this.start,
-    top: Dp = this.top,
-    end: Dp = this.end,
-    bottom: Dp = this.bottom,
+    start: Dp = this.startDp,
+    top: Dp = this.topDp,
+    end: Dp = this.endDp,
+    bottom: Dp = this.bottomDp,
 ) = PaddingValues(
     start = start,
     top = top,
@@ -111,8 +116,8 @@ fun PaddingValues.copy(
 
 @Composable
 fun PaddingValues.except(vararg sides: PaddingSide) = copy(
-    start = if (PaddingSide.Start in sides) 0.dp else start,
-    top = if (PaddingSide.Top in sides) 0.dp else top,
-    end = if (PaddingSide.End in sides) 0.dp else end,
-    bottom = if (PaddingSide.Bottom in sides) 0.dp else bottom,
+    start = if (PaddingSide.Start in sides) 0.dp else startDp,
+    top = if (PaddingSide.Top in sides) 0.dp else topDp,
+    end = if (PaddingSide.End in sides) 0.dp else endDp,
+    bottom = if (PaddingSide.Bottom in sides) 0.dp else bottomDp,
 )

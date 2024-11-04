@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.max
 import com.thebrownfoxx.neon.client.application.ui.extension.NavigationBarHeight
 import com.thebrownfoxx.neon.client.application.ui.extension.PaddingSide
-import com.thebrownfoxx.neon.client.application.ui.extension.bottom
+import com.thebrownfoxx.neon.client.application.ui.extension.bottomDp
 import com.thebrownfoxx.neon.client.application.ui.extension.except
 
 @Composable
@@ -26,7 +26,7 @@ fun LoginScreenBox(
     contentPadding: PaddingValues = PaddingValues(),
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val bottomPadding = max(NavigationBarHeight, contentPadding.bottom)
+    val bottomPadding = max(NavigationBarHeight, contentPadding.bottomDp)
 
     Box(
         modifier = modifier

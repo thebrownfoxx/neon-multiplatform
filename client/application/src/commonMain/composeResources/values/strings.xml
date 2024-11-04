@@ -29,7 +29,9 @@
     <string name="deleted_member">Deleted Member</string>
     <string name="deleted_group">Deleted Group</string>
     <string name="close">Close</string>
+    <string name="call">Call</string>
     <string name="message">Message</string>
+    <string name="no_conversation_selected">No conversation selected</string>
     <string name="send">Send</string>
     <string name="mark_as_read">Mark as read</string>
     <string name="sending">Sending</string>

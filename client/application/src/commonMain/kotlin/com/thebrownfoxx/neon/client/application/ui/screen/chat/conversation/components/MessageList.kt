@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Visibility
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import com.thebrownfoxx.neon.client.application.ui.component.common.Button
 import com.thebrownfoxx.neon.client.application.ui.component.common.ButtonIconText
 import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
+import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
@@ -32,6 +34,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentState
+import com.thebrownfoxx.neon.common.type.Loadable
 import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.mark_as_read
@@ -39,6 +42,27 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MessageList(
+    entries: Loadable<List<MessageListEntry>>,
+    onMarkAsRead: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+) {
+    Surface(modifier = modifier) {
+        AnimatedLoadableContent(
+            targetState = entries,
+            loader = { DirectMessageListLoader(contentPadding = contentPadding) },
+        ) {
+            LoadedMessageList(
+                entries = it,
+                onMarkAsRead = onMarkAsRead,
+                contentPadding = contentPadding,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadedMessageList(
     entries: List<MessageListEntry>,
     onMarkAsRead: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,11 +109,13 @@ private fun LazyListScope.entries(entries: List<MessageListEntry>) {
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
                     )
+
                     ReceivedDirectState -> ReceivedDirectMessageListBubble(
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
                         read = entry.message.deliveryState == DeliveryState.Read,
                     )
+
                     is ReceivedCommunityState -> ReceivedCommunityMessageListBubble(
                         senderAvatar = sender.senderAvatar,
                         content = entry.message.content,

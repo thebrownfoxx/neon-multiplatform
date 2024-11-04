@@ -1,6 +1,8 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.components
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.Send
@@ -27,6 +29,7 @@ fun MessageFieldBar(
     onMessageChange: (String) -> Unit,
     onSend: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     BottomBarScrim(modifier = modifier) {
         FilledTextField(
@@ -39,6 +42,7 @@ fun MessageFieldBar(
             iconAlignment = Alignment.BottomCenter,
             singleLine = false,
             modifier = Modifier
+                .padding(contentPadding)
                 .fillMaxWidth()
                 .sizeIn(maxHeight = 128.dp),
         )

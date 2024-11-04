@@ -1,6 +1,5 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,16 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
 import com.thebrownfoxx.neon.client.application.ui.extension.copy
-import com.thebrownfoxx.neon.client.application.ui.extension.loaderContentTransition
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreview
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreviewsLoader
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewsState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewsState
+import com.thebrownfoxx.neon.common.type.Loadable
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.conversations
 import neon.client.application.generated.resources.nudged_conversations
@@ -31,26 +27,19 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ChatPreviews(
-    state: ChatPreviewsState,
+    state: Loadable<ChatPreviewsState>,
     eventHandler: ChatPreviewsEventHandler,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    AnimatedContent(
-        targetState = state,
-        label = "contentLoad",
-        contentKey = { it::class },
-        transitionSpec = { loaderContentTransition() },
-    ) {
-        when (state) {
-            is LoadingChatPreviewsState -> LoadingChatPreviews(
-                modifier = modifier,
-                contentPadding = contentPadding,
-            )
-            is LoadedChatPreviewsState -> LoadedChatPreviews(
-                state = state,
+    Surface(modifier = modifier) {
+        AnimatedLoadableContent(
+            targetState = state,
+            loader = { LoadingChatPreviews(contentPadding = contentPadding) },
+        ) {
+            LoadedChatPreviews(
+                state = it,
                 eventHandler = eventHandler,
-                modifier = modifier,
                 contentPadding = contentPadding,
             )
         }
@@ -58,7 +47,7 @@ fun ChatPreviews(
 }
 
 @Composable
-fun LoadingChatPreviews(
+private fun LoadingChatPreviews(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -73,30 +62,31 @@ fun LoadingChatPreviews(
 
 @Composable
 private fun LoadedChatPreviews(
-    state: LoadedChatPreviewsState,
+    state: ChatPreviewsState,
     eventHandler: ChatPreviewsEventHandler,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     with(state) {
         with(eventHandler) {
-            Surface(modifier = modifier) {
-                LazyColumn(contentPadding = contentPadding) {
-                    nudgedConversations(
-                        nudgedConversations = nudgedConversations,
-                        onConversationClick = onConversationClick,
-                    )
-                    unreadConversations(
-                        unreadConversations = unreadConversations,
-                        readConversationsEmpty = readConversations.isEmpty(),
-                        onConversationClick = onConversationClick,
-                    )
-                    readConversations(
-                        readConversations = readConversations,
-                        unreadConversationsEmpty = unreadConversations.isEmpty(),
-                        onConversationClick = onConversationClick,
-                    )
-                }
+            LazyColumn(
+                contentPadding = contentPadding,
+                modifier = modifier,
+            ) {
+                nudgedConversations(
+                    nudgedConversations = nudgedConversations,
+                    onConversationClick = onConversationClick,
+                )
+                unreadConversations(
+                    unreadConversations = unreadConversations,
+                    readConversationsEmpty = readConversations.isEmpty(),
+                    onConversationClick = onConversationClick,
+                )
+                readConversations(
+                    readConversations = readConversations,
+                    unreadConversationsEmpty = unreadConversations.isEmpty(),
+                    onConversationClick = onConversationClick,
+                )
             }
         }
     }
@@ -119,7 +109,7 @@ private fun LazyListScope.nudgedConversations(
 }
 
 private fun LazyListScope.nudgedHeader() {
-    item { Header(stringResource(Res.string.nudged_conversations)) }
+    item { Header(text = stringResource(Res.string.nudged_conversations)) }
 }
 
 private fun LazyListScope.unreadConversations(
@@ -184,11 +174,9 @@ private fun LazyListScope.readHeader(unreadConversationsEmpty: Boolean) {
 
 @Composable
 private fun Header(text: String) {
-    val headerPadding = 16.dp.padding.copy(bottom = 8.dp)
-
     Text(
         text = text,
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(headerPadding),
+        modifier = Modifier.padding(16.dp.padding.copy(bottom = 8.dp)),
     )
 }

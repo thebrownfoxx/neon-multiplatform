@@ -38,10 +38,10 @@ import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.InternalComponentApi
 import com.thebrownfoxx.neon.client.application.ui.component.scrim.GradientDirection
 import com.thebrownfoxx.neon.client.application.ui.component.scrim.GradientScrimBox
-import com.thebrownfoxx.neon.client.application.ui.extension.end
+import com.thebrownfoxx.neon.client.application.ui.extension.endDp
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
-import com.thebrownfoxx.neon.client.application.ui.extension.start
+import com.thebrownfoxx.neon.client.application.ui.extension.startDp
 import com.thebrownfoxx.neon.client.application.ui.extension.vertical
 
 // TODO: Add vertical scrims
@@ -153,8 +153,8 @@ fun TextField(
                 trailingIcon = trailingIconWithScrim,
             ) { innerPadding ->
                 val density = LocalDensity.current
-                val startPadding = innerPadding.start
-                val endPadding = innerPadding.end
+                val startPadding = innerPadding.startDp
+                val endPadding = innerPadding.endDp
 
                 LaunchedEffect(textFieldValue, textLayoutResult) {
                     val cursorRect = textLayoutResult?.getCursorRect(textFieldValue.selection.start)

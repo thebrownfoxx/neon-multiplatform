@@ -50,7 +50,7 @@ private fun PreviewContentLoader(modifier: Modifier = Modifier) {
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
+        modifier = modifier,
     ) {
         // This is to make the preview the same size even if there is no icon shown
         Spacer(modifier = Modifier.size(16.dp))

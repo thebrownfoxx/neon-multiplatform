@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationInfoState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
@@ -99,16 +100,20 @@ object ConversationDummy {
     ).reversed()
 
     val DirectMessages = ConversationState(
-        avatar = SingleAvatarState(
-            url = null,
-            placeholder = "SharlLeclerc",
+        info = Loaded(
+            ConversationInfoState(
+                avatar = SingleAvatarState(
+                    url = null,
+                    placeholder = "SharlLeclerc",
+                ),
+                name = "SharlLeclerc",
+            )
         ),
-        name = "SharlLeclerc",
         entries = Loaded(DirectMessageEntries),
     )
 
     val MemberScreenState = ConversationPaneState(
-        conversation = Loaded(DirectMessages),
+        conversation = DirectMessages,
         message = "",
     )
 

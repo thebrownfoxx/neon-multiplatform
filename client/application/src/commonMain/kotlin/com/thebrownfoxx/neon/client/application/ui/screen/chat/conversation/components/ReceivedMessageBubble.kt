@@ -5,9 +5,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.thebrownfoxx.neon.client.application.ui.extension.Corner
-import com.thebrownfoxx.neon.client.application.ui.extension.RoundedCorners
-import com.thebrownfoxx.neon.client.application.ui.extension.Side
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 
 @Composable
@@ -17,12 +14,7 @@ fun ReceivedMessageBubble(
     groupPosition: GroupPosition,
     modifier: Modifier = Modifier,
 ) {
-    val roundedCorners = when (groupPosition) {
-        GroupPosition.Alone, GroupPosition.Last ->
-            RoundedCorners(Corner.TopEnd, Corner.BottomEnd, Corner.BottomStart)
-
-        else -> RoundedCorners(Side.End)
-    }
+    val roundedCorners = groupPosition.toReceivedMessageBubbleRoundedCorners()
 
     val containerColor by animateColorAsState(
         targetValue = when {

@@ -24,42 +24,25 @@ fun ChatPreviewsLoader(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val headerPadding = 16.dp.padding.copy(bottom = 8.dp)
-
     LazyColumn(
         contentPadding = contentPadding,
         modifier = modifier,
         userScrollEnabled = false,
     ) {
-        item {
-            TextLoader(
-                text = stringResource(Res.string.nudged_conversations),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(headerPadding),
-            )
-        }
-        items(count = nudgedConversationsCount) {
-            ChatPreviewLoader()
-        }
-        item {
-            TextLoader(
-                text = stringResource(Res.string.unread_conversations),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(headerPadding),
-            )
-        }
-        items(count = unreadConversationsCount) {
-            ChatPreviewLoader()
-        }
-        item {
-            TextLoader(
-                text = stringResource(Res.string.read_conversations),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(headerPadding),
-            )
-        }
-        items(count = readConversationsCount) {
-            ChatPreviewLoader()
-        }
+        item { HeaderLoader(text = stringResource(Res.string.nudged_conversations)) }
+        items(count = nudgedConversationsCount) { ChatPreviewLoader() }
+        item { HeaderLoader(text = stringResource(Res.string.unread_conversations)) }
+        items(count = unreadConversationsCount) { ChatPreviewLoader() }
+        item { HeaderLoader(text = stringResource(Res.string.read_conversations)) }
+        items(count = readConversationsCount) { ChatPreviewLoader() }
     }
+}
+
+@Composable
+private fun HeaderLoader(text: String) {
+    TextLoader(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.padding(16.dp.padding.copy(bottom = 8.dp)),
+    )
 }

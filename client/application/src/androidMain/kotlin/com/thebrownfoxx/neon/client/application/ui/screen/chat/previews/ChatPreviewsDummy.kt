@@ -7,6 +7,7 @@ import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.Deli
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewSenderState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
@@ -34,12 +35,14 @@ object ChatPreviewsDummy {
             message = "where the feet pics",
             timestamp = 1.days.ago,
             delivery = DeliveryState.Read,
+            emphasized = true,
         ),
         receivedDirectChatPreview(
             name = "will_joseph",
             message = "feet pics or im sabotaging your next race",
             timestamp = 2.days.ago,
             delivery = DeliveryState.Sent,
+            emphasized = true,
         ),
     ).sortedByDescending { it.content?.timestamp }
 
@@ -57,12 +60,14 @@ object ChatPreviewsDummy {
                 url = null,
                 placeholder = "oscoala",
             ),
+            emphasized = true,
         ),
         receivedDirectChatPreview(
             name = "carlito",
             message = "you ready to get freaky? 🤤",
             timestamp = 5.minutes.ago,
             delivery = DeliveryState.Sent,
+            emphasized = true,
         ),
     ).sortedByDescending { it.content?.timestamp }
 
@@ -156,12 +161,18 @@ object ChatPreviewsDummy {
         ),
     ).sortedByDescending { it.content?.timestamp }
 
+    val ChatPreviewsState = ChatPreviewsState(
+        nudgedConversations = NudgedConversations,
+        unreadConversations = UnreadConversations,
+        readConversations = ReadConversations,
+    )
 
-    fun sentDirectChatPreview(
+    private fun sentDirectChatPreview(
         name: String,
         message: String,
         timestamp: Instant,
         delivery: DeliveryState,
+        emphasized: Boolean = false,
     ) = chatPreview(
         avatar = SingleAvatarState(
             url = null,
@@ -172,6 +183,7 @@ object ChatPreviewsDummy {
         timestamp = timestamp,
         delivery = delivery,
         sender = SentState,
+        emphasized = emphasized,
     )
 
     private fun receivedDirectChatPreview(
@@ -179,6 +191,7 @@ object ChatPreviewsDummy {
         message: String,
         timestamp: Instant,
         delivery: DeliveryState,
+        emphasized: Boolean = false,
     ) = chatPreview(
         avatar = SingleAvatarState(
             url = null,
@@ -189,6 +202,7 @@ object ChatPreviewsDummy {
         timestamp = timestamp,
         delivery = delivery,
         sender = ReceivedDirectState,
+        emphasized = emphasized,
     )
 
     private fun sentCommunityChatPreview(
@@ -197,6 +211,7 @@ object ChatPreviewsDummy {
         message: String,
         timestamp: Instant,
         delivery: DeliveryState,
+        emphasized: Boolean = false,
     ) = chatPreview(
         avatar = avatar,
         name = name,
@@ -204,6 +219,7 @@ object ChatPreviewsDummy {
         timestamp = timestamp,
         delivery = delivery,
         sender = SentState,
+        emphasized = emphasized,
     )
 
     private fun receivedCommunityChatPreview(
@@ -213,6 +229,7 @@ object ChatPreviewsDummy {
         timestamp: Instant,
         delivery: DeliveryState,
         sender: SingleAvatarState,
+        emphasized: Boolean = false,
     ) = chatPreview(
         avatar = avatar,
         name = name,
@@ -220,6 +237,7 @@ object ChatPreviewsDummy {
         timestamp = timestamp,
         delivery = delivery,
         sender = ReceivedCommunityState(sender),
+        emphasized = emphasized,
     )
 
     private fun chatPreview(
@@ -229,6 +247,7 @@ object ChatPreviewsDummy {
         timestamp: Instant,
         delivery: DeliveryState,
         sender: ChatPreviewSenderState,
+        emphasized: Boolean,
     ) = ChatPreviewState(
         avatar = avatar,
         name = name,
@@ -237,6 +256,7 @@ object ChatPreviewsDummy {
             timestamp = timestamp.toLocalDateTime(),
             delivery = delivery,
             sender = sender,
-        )
+        ),
+        emphasized = emphasized,
     )
 }

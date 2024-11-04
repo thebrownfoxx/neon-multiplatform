@@ -1,0 +1,41 @@
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.thebrownfoxx.neon.client.application.ui.extension.PaddingSide
+import com.thebrownfoxx.neon.client.application.ui.extension.except
+import com.thebrownfoxx.neon.client.application.ui.extension.minus
+import com.thebrownfoxx.neon.client.application.ui.extension.padding
+import com.thebrownfoxx.neon.client.application.ui.extension.plus
+import com.thebrownfoxx.neon.client.application.ui.extension.top
+import com.thebrownfoxx.neon.client.application.ui.extension.topPadding
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreviews
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.FakeSearchBar
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
+import com.thebrownfoxx.neon.common.type.Loadable
+
+@Composable
+fun ChatPreviewsPane(
+    state: Loadable<ChatPreviewsState>,
+    eventHandler: ChatPreviewsEventHandler,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+) {
+    Scaffold(
+        topBar = { FakeSearchBar(contentPadding = 16.dp.padding + contentPadding.top) },
+        modifier = modifier,
+    ) { innerPadding ->
+        ChatPreviews(
+            state = state,
+            eventHandler = eventHandler,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = innerPadding - 16.dp.topPadding +
+                    contentPadding.except(PaddingSide.Bottom),
+        )
+    }
+}
