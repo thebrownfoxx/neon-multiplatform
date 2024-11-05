@@ -1,5 +1,7 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.chat.variant
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +16,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.Spacer
 import com.thebrownfoxx.neon.client.application.ui.component.twopane.Pane
 import com.thebrownfoxx.neon.client.application.ui.component.twopane.TwoPaneLayout
 import com.thebrownfoxx.neon.client.application.ui.extension.RoundedCorners
 import com.thebrownfoxx.neon.client.application.ui.extension.Side
+import com.thebrownfoxx.neon.client.application.ui.extension.sharedXAxisEnter
+import com.thebrownfoxx.neon.client.application.ui.extension.sharedXAxisExit
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.ConversationPane
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
@@ -29,6 +34,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Ch
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
 import com.thebrownfoxx.neon.common.type.Loadable
+import com.thebrownfoxx.neon.common.type.getOrNull
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.no_conversation_selected
 import org.jetbrains.compose.resources.stringResource
@@ -84,13 +90,23 @@ private fun RightPane(
     conversation: ConversationPaneState?,
     conversationPaneEventHandler: ConversationPaneEventHandler,
 ) {
+    val density = LocalDensity.current
     Pane(roundedCorners = RoundedCorners(Side.End)) {
-        when (conversation) {
-            null -> RightPanePlaceholder()
-            else -> ConversationPane(
-                state = conversation,
-                eventHandler = conversationPaneEventHandler,
-            )
+        AnimatedContent(
+            targetState = conversation,
+            transitionSpec = {
+                val reversed = targetState != null
+                with(density) { sharedXAxisEnter(reversed) togetherWith sharedXAxisExit(reversed) }
+            },
+            contentKey = { it?.conversation?.info?.getOrNull()?.groupId },
+        ) {
+            when (conversation) {
+                null -> RightPanePlaceholder()
+                else -> ConversationPane(
+                    state = conversation,
+                    eventHandler = conversationPaneEventHandler,
+                )
+            }
         }
     }
 }

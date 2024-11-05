@@ -21,3 +21,13 @@ fun <T, R> Array<Loadable<T>>.combine(transform: (List<T>) -> R): Loadable<R> = 
     all { it is Loaded } -> Loaded(transform(map { (it as Loaded).value }))
     else -> Loading
 }
+
+fun <R, T: R> Loadable<T>.getOrElse(default: R): R = when (this) {
+    is Loaded -> value
+    else -> default
+}
+
+fun <T> Loadable<T>.getOrNull(): T? = when (this) {
+    is Loaded -> value
+    else -> null
+}
