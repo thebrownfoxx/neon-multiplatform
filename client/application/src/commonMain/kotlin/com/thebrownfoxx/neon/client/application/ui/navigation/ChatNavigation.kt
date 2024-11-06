@@ -1,27 +1,48 @@
 package com.thebrownfoxx.neon.client.application.ui.navigation
 
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.ChatScreen
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.ChatViewModel
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneEventHandler
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsDummy
-import com.thebrownfoxx.neon.common.type.Loaded
 import kotlinx.serialization.Serializable
 
 @Serializable
 data object ChatRoute
 
 fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
-    ChatScreen(
-        state = ChatScreenState(
-            chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
-            conversation = ConversationDummy.ConversationPaneState,
-        ),
-        eventHandler = ChatScreenEventHandler.Blank,
-    )
+    val viewModel = viewModel { ChatViewModel() }
+    with(viewModel) {
+        val chatPreviews by chatPreviews.collectAsStateWithLifecycle()
+        val conversation by conversation.collectAsStateWithLifecycle()
+
+        ChatScreen(
+            state = ChatScreenState(
+                chatPreviews = chatPreviews,
+                conversation = conversation,
+            ),
+            eventHandler = ChatScreenEventHandler(
+                chatPreviewsEventHandler = ChatPreviewsEventHandler(
+                    onLoadMore = {},
+                    onConversationClick = ::onConversationClick
+                ),
+                conversationPaneEventHandler = ConversationPaneEventHandler(
+                    onCall = {},
+                    onMessageChange = {},
+                    onSend = {},
+                    onMarkAsRead = {},
+                    onClose = ::onConversationClose,
+                )
+            ),
+        )
+    }
 }
 
 fun NavController.navigateToChat() = navigate(ChatRoute) {

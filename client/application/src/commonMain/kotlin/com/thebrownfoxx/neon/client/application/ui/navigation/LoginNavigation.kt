@@ -16,8 +16,8 @@ import kotlinx.serialization.Serializable
 data object LoginRoute
 
 fun NavGraphBuilder.loginDestination() = composable<LoginRoute> {
-    val loginViewModel = viewModel { LoginViewModel(dependencies.authenticator) }
-    with(loginViewModel) {
+    val viewModel = viewModel { LoginViewModel(dependencies.authenticator) }
+    with(viewModel) {
         val loginScreenState by state.collectAsStateWithLifecycle()
         val loginScreenEventHandler = LoginScreenEventHandler(
             onUsernameChange = ::onUsernameChange,

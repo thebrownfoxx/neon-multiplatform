@@ -27,7 +27,7 @@ fun NonExpandedChatScreen(
             AnimatedContent(
                 targetState = conversation,
                 transitionSpec = {
-                    val reversed = targetState != null
+                    val reversed = targetState == null
                     sharedZAxisEnter(reversed) togetherWith sharedZAxisExit(reversed)
                 },
                 contentKey = { it?.conversation?.info?.getOrNull()?.groupId },

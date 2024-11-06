@@ -37,6 +37,7 @@ fun ChatPreviews(
             targetState = state,
             loader = { LoadingChatPreviews(contentPadding = contentPadding) },
         ) {
+            // TODO: Highlight the selected conversation
             LoadedChatPreviews(
                 state = it,
                 eventHandler = eventHandler,

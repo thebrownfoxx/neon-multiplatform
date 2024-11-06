@@ -15,6 +15,7 @@ import com.thebrownfoxx.neon.client.application.ui.component.InternalComponentAp
 
 // TODO: fix weird height change on focus change when text is empty and the
 //  font size is larger than standard
+// TODO: fix weird color when there is scrim and is disabled
 @OptIn(InternalComponentApi::class)
 @Composable
 fun FilledTextField(

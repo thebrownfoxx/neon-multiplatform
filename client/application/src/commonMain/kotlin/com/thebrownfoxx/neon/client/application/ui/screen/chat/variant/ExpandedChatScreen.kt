@@ -100,10 +100,10 @@ private fun RightPane(
             },
             contentKey = { it?.conversation?.info?.getOrNull()?.groupId },
         ) {
-            when (conversation) {
+            when (it) {
                 null -> RightPanePlaceholder()
                 else -> ConversationPane(
-                    state = conversation,
+                    state = it,
                     eventHandler = conversationPaneEventHandler,
                 )
             }
