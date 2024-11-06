@@ -4,11 +4,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,7 +36,7 @@ fun MessageFieldBar(
             value = message,
             onValueChange = onMessageChange,
             placeholder = stringResource(Res.string.message),
-            shape = MaterialTheme.shapes.medium,
+            shape = CircleShape,
             colors = TextFieldDefaults.AppBarColors,
             trailingIcon = { SendButton(onSend) },
             iconAlignment = Alignment.BottomCenter,

@@ -9,9 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.extension.PaddingSide
 import com.thebrownfoxx.neon.client.application.ui.extension.except
 import com.thebrownfoxx.neon.client.application.ui.extension.minus
-import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
-import com.thebrownfoxx.neon.client.application.ui.extension.top
 import com.thebrownfoxx.neon.client.application.ui.extension.topPadding
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.ChatPreviews
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.FakeSearchBar
@@ -27,7 +25,9 @@ fun ChatPreviewsPane(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     Scaffold(
-        topBar = { FakeSearchBar(contentPadding = 16.dp.padding + contentPadding.top) },
+        topBar = {
+            FakeSearchBar(contentPadding = contentPadding.except(PaddingSide.Bottom))
+        },
         modifier = modifier,
     ) { innerPadding ->
         ChatPreviews(
@@ -35,7 +35,7 @@ fun ChatPreviewsPane(
             eventHandler = eventHandler,
             modifier = Modifier.fillMaxSize(),
             contentPadding = innerPadding - 16.dp.topPadding +
-                    contentPadding.except(PaddingSide.Bottom),
+                    contentPadding.except(PaddingSide.Top),
         )
     }
 }

@@ -27,6 +27,8 @@ import com.thebrownfoxx.neon.client.application.ui.component.common.ButtonIconTe
 import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
+import com.thebrownfoxx.neon.client.application.ui.extension.padding
+import com.thebrownfoxx.neon.client.application.ui.extension.plus
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
@@ -68,6 +70,8 @@ private fun LoadedMessageList(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val totalContentPadding = contentPadding + 16.dp.padding
+
     val lastEntry = remember(entries) { entries.lastOrNull() }
 
     val read = remember(lastEntry) {
@@ -77,7 +81,7 @@ private fun LoadedMessageList(
     LazyColumn(
         modifier = modifier,
         reverseLayout = true,
-        contentPadding = contentPadding,
+        contentPadding = totalContentPadding,
     ) {
         item {
             MarkAsReadButton(

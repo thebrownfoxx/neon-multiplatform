@@ -6,10 +6,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.thebrownfoxx.neon.client.application.ui.extension.bottom
-import com.thebrownfoxx.neon.client.application.ui.extension.horizontalPadding
+import com.thebrownfoxx.neon.client.application.ui.extension.PaddingSide
+import com.thebrownfoxx.neon.client.application.ui.extension.except
+import com.thebrownfoxx.neon.client.application.ui.extension.horizontal
+import com.thebrownfoxx.neon.client.application.ui.extension.minus
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
-import com.thebrownfoxx.neon.client.application.ui.extension.top
+import com.thebrownfoxx.neon.client.application.ui.extension.verticalPadding
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.components.ConversationTitleBar
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.components.MessageFieldBar
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.components.MessageList
@@ -31,7 +33,7 @@ fun ConversationPane(
                         info = conversation.info,
                         onCall = onCall,
                         onClose = onClose,
-                        contentPadding = contentPadding.top,
+                        contentPadding = contentPadding.except(PaddingSide.Bottom),
                     )
                 },
                 bottomBar = {
@@ -39,7 +41,7 @@ fun ConversationPane(
                         message = message,
                         onMessageChange = onMessageChange,
                         onSend = onSend,
-                        contentPadding = contentPadding.bottom,
+                        contentPadding = contentPadding.except(PaddingSide.Top),
                     )
                 },
                 modifier = modifier,
@@ -47,8 +49,9 @@ fun ConversationPane(
                 MessageList(
                     entries = conversation.entries,
                     onMarkAsRead = onMarkAsRead,
-                    contentPadding = innerPadding + 16.dp.horizontalPadding,
                     modifier = Modifier.fillMaxSize(),
+                    contentPadding = innerPadding + contentPadding.horizontal -
+                            16.dp.verticalPadding,
                 )
             }
         }

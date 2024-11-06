@@ -117,6 +117,7 @@ private fun RightPanePlaceholder() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
+            .padding(16.dp)
             .alpha(0.8f)
             .fillMaxSize(),
     ) {

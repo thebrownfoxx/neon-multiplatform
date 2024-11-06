@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.state
 
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
@@ -112,7 +112,7 @@ object ConversationDummy {
         entries = Loaded(DirectMessageEntries),
     )
 
-    val MemberScreenState = ConversationPaneState(
+    val ConversationPaneState = ConversationPaneState(
         conversation = DirectMessages,
         message = "",
     )

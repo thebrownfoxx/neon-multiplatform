@@ -1,6 +1,9 @@
 package com.thebrownfoxx.neon.client.application.ui.component
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -11,20 +14,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.scrim.GradientDirection
 import com.thebrownfoxx.neon.client.application.ui.component.scrim.GradientScrimBox
-import com.thebrownfoxx.neon.client.application.ui.extension.SafeDrawingPadding
-import com.thebrownfoxx.neon.client.application.ui.extension.bottomDp
-import com.thebrownfoxx.neon.client.application.ui.extension.bottomPadding
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
-import com.thebrownfoxx.neon.client.application.ui.extension.plus
-import com.thebrownfoxx.neon.client.application.ui.extension.topDp
-import com.thebrownfoxx.neon.client.application.ui.extension.topPadding
 
 object AppBarDefaults {
     val ContainerColor @Composable get() = MaterialTheme.colorScheme.surfaceContainer
     val ContainerAlpha @Composable get() = 0.9f
     val ScrimColor @Composable get() = MaterialTheme.colorScheme.surface
-    val TopBarPadding @Composable get() = 16.dp.padding + SafeDrawingPadding.topDp.topPadding
-    val BottomBarPadding @Composable get() = 16.dp.padding + SafeDrawingPadding.bottomDp.bottomPadding
+    val Padding @Composable get() = 16.dp.padding
 }
 
 @Composable
@@ -47,12 +43,14 @@ fun AppBar(
 fun TopBarScrim(
     modifier: Modifier = Modifier,
     scrimColor: Color = AppBarDefaults.ScrimColor,
+    contentPadding: PaddingValues = AppBarDefaults.Padding,
     content: @Composable () -> Unit,
 ) {
     AppBarScrim(
         gradientDirection = GradientDirection.TopBottom,
         scrimColor = scrimColor,
         modifier = modifier,
+        contentPadding = contentPadding,
         content = content,
     )
 }
@@ -61,12 +59,14 @@ fun TopBarScrim(
 fun BottomBarScrim(
     modifier: Modifier = Modifier,
     scrimColor: Color = AppBarDefaults.ScrimColor,
+    contentPadding: PaddingValues = AppBarDefaults.Padding,
     content: @Composable () -> Unit,
 ) {
     AppBarScrim(
         gradientDirection = GradientDirection.BottomTop,
         scrimColor = scrimColor,
         modifier = modifier,
+        contentPadding = contentPadding,
         content = content,
     )
 }
@@ -76,6 +76,7 @@ private fun AppBarScrim(
     gradientDirection: GradientDirection,
     modifier: Modifier = Modifier,
     scrimColor: Color = AppBarDefaults.ScrimColor,
+    contentPadding: PaddingValues = AppBarDefaults.Padding,
     content: @Composable () -> Unit,
 ) {
     GradientScrimBox(
@@ -86,6 +87,8 @@ private fun AppBarScrim(
         threshold = 0.4f,
         thresholdAlpha = 0.7f,
     ) {
-        content()
+        Box(modifier = Modifier.padding(contentPadding)) {
+            content()
+        }
     }
 }

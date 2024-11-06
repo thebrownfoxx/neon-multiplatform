@@ -12,11 +12,11 @@ import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
 
-@Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview(device = "spec:width=411dp,height=891dp")
 @Composable
 private fun LoadingPreview() {
     NeonTheme {
-        ExpandedChatScreen(
+        NonExpandedChatScreen(
             state = ChatScreenState(
                 chatPreviews = Loading,
                 conversation = null,
@@ -26,11 +26,11 @@ private fun LoadingPreview() {
     }
 }
 
-@Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview(device = "spec:width=411dp,height=891dp")
 @Composable
 private fun LoadedPreview() {
     NeonTheme {
-        ExpandedChatScreen(
+        NonExpandedChatScreen(
             state = ChatScreenState(
                 chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
                 conversation = null,
@@ -40,11 +40,11 @@ private fun LoadedPreview() {
     }
 }
 
-@Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview(device = "spec:width=411dp,height=891dp")
 @Composable
 private fun SelectedLoadingPreview() {
     NeonTheme {
-        ExpandedChatScreen(
+        NonExpandedChatScreen(
             state = ChatScreenState(
                 chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
                 conversation = ConversationPaneState(
@@ -59,11 +59,11 @@ private fun SelectedLoadingPreview() {
     }
 }
 
-@Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview(device = "spec:width=411dp,height=891dp")
 @Composable
 private fun SelectedPreview() {
     NeonTheme {
-        ExpandedChatScreen(
+        NonExpandedChatScreen(
             state = ChatScreenState(
                 chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
                 conversation = ConversationDummy.ConversationPaneState,

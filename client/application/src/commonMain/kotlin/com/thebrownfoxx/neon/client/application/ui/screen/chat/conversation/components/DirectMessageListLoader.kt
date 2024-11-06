@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.Spacer
 import com.thebrownfoxx.neon.client.application.ui.extension.bottomDp
 import com.thebrownfoxx.neon.client.application.ui.extension.horizontal
+import com.thebrownfoxx.neon.client.application.ui.extension.padding
+import com.thebrownfoxx.neon.client.application.ui.extension.plus
 import com.thebrownfoxx.neon.client.application.ui.extension.topDp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 
@@ -19,11 +21,13 @@ fun DirectMessageListLoader(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val totalContentPadding = contentPadding + 16.dp.padding
+
     Column(
         verticalArrangement = Arrangement.Bottom,
-        modifier = modifier.padding(contentPadding.horizontal),
+        modifier = modifier.padding(totalContentPadding.horizontal),
     ) {
-        Spacer(height = contentPadding.topDp)
+        Spacer(height = totalContentPadding.topDp)
 
         SentMessageLoader(text = "The quick brown foxx!!", groupPosition = GroupPosition.First)
         Spacer(height = 4.dp)
@@ -43,7 +47,7 @@ fun DirectMessageListLoader(
         Spacer(height = 4.dp)
         ReceivedMessageLoader(text = "sigma?", groupPosition = GroupPosition.Last)
 
-        Spacer(height = contentPadding.bottomDp)
+        Spacer(height = totalContentPadding.bottomDp)
     }
 }
 
