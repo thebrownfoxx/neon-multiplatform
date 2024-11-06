@@ -1,16 +1,9 @@
-package com.thebrownfoxx.neon.client.application.ui.screen.login.state
+package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state
 
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.AvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.GroupAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewSenderState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
 import com.thebrownfoxx.neon.common.extension.ago
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
 import kotlinx.datetime.Instant
@@ -34,14 +27,12 @@ object ChatPreviewsDummy {
             name = "AndreaStella",
             message = "where the feet pics",
             timestamp = 1.days.ago,
-            delivery = DeliveryState.Read,
             emphasized = true,
         ),
         receivedDirectChatPreview(
             name = "will_joseph",
             message = "feet pics or im sabotaging your next race",
             timestamp = 2.days.ago,
-            delivery = DeliveryState.Sent,
             emphasized = true,
         ),
     ).sortedByDescending { it.content?.timestamp }
@@ -55,7 +46,6 @@ object ChatPreviewsDummy {
             name = "McLaren",
             message = "I'm sorry Lando",
             timestamp = 14.minutes.ago,
-            delivery = DeliveryState.Sent,
             sender = SingleAvatarState(
                 url = null,
                 placeholder = "oscoala",
@@ -66,7 +56,6 @@ object ChatPreviewsDummy {
             name = "carlito",
             message = "you ready to get freaky? 🤤",
             timestamp = 5.minutes.ago,
-            delivery = DeliveryState.Sent,
             emphasized = true,
         ),
     ).sortedByDescending { it.content?.timestamp }
@@ -101,7 +90,6 @@ object ChatPreviewsDummy {
             name = "oscoala",
             message = "I'm sorry Lando.",
             timestamp = 20.minutes.ago,
-            delivery = DeliveryState.Sent,
         ),
         sentCommunityChatPreview(
             avatar = GroupAvatarState(
@@ -138,7 +126,6 @@ object ChatPreviewsDummy {
             name = "Awesome Doods",
             message = "Esteban, what is this? 🦅🦅",
             timestamp = 48.minutes.ago,
-            delivery = DeliveryState.Sent,
             sender = SingleAvatarState(
                 url = null,
                 placeholder = "logie_bear",
@@ -190,7 +177,6 @@ object ChatPreviewsDummy {
         name: String,
         message: String,
         timestamp: Instant,
-        delivery: DeliveryState,
         emphasized: Boolean = false,
     ) = chatPreview(
         avatar = SingleAvatarState(
@@ -200,7 +186,7 @@ object ChatPreviewsDummy {
         name = name,
         message = message,
         timestamp = timestamp,
-        delivery = delivery,
+        delivery = null,
         sender = ReceivedDirectState,
         emphasized = emphasized,
     )
@@ -227,7 +213,6 @@ object ChatPreviewsDummy {
         name: String,
         message: String,
         timestamp: Instant,
-        delivery: DeliveryState,
         sender: SingleAvatarState,
         emphasized: Boolean = false,
     ) = chatPreview(
@@ -235,7 +220,7 @@ object ChatPreviewsDummy {
         name = name,
         message = message,
         timestamp = timestamp,
-        delivery = delivery,
+        delivery = null,
         sender = ReceivedCommunityState(sender),
         emphasized = emphasized,
     )
@@ -245,7 +230,7 @@ object ChatPreviewsDummy {
         name: String,
         message: String,
         timestamp: Instant,
-        delivery: DeliveryState,
+        delivery: DeliveryState?,
         sender: ChatPreviewSenderState,
         emphasized: Boolean,
     ) = ChatPreviewState(

@@ -23,7 +23,7 @@ import io.ktor.http.contentType
 import io.ktor.resources.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class DefaultAuthenticator(
+class RemoteAuthenticator(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
 ) : Authenticator {

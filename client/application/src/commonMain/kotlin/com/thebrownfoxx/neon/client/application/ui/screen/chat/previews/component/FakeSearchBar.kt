@@ -62,5 +62,6 @@ private fun SearchLabel() {
     Text(
         text = stringResource(Res.string.search_conversations),
         style = MaterialTheme.typography.bodyLarge,
+        maxLines = 1,
     )
 }
