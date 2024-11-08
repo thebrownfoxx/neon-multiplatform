@@ -10,12 +10,12 @@ import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupRepository
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryInviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryMemberRepository
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryPasswordRepository
+import com.thebrownfoxx.neon.server.service.default.DefaultAuthenticator
+import com.thebrownfoxx.neon.server.service.default.DefaultGroupManager
+import com.thebrownfoxx.neon.server.service.default.DefaultJwtProcessor
+import com.thebrownfoxx.neon.server.service.default.DefaultMemberManager
+import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
-import com.thebrownfoxx.neon.server.service.repository.DefaultAuthenticator
-import com.thebrownfoxx.neon.server.service.repository.DefaultGroupManager
-import com.thebrownfoxx.neon.server.service.repository.DefaultJwtProcessor
-import com.thebrownfoxx.neon.server.service.repository.DefaultMemberManager
-import com.thebrownfoxx.neon.server.service.repository.DefaultPermissionChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

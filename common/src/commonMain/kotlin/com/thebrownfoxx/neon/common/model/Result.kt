@@ -67,3 +67,7 @@ inline fun <T, E> Result<T, E>.onSuccess(function: (T) -> Unit) {
 inline fun <T, E> Result<T, E>.onFailure(function: (E) -> Unit) {
     if (this is Failure) function(error)
 }
+
+fun <T> T.asSuccess() = Success(this)
+
+fun <E> E.asFailure() = Failure(this)

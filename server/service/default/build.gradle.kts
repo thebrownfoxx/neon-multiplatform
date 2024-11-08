@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.serialization)
+    implementation(libs.kotlinx.datetime)
     implementation(libs.auth0.jwt)
     implementation(projects.common)
     implementation(projects.common.hash)

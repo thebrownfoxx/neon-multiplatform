@@ -16,9 +16,12 @@ import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.message.MessageRepository
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryAddMessageError
+import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationCountError
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationPreviewError
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationsError
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetMessageError
+import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetMessagesError
+import com.thebrownfoxx.neon.server.repository.message.model.RepositoryUpdateMessageError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,11 +61,19 @@ class InMemoryMessageRepository(
         return result
     }
 
+    override suspend fun update(message: Message): UnitResult<RepositoryUpdateMessageError> {
+        if (!this.messages.value.containsKey(message.id)) return Failure(
+            RepositoryUpdateMessageError.NotFound
+        )
+        this.messages.update { it + (message.id to message) }
+        return unitSuccess()
+    }
+
     override fun getConversations(
         memberId: MemberId,
         count: Int,
         offset: Int,
-        read: Boolean,
+        read: Boolean?,
         descending: Boolean,
     ): Flow<Result<Set<GroupId>, RepositoryGetConversationsError>> {
         // TODO: OMG this is crazy
@@ -70,7 +81,7 @@ class InMemoryMessageRepository(
         return messages.flatMapLatest { messages ->
             val groupMemberIds = messages.values.map { message ->
                 groupMemberRepository.getMembers(message.groupId).map { membersResult ->
-                    val members = membersResult.getOrElse { emptySet() }
+                    val members = membersResult.getOrElse { emptyList() }
                     message to members
                 }
             }
@@ -81,7 +92,7 @@ class InMemoryMessageRepository(
                         .filter { (message, groupMemberIds) ->
                             val sent = message.senderId == memberId
                             val messageRead = message.delivery == Delivery.Read || sent
-                            messageRead == read && memberId in groupMemberIds
+                            (read == null || messageRead == read) && memberId in groupMemberIds
                         }
                         .sortedBy { (message) ->
                             message.timestamp.toEpochMilliseconds() * if (descending) -1 else 1
@@ -94,18 +105,39 @@ class InMemoryMessageRepository(
         }
     }
 
+    override fun getConversationCount(
+        memberId: MemberId,
+        read: Boolean?,
+    ): Flow<Result<Int, RepositoryGetConversationCountError>> {
+        return messages.flatMapLatest { messages ->
+            val groupMemberIds = messages.values.map { message ->
+                groupMemberRepository.getMembers(message.groupId).map { membersResult ->
+                    val members = membersResult.getOrElse { emptyList() }
+                    message to members
+                }
+            }
+
+            combine(groupMemberIds) {
+                Success(
+                    it.count { (message, groupMemberIds) ->
+                        val sent = message.senderId == memberId
+                        val messageRead = message.delivery == Delivery.Read || sent
+                        (read == null || messageRead == read) && memberId in groupMemberIds
+                    }
+                )
+            }
+        }
+    }
+
     override fun getConversationPreview(
         id: GroupId,
-    ): Flow<Result<MessageId, RepositoryGetConversationPreviewError>> {
+    ): Flow<Result<MessageId?, RepositoryGetConversationPreviewError>> {
         return messages.mapLatest { messages ->
             val message = messages.values
                 .filter { it.groupId == id }
                 .maxByOrNull { it.timestamp }
 
-            when (message) {
-                null -> Failure(RepositoryGetConversationPreviewError.NotFound)
-                else -> Success(message.id)
-            }
+            Success(message?.id)
         }
     }
 
@@ -113,12 +145,26 @@ class InMemoryMessageRepository(
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<Result<Set<MessageId>, RepositoryGetMessageError>> {
+    ): Flow<Result<Set<MessageId>, RepositoryGetMessagesError>> {
         return messages.mapLatest { messages ->
             val messageIds = messages.values
                 .filter { it.groupId == groupId }
                 .sortedByDescending { it.timestamp }
                 .coercedSubList(offset..<offset + count)
+                .map { it.id }
+                .toSet()
+
+            Success(messageIds)
+        }
+    }
+
+    override fun getUnreadMessages(
+        groupId: GroupId,
+    ): Flow<Result<Set<MessageId>, RepositoryGetMessagesError>> {
+        return messages.mapLatest { messages ->
+            val messageIds = messages.values
+                .filter { it.groupId == groupId && it.delivery != Delivery.Read }
+                .sortedByDescending { it.timestamp }
                 .map { it.id }
                 .toSet()
 

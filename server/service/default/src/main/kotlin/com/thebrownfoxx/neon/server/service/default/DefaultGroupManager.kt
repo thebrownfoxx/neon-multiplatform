@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.service.repository
+package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Failure

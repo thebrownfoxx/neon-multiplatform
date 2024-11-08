@@ -7,19 +7,49 @@ import com.thebrownfoxx.neon.common.model.MessageId
 import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.server.service.messenger.model.Conversations
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessageError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessagesError
 import com.thebrownfoxx.neon.server.service.messenger.model.MarkConversationAsReadError
+import com.thebrownfoxx.neon.server.service.messenger.model.NewConversationError
 import com.thebrownfoxx.neon.server.service.messenger.model.SendMessageError
 import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
-    val conversations: Flow<Conversations>
+    suspend fun getConversations(
+        actorId: MemberId,
+        count: Int,
+        offset: Int,
+    ): Result<Conversations, GetConversationsError>
 
-    fun getMessage(id: MessageId): Flow<Result<Message, GetMessageError>>
-    fun getConversationPreview(id: GroupId): Flow<Result<MessageId?, GetMessageError>>
-    fun getMessages(groupId: GroupId): Flow<Result<Set<MessageId>, GetMessagesError>>
-    suspend fun newConversation(memberIds: Set<MemberId>)
-    suspend fun sendMessage(groupId: GroupId, content: String) : UnitResult<SendMessageError>
-    suspend fun markConversationAsRead(groupId: GroupId) : UnitResult<MarkConversationAsReadError>
+    fun getMessage(
+        actorId: MemberId,
+        id: MessageId,
+    ): Flow<Result<Message, GetMessageError>>
+
+    fun getConversationPreview(
+        actorId: MemberId,
+        groupId: GroupId,
+    ): Flow<Result<MessageId?, GetConversationPreviewError>>
+
+    suspend fun getMessages(
+        actorId: MemberId,
+        groupId: GroupId,
+        count: Int,
+        offset: Int,
+    ): Result<Set<MessageId>, GetMessagesError>
+
+    suspend fun newConversation(memberIds: Set<MemberId>): UnitResult<NewConversationError>
+
+    suspend fun sendMessage(
+        actorId: MemberId,
+        groupId: GroupId,
+        content: String,
+    ): UnitResult<SendMessageError>
+
+    suspend fun markConversationAsRead(
+        actorId: MemberId,
+        groupId: GroupId,
+    ): UnitResult<MarkConversationAsReadError>
 }

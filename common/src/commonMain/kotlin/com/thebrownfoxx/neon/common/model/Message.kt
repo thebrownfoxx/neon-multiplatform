@@ -41,6 +41,7 @@ object MessageIdSerializer : KSerializer<MessageId> {
     }
 }
 
+// TODO: Maybe server delivery must be different from client delivery (thus also differentiating the whole model?)
 sealed interface Delivery {
     data object Sending: Delivery
     data object Sent : Delivery
