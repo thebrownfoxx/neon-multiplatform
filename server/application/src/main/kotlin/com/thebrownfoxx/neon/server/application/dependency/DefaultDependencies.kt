@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupMemberRepos
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupRepository
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryInviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryMemberRepository
+import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryMessageRepository
 import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryPasswordRepository
 import com.thebrownfoxx.neon.server.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.server.service.default.DefaultGroupManager
@@ -39,6 +40,7 @@ class DefaultDependencies : Dependencies {
     private val groupMemberRepository = InMemoryGroupMemberRepository()
     private val inviteCodeRepository = InMemoryInviteCodeRepository()
     private val passwordRepository = InMemoryPasswordRepository()
+    private val messageRepository = InMemoryMessageRepository(groupMemberRepository)
     private val hasher = MultiplatformHasher()
     private val permissionChecker = DefaultPermissionChecker(groupMemberRepository)
 
@@ -68,6 +70,7 @@ class DefaultDependencies : Dependencies {
                 groupMemberRepository,
                 inviteCodeRepository,
                 passwordRepository,
+                messageRepository,
                 hasher,
             )
         }
