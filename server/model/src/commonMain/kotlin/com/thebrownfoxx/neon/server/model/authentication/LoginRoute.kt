@@ -7,7 +7,7 @@ import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
 
 @Resource("/login")
-class Login
+class LoginRoute
 
 @Serializable
 data class LoginBody(val username: String, val password: String)

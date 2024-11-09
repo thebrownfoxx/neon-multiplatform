@@ -119,9 +119,10 @@ private fun generateInitialServiceData() = serviceData {
             charles.said("I'm sorry, Lando", Instant.fromEpochSeconds(2))
             carlos.said(
                 "im sorry lando. you know im all yours.",
-                Instant.fromEpochSeconds(3)
+                Instant.fromEpochSeconds(3),
             )
         }
+        println(this)
     }
 
     community(
@@ -145,7 +146,7 @@ private fun generateInitialServiceData() = serviceData {
             )
             andrea.said(
                 "ill suck yalls toes if you stop fighting",
-                Instant.fromEpochSeconds(6)
+                Instant.fromEpochSeconds(6),
             )
         }
     }

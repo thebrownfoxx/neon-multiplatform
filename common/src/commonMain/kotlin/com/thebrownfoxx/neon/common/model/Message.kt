@@ -37,7 +37,7 @@ object MessageIdSerializer : KSerializer<MessageId> {
     }
 
     override fun serialize(encoder: Encoder, value: MessageId) {
-        return encoder.encodeString(value.value)
+        encoder.encodeString(value.value)
     }
 }
 

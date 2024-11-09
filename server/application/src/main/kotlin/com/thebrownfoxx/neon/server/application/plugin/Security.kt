@@ -11,11 +11,13 @@ import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
 import io.ktor.server.application.Application
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.basic
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.routing.Route
 
 fun Application.configureSecurity() {
     authentication {
@@ -29,6 +31,18 @@ val MemberIdClaim = JwtClaimKey("member_id")
 enum class AuthenticationType {
     Basic,
     Jwt,
+}
+
+fun Route.authenticate(
+    vararg configurations: AuthenticationType = arrayOf(),
+    optional: Boolean = false,
+    build: Route.() -> Unit
+): Route {
+    return authenticate(
+        configurations = configurations.map { it.name }.toTypedArray(),
+        optional = optional,
+        build = build,
+    )
 }
 
 private fun AuthenticationConfig.basicAuthentication() {

@@ -49,6 +49,6 @@ object GroupIdSerializer : KSerializer<GroupId> {
     }
 
     override fun serialize(encoder: Encoder, value: GroupId) {
-        return encoder.encodeString(value.value)
+        encoder.encodeString(value.value)
     }
 }

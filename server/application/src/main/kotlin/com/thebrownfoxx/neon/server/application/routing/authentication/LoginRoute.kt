@@ -3,9 +3,9 @@ package com.thebrownfoxx.neon.server.application.routing.authentication
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim
-import com.thebrownfoxx.neon.server.model.authentication.Login
 import com.thebrownfoxx.neon.server.model.authentication.LoginBody
 import com.thebrownfoxx.neon.server.model.authentication.LoginResponse
+import com.thebrownfoxx.neon.server.model.authentication.LoginRoute
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
 import com.thebrownfoxx.neon.server.service.jwt.model.claimedAs
 import io.ktor.http.HttpStatusCode
@@ -16,10 +16,10 @@ import io.ktor.server.routing.Route
 
 fun Route.login() {
     with(DependencyProvider.dependencies) {
-        post<Login> {
+        post<LoginRoute> {
             val (username, password) = call.receive<LoginBody>()
-            val memberId = authenticator.login(username, password).getOrElse {
-                return@post when (it) {
+            val memberId = authenticator.login(username, password).getOrElse { error ->
+                return@post when (error) {
                     LoginError.InvalidCredentials -> call.respond(
                         HttpStatusCode.Unauthorized,
                         LoginResponse.InvalidCredentials(),

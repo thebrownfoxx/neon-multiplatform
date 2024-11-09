@@ -35,6 +35,6 @@ object MemberIdSerializer : KSerializer<MemberId> {
     }
 
     override fun serialize(encoder: Encoder, value: MemberId) {
-        return encoder.encodeString(value.value)
+        encoder.encodeString(value.value)
     }
 }
