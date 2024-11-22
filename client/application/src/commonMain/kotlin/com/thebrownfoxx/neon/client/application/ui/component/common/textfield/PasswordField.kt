@@ -25,6 +25,8 @@ fun PasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isError: Boolean = false,
     visibilityHandler: PasswordFieldVisibilityHandler =
         PasswordFieldDefaults.PasswordVisibilityHandler,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -43,6 +45,8 @@ fun PasswordField(
             onValueChange = onValueChange,
             label = label,
             modifier = modifier.onFocusChanged { focused = it.hasFocus },
+            enabled = enabled,
+            isError = isError,
             visualTransformation = visualTransformation,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
@@ -70,7 +74,9 @@ private fun VisibilityToggle(
         else -> Icons.TwoTone.VisibilityOff
     }
 
-    ThemedTextFieldTrailingIcon(visible = focused || value.isNotEmpty()) {
+    TextFieldIcon(
+        visible = focused || value.isNotEmpty(),
+    ) {
         IconButton(onClick = onPasswordVisibleToggle) {
             AnimatedContent(targetState = icon, label = "icon") { targetIcon ->
                 Icon(

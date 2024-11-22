@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CloudOff
+import androidx.compose.material.icons.twotone.Error
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.CredentialsMissing
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.Idle
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.LoggingIn
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.MissingCredential
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.connection_error
 import neon.client.application.generated.resources.connection_error_message
@@ -37,6 +39,8 @@ import neon.client.application.generated.resources.credentials_missing_message
 import neon.client.application.generated.resources.error
 import neon.client.application.generated.resources.logging_in_message
 import neon.client.application.generated.resources.password_missing_message
+import neon.client.application.generated.resources.unknown_error
+import neon.client.application.generated.resources.unknown_error_message
 import neon.client.application.generated.resources.username_missing_message
 import org.jetbrains.compose.resources.stringResource
 
@@ -88,52 +92,70 @@ fun LoginStateIndicator(
                     targetState = cachedStatus,
                     label = "statusContent",
                 ) { targetStatus ->
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        when (targetStatus) {
-                            Idle -> error("This should never happen")
-                            is CredentialsMissing -> {
-                                val text = when {
-                                    targetStatus.usernameMissing && targetStatus.passwordMissing ->
-                                        stringResource(Res.string.credentials_missing_message)
-
-                                    targetStatus.usernameMissing ->
-                                        stringResource(Res.string.username_missing_message)
-
-                                    targetStatus.passwordMissing ->
-                                        stringResource(Res.string.password_missing_message)
-
-                                    else ->
-                                        throw IllegalStateException(
-                                            "CredentialsMissing should have at least one missing " +
-                                                    "credential",
-                                        )
-                                }
-                                Text(text = text)
-                            }
-
-                            LoggingIn -> {
-                                Text(text = stringResource(Res.string.logging_in_message))
-                            }
-
-                            CredentialsIncorrect -> {
-                                InformationCardIconText(
-                                    icon = Icons.TwoTone.Warning,
-                                    iconContentDescription = stringResource(Res.string.error),
-                                    text = stringResource(Res.string.credentials_incorrect_message),
-                                )
-                            }
-
-                            ConnectionError -> {
-                                InformationCardIconText(
-                                    icon = Icons.TwoTone.CloudOff,
-                                    iconContentDescription = stringResource(Res.string.connection_error),
-                                    text = stringResource(Res.string.connection_error_message)
-                                )
-                            }
-                        }
-                    }
+                    Content(targetStatus)
                 }
             }
         }
     }
+}
+
+@Composable
+private fun Content(targetStatus: LoginState) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        when (targetStatus) {
+            Idle -> error("This should never happen")
+            is CredentialsMissing -> CredentialsMissingContent(targetStatus.missingCredential)
+            LoggingIn -> LoggingInContent()
+            CredentialsIncorrect -> CredentialsIncorrectContent()
+            ConnectionError -> ConnectionErrorContent()
+            LoginState.UnknownError -> UnknownErrorContent()
+        }
+    }
+}
+
+@Composable
+private fun CredentialsMissingContent(missingCredential: MissingCredential) {
+    val text = when (missingCredential) {
+        MissingCredential.Both ->
+            stringResource(Res.string.credentials_missing_message)
+
+        MissingCredential.Username ->
+            stringResource(Res.string.username_missing_message)
+
+        MissingCredential.Password ->
+            stringResource(Res.string.password_missing_message)
+    }
+    Text(text = text)
+}
+
+@Composable
+private fun LoggingInContent() {
+    Text(text = stringResource(Res.string.logging_in_message))
+}
+
+@Composable
+private fun CredentialsIncorrectContent() {
+    InformationCardIconText(
+        icon = Icons.TwoTone.Warning,
+        iconContentDescription = stringResource(Res.string.error),
+        text = stringResource(Res.string.credentials_incorrect_message),
+    )
+}
+
+@Composable
+private fun ConnectionErrorContent() {
+    InformationCardIconText(
+        icon = Icons.TwoTone.CloudOff,
+        iconContentDescription = stringResource(Res.string.connection_error),
+        text = stringResource(Res.string.connection_error_message),
+    )
+}
+
+@Composable
+private fun UnknownErrorContent() {
+    InformationCardIconText(
+        icon = Icons.TwoTone.Error,
+        iconContentDescription = stringResource(Res.string.unknown_error),
+        text = stringResource(Res.string.unknown_error_message),
+    )
 }

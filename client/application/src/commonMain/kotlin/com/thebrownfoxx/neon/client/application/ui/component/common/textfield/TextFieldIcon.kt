@@ -31,29 +31,3 @@ fun TextFieldIcon(
         }
     }
 }
-
-@Composable
-fun ThemedTextFieldLeadingIcon(
-    modifier: Modifier = Modifier,
-    visible: Boolean = true,
-    content: @Composable () -> Unit,
-) {
-    TextFieldIcon(
-        modifier = modifier,
-        visible = visible,
-        content = content,
-    )
-}
-
-@Composable
-fun ThemedTextFieldTrailingIcon(
-    modifier: Modifier = Modifier,
-    visible: Boolean = true,
-    content: @Composable () -> Unit,
-) {
-    TextFieldIcon(
-        modifier = modifier,
-        visible = visible,
-        content = content,
-    )
-}

@@ -16,12 +16,12 @@ fun FilledPasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isError: Boolean = false,
     visibilityHandler: PasswordFieldVisibilityHandler =
         PasswordFieldDefaults.PasswordVisibilityHandler,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    enabled: Boolean = true,
-    isError: Boolean = false,
     shape: Shape = MaterialTheme.shapes.small,
     colors: ThemedTextFieldStateColors = TextFieldDefaults.ThemedColors,
 ) {
@@ -36,6 +36,8 @@ fun FilledPasswordField(
             label = label,
             value = value,
             onValueChange = onValueChange,
+            enabled = enabled,
+            isError = isError,
             visibilityHandler = visibilityHandler,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,

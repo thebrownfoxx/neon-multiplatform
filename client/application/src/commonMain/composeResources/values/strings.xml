@@ -13,6 +13,8 @@
     <string name="credentials_incorrect_message">The username or password you entered is incorrect</string>
     <string name="connection_error">Connection Error</string>
     <string name="connection_error_message">There was a connection error</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="unknown_error_message">An error has occurred</string>
     <string name="start_a_conversation">Start a conversation</string>
     <string name="nudged_conversations">Catch up</string>
     <string name="unread_conversations">Unread messages</string>

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenNavigation
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.MissingCredential
 import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.client.service.authenticator.model.LoginError
 import com.thebrownfoxx.neon.common.model.onFailure
@@ -18,59 +19,60 @@ import kotlinx.coroutines.launch
 class LoginViewModel(private val authenticator: Authenticator) : ViewModel() {
     private val navigation = MutableSharedFlow<LoginScreenNavigation>()
 
-    private val mutableState = MutableStateFlow(LoginScreenState())
-    val state = mutableState.asStateFlow()
+    private val _state = MutableStateFlow(LoginScreenState())
+    val state = _state.asStateFlow()
 
     fun onUsernameChange(newUsername: String) {
-        mutableState.update { it.copy(username = newUsername) }
+        _state.update { it.copy(username = newUsername) }
     }
 
     fun onPasswordChange(newPassword: String) {
-        mutableState.update { it.copy(password = newPassword) }
+        _state.update { it.copy(password = newPassword) }
     }
 
     fun onLogin() {
         viewModelScope.launch {
-            val state = mutableState.value
+            val state = _state.value
 
             val usernameMissing = state.username.isBlank()
             val passwordMissing = state.password.isEmpty()
-            if (usernameMissing || passwordMissing) {
-                this@LoginViewModel.mutableState.update {
-                    it.copy(
-                        loginState = LoginState.CredentialsMissing(
-                            usernameMissing = usernameMissing,
-                            passwordMissing = passwordMissing,
-                        )
-                    )
+            val missingCredential = when {
+                usernameMissing && passwordMissing -> MissingCredential.Both
+                usernameMissing -> MissingCredential.Username
+                passwordMissing -> MissingCredential.Password
+                else -> null
+            }
+            if (missingCredential != null) {
+                this@LoginViewModel._state.update {
+                    it.copy(loginState = LoginState.CredentialsMissing(missingCredential))
                 }
                 return@launch
             }
 
-            mutableState.update {
+            _state.update {
                 it.copy(loginState = LoginState.LoggingIn)
             }
 
             val result = authenticator.login(
-                username = mutableState.value.username,
-                password = mutableState.value.password,
+                username = _state.value.username,
+                password = _state.value.password,
             )
 
             result.onFailure { error ->
                 when (error) {
                     LoginError.InvalidCredentials ->
-                        mutableState.update { it.copy(loginState = LoginState.CredentialsIncorrect) }
+                        _state.update { it.copy(loginState = LoginState.CredentialsIncorrect) }
 
                     LoginError.ConnectionError ->
-                        mutableState.update { it.copy(loginState = LoginState.ConnectionError) }
+                        _state.update { it.copy(loginState = LoginState.ConnectionError) }
 
                     LoginError.UnknownError ->
-                        mutableState.update { it.copy(loginState = LoginState.ConnectionError) }
+                        _state.update { it.copy(loginState = LoginState.UnknownError) }
                 }
             }
 
             result.onSuccess {
-                mutableState.update { it.copy(loginState = LoginState.Idle) }
+                _state.update { it.copy(loginState = LoginState.Idle) }
             }
         }
     }

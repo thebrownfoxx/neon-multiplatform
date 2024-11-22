@@ -9,12 +9,26 @@ import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 
 @Preview
 @Composable
-private fun FilledPasswordFieldPreview() {
+private fun Preview() {
     NeonTheme {
         FilledPasswordField(
             label = "Password",
             value = "password",
             onValueChange = {},
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DisabledPreview() {
+    NeonTheme {
+        FilledPasswordField(
+            label = "Password",
+            value = "password",
+            onValueChange = {},
+            enabled = false,
             modifier = Modifier.padding(16.dp),
         )
     }

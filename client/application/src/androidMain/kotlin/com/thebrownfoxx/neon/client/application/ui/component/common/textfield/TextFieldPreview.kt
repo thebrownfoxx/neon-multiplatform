@@ -101,7 +101,7 @@ private fun WithLeadingIconPreview() {
         TextField(
             label = "Username",
             leadingIcon = {
-                ThemedTextFieldLeadingIcon {
+                TextFieldIcon {
                     Icon(imageVector = Icons.TwoTone.Person, contentDescription = null)
                 }
             },
@@ -118,7 +118,7 @@ private fun WithTrailingIconPreview() {
         TextField(
             label = "Password",
             trailingIcon = {
-                ThemedTextFieldTrailingIcon {
+                TextFieldIcon {
                     IconButton(onClick = {}) {
                         Icon(imageVector = Icons.TwoTone.VisibilityOff, contentDescription = null)
                     }

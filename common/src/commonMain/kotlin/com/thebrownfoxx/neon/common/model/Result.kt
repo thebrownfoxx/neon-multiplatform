@@ -1,5 +1,13 @@
 package com.thebrownfoxx.neon.common.model
 
+inline fun <T> runFailing(function: () -> T): Result<T, Exception> {
+    return try {
+        Success(function())
+    } catch (e: Exception) {
+        Failure(e)
+    }
+}
+
 typealias UnitResult<E> = Result<Unit, E>
 
 typealias UnitSuccess = Success<Unit>

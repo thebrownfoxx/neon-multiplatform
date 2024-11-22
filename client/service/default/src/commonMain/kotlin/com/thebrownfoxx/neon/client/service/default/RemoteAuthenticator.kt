@@ -9,7 +9,9 @@ import com.thebrownfoxx.neon.client.service.jwt.model.SetTokenError
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.onFailure
+import com.thebrownfoxx.neon.common.model.runFailing
 import com.thebrownfoxx.neon.common.model.unitSuccess
 import com.thebrownfoxx.neon.server.model.Response
 import com.thebrownfoxx.neon.server.model.authentication.LoginBody
@@ -30,15 +32,18 @@ class RemoteAuthenticator(
     override val loggedInMember = MutableStateFlow<MemberId?>(null)
 
     override suspend fun login(username: String, password: String): UnitResult<LoginError> {
-        val response = httpClient.post(Login()) {
-            contentType(ContentType.Application.Json)
-            setBody(LoginBody(username, password))
-        }
+        val response = runFailing {
+            httpClient.post(Login()) {
+                contentType(ContentType.Application.Json)
+                setBody(LoginBody(username, password))
+            }
+        }.getOrElse { return Failure(LoginError.ConnectionError) }
+
         val body = response.bodyOrNull<Response>()
 
         return when (enumValueOfOrNull<LoginResponse.Status>(body?.status)) {
             LoginResponse.Status.InvalidCredentials -> Failure(LoginError.InvalidCredentials)
-            LoginResponse.Status.InternalConnectionError -> Failure(LoginError.ConnectionError)
+            LoginResponse.Status.InternalConnectionError -> Failure(LoginError.UnknownError)
             null -> Failure(LoginError.UnknownError)
             LoginResponse.Status.Successful -> {
                 val successfulBody = response.body<LoginResponse.Successful>()

@@ -12,7 +12,7 @@ import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 @Composable
 private fun LeadingPreview() {
     NeonTheme {
-        ThemedTextFieldLeadingIcon {
+        TextFieldIcon {
             Icon(imageVector = Icons.TwoTone.Man, contentDescription = null)
         }
     }
@@ -22,7 +22,7 @@ private fun LeadingPreview() {
 @Composable
 private fun TrailingPreview() {
     NeonTheme {
-        ThemedTextFieldTrailingIcon {
+        TextFieldIcon {
             Icon(imageVector = Icons.TwoTone.Man, contentDescription = null)
         }
     }
