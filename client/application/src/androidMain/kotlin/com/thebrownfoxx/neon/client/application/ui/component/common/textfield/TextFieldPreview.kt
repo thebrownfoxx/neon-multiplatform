@@ -1,4 +1,4 @@
-@file:OptIn(InternalComponentApi::class, InternalComponentApi::class)
+@file:OptIn(InternalComponentApi::class)
 
 package com.thebrownfoxx.neon.client.application.ui.component.common.textfield
 
