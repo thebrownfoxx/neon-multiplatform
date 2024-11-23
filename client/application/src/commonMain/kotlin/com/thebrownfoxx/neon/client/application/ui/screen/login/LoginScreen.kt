@@ -7,10 +7,7 @@ import com.thebrownfoxx.neon.client.application.ui.extension.LocalWindowSizeClas
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.variant.CompactLoginScreen
-import com.thebrownfoxx.neon.client.application.ui.screen.login.variant.ExpandedLoginScreen
-import com.thebrownfoxx.neon.client.application.ui.screen.login.variant.MediumLoginScreen
-import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.thebrownfoxx.neon.client.application.ui.screen.login.variant.WideLoginScreen
 
 // TODO: If the user insists on logging in with missing credentials, reemphasize the warning.
 // TODO: If there is an error, open the relevant text field
@@ -23,33 +20,16 @@ fun LoginScreen(
     val windowSizeClass = LocalWindowSizeClass.current
 
     when (windowSizeClass?.widthSizeClass) {
-        WindowWidthSizeClass.Expanded -> ExpandedLoginScreen(
+        WindowWidthSizeClass.Compact -> CompactLoginScreen(
             state = state,
             eventHandler = eventHandler,
             modifier = modifier,
         )
 
-        WindowWidthSizeClass.Medium -> MediumLoginScreen(
+        else -> WideLoginScreen(
             state = state,
             eventHandler = eventHandler,
             modifier = modifier,
-        )
-
-        else -> CompactLoginScreen(
-            state = state,
-            eventHandler = eventHandler,
-            modifier = modifier,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun Preview() {
-    NeonTheme {
-        LoginScreen(
-            state = LoginScreenState(),
-            eventHandler = LoginScreenEventHandler.Blank,
         )
     }
 }

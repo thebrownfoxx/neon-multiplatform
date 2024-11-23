@@ -10,7 +10,7 @@ import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 @Composable
 private fun Preview() {
     NeonTheme {
-        ExpandedLoginScreen(
+        WideLoginScreen(
             state = LoginScreenState(),
             eventHandler = LoginScreenEventHandler.Blank,
         )

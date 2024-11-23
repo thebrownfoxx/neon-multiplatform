@@ -8,6 +8,8 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -24,3 +26,15 @@ private fun Context.getActivityOrNull(): Activity? {
     }
     return null
 }
+
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+internal val CompactWindowSizeClass
+    get() = WindowSizeClass.calculateFromSize(DpSize(width = 400.dp, height = 800.dp))
+
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+internal val MediumWindowSizeClass
+    get() = WindowSizeClass.calculateFromSize(DpSize(width = 700.dp, height = 600.dp))
+
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+internal val ExpandedWindowSizeClass
+    get() = WindowSizeClass.calculateFromSize(DpSize(width = 1000.dp, height = 800.dp))

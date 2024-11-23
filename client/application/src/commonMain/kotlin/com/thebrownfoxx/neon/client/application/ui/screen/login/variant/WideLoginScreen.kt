@@ -16,22 +16,22 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScree
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenState
 
 @Composable
-fun ExpandedLoginScreen(
+fun WideLoginScreen(
     state: LoginScreenState,
     eventHandler: LoginScreenEventHandler,
     modifier: Modifier = Modifier,
 ) {
-    val contentPadding = 32.dp
+    val contentPadding = 48.dp.padding
 
     Surface(modifier = modifier) {
-        LoginScreenBox(contentPadding = contentPadding.padding) {
+        LoginScreenBox(contentPadding = contentPadding) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.Center)
                     .sizeIn(maxWidth = 512.dp),
-                shape = RoundedCornerShape(contentPadding),
+                shape = RoundedCornerShape(24.dp),
             ) {
                 LoginScreenContent(
                     state = state,
