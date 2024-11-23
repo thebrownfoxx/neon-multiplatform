@@ -12,7 +12,7 @@ kotlincrypto-random = "0.3.2"
 # Server
 ktor = "3.0.0"
 logback = "1.5.11"
-exposed = "0.52.0"
+exposed = "0.56.0"
 h2 = "2.1.214"
 postgresql = "42.7.1"
 auth0-jwt = "4.4.0"
@@ -73,7 +73,7 @@ auth0-jwt = { module = "com.auth0:java-jwt", version.ref = "auth0-jwt" }
 # Ktor Client
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-resources = { module = "io.ktor:ktor-client-resources", version.ref = "ktor" }
 
 # Client

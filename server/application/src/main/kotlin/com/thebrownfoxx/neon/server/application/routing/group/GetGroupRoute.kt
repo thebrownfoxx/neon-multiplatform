@@ -1,13 +1,13 @@
 package com.thebrownfoxx.neon.server.application.routing.group
 
-import com.thebrownfoxx.neon.common.model.ChatGroup
-import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.AuthenticationType
 import com.thebrownfoxx.neon.server.application.plugin.authenticate
-import com.thebrownfoxx.neon.server.model.group.GetGroupResponse
-import com.thebrownfoxx.neon.server.model.group.GroupRoute
+import com.thebrownfoxx.neon.server.model.ChatGroup
+import com.thebrownfoxx.neon.server.model.Community
+import com.thebrownfoxx.neon.server.route.group.GetGroupResponse
+import com.thebrownfoxx.neon.server.route.group.GroupRoute
 import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get

@@ -14,6 +14,7 @@ kotlin {
             implementation(libs.ktor.client.resources)
             implementation(projects.common)
             implementation(projects.server.model)
+            implementation(projects.server.route)
             implementation(projects.client.service)
         }
         commonTest.dependencies {

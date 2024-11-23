@@ -1,12 +1,9 @@
 package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.extension.asFlow
-import com.thebrownfoxx.neon.common.model.ChatGroup
-import com.thebrownfoxx.neon.common.model.Delivery
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.model.MessageId
 import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.Success
@@ -17,6 +14,9 @@ import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.mapError
 import com.thebrownfoxx.neon.common.model.onFailure
 import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.server.model.ChatGroup
+import com.thebrownfoxx.neon.server.model.Delivery
+import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryGetGroupError

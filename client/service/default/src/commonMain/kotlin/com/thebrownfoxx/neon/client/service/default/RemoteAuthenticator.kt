@@ -13,9 +13,9 @@ import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.onFailure
 import com.thebrownfoxx.neon.common.model.runFailing
 import com.thebrownfoxx.neon.common.model.unitSuccess
-import com.thebrownfoxx.neon.server.model.Response
-import com.thebrownfoxx.neon.server.model.authentication.LoginBody
-import com.thebrownfoxx.neon.server.model.authentication.LoginResponse
+import com.thebrownfoxx.neon.server.route.Response
+import com.thebrownfoxx.neon.server.route.authentication.LoginBody
+import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.post

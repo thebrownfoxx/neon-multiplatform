@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.CredentialsMissing
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.Idle
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState.LoggingIn
+import com.thebrownfoxx.neon.client.application.ui.screen.login.state.MissingCredential
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 
 @Preview
@@ -27,10 +28,7 @@ private fun IdleLoginPreview() {
 private fun CredentialsMissingPreview() {
     NeonTheme {
         LoginStateIndicator(
-            state = CredentialsMissing(
-                usernameMissing = true,
-                passwordMissing = true,
-            ),
+            state = CredentialsMissing(missingCredential = MissingCredential.Both),
             padding = 16.dp.padding,
         )
     }

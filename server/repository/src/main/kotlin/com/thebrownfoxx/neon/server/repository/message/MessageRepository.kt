@@ -2,10 +2,10 @@ package com.thebrownfoxx.neon.server.repository.message
 
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.model.MessageId
 import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryAddMessageError
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationCountError
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationPreviewError

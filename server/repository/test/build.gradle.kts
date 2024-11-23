@@ -10,6 +10,7 @@ dependencies {
     implementation(projects.common)
     implementation(projects.common.must)
     implementation(projects.common.hash)
+    implementation(projects.server.model)
     implementation(projects.server.repository)
     implementation(libs.kotlin.test.junit)
 }

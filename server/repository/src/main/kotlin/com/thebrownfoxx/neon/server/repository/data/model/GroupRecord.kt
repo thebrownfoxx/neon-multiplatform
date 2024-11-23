@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.data.model
 
-import com.thebrownfoxx.neon.common.model.ChatGroup
-import com.thebrownfoxx.neon.common.model.Community
-import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.MemberId
+import com.thebrownfoxx.neon.server.model.ChatGroup
+import com.thebrownfoxx.neon.server.model.Community
+import com.thebrownfoxx.neon.server.model.Group
 
 data class ChatGroupRecord(
     override val group: ChatGroup,

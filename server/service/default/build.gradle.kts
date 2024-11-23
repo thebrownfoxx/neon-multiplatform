@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.auth0.jwt)
     implementation(projects.common)
     implementation(projects.common.hash)
+    implementation(projects.server.model)
     implementation(projects.server.service)
     implementation(projects.server.repository)
     testImplementation(libs.kotlin.test)

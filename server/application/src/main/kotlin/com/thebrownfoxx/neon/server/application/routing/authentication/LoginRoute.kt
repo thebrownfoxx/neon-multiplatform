@@ -3,9 +3,9 @@ package com.thebrownfoxx.neon.server.application.routing.authentication
 import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim
-import com.thebrownfoxx.neon.server.model.authentication.LoginBody
-import com.thebrownfoxx.neon.server.model.authentication.LoginResponse
-import com.thebrownfoxx.neon.server.model.authentication.LoginRoute
+import com.thebrownfoxx.neon.server.route.authentication.LoginBody
+import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
+import com.thebrownfoxx.neon.server.route.authentication.LoginRoute
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
 import com.thebrownfoxx.neon.server.service.jwt.model.claimedAs
 import io.ktor.http.HttpStatusCode

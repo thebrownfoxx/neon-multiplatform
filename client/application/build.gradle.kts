@@ -40,7 +40,7 @@ kotlin {
             implementation(libs.coil)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)
-            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.client.cio)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(projects.common)
@@ -49,6 +49,7 @@ kotlin {
         }
 
         androidMain.dependencies {
+            implementation(compose.preview)
             implementation(libs.androidx.activity.ktx)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.compose.material3)
@@ -93,9 +94,6 @@ android {
     buildFeatures {
         compose = true
     }
-    dependencies {
-        debugImplementation(compose.uiTooling)
-    }
 }
 
 compose.desktop {
@@ -108,4 +106,8 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+dependencies {
+    debugImplementation(compose.uiTooling)
 }

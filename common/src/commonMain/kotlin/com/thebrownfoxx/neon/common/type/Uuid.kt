@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid as KUuid
 
-internal val IgnoredUuid = Uuid("IGNORED")
+val IgnoredUuid = Uuid("IGNORED")
 
 @OptIn(ExperimentalUuidApi::class)
 @Serializable

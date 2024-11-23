@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(projects.common)
     implementation(projects.common.hash)
+    implementation(projects.server.model)
     implementation(projects.server.repository)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

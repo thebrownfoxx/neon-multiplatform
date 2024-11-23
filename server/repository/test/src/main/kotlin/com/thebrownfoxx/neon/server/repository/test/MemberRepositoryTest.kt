@@ -1,13 +1,13 @@
 package com.thebrownfoxx.neon.server.repository.test
 
 import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
+import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.repository.member.MemberRepository
 import com.thebrownfoxx.neon.server.repository.member.model.RepositoryAddMemberError
 import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberError

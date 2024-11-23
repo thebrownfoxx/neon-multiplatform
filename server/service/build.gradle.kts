@@ -13,6 +13,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(projects.common.must)
     testImplementation(projects.common.hash)
+    implementation(projects.server.model)
     testImplementation(projects.server.repository)
     testImplementation(projects.server.repository.inmemory)
 }

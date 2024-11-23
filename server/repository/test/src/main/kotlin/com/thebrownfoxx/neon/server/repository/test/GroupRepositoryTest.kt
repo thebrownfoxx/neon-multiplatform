@@ -1,7 +1,5 @@
 package com.thebrownfoxx.neon.server.repository.test
 
-import com.thebrownfoxx.neon.common.model.ChatGroup
-import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Failure
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.Success
@@ -9,6 +7,8 @@ import com.thebrownfoxx.neon.common.model.UnitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
+import com.thebrownfoxx.neon.server.model.ChatGroup
+import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryGetGroupError

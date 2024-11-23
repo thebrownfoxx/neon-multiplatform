@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.model
+package com.thebrownfoxx.neon.server.route
 
 import kotlinx.serialization.Serializable
 

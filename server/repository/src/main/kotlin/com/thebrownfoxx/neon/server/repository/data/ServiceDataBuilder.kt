@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.Message
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.data.model.GroupRecord
 import com.thebrownfoxx.neon.server.repository.data.model.MemberRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData

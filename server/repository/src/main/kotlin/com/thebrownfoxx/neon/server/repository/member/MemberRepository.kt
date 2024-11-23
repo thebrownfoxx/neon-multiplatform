@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.member
 
-import com.thebrownfoxx.neon.common.model.Member
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.repository.member.model.RepositoryAddMemberError
 import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberError
 import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberIdError

@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.model.group
+package com.thebrownfoxx.neon.server.route.group
 
 import com.thebrownfoxx.neon.common.model.GroupId
 import io.ktor.resources.Resource

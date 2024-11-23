@@ -1,8 +1,6 @@
 package com.thebrownfoxx.neon.server.service.default
 
-import com.thebrownfoxx.neon.common.model.Community
 import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Result
@@ -12,6 +10,8 @@ import com.thebrownfoxx.neon.common.model.getOrElse
 import com.thebrownfoxx.neon.common.model.map
 import com.thebrownfoxx.neon.common.model.mapError
 import com.thebrownfoxx.neon.common.model.onFailure
+import com.thebrownfoxx.neon.server.model.Community
+import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryGetGroupError

@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.data.model
 
-import com.thebrownfoxx.neon.common.model.Message
+import com.thebrownfoxx.neon.server.model.Message
 
 data class ServiceData(
     val memberRecords: List<MemberRecord>,

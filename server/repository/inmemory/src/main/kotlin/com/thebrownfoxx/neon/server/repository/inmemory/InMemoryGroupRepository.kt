@@ -2,12 +2,12 @@ package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.annotation.TestApi
 import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.Success
 import com.thebrownfoxx.neon.common.model.UnitResult
 import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryGetGroupError

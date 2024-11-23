@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.server.service.group
 
-import com.thebrownfoxx.neon.common.model.Group
 import com.thebrownfoxx.neon.common.model.GroupId
 import com.thebrownfoxx.neon.common.model.MemberId
 import com.thebrownfoxx.neon.common.model.Result
 import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.service.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.server.service.group.model.CreateCommunityError
 import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
