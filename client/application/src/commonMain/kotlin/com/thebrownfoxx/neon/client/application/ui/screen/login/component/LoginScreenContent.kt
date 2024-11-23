@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.Spacer
+import com.thebrownfoxx.neon.client.application.ui.component.Wordmark
 import com.thebrownfoxx.neon.client.application.ui.component.common.Button
 import com.thebrownfoxx.neon.client.application.ui.component.common.ButtonIconText
 import com.thebrownfoxx.neon.client.application.ui.component.common.ThemedButtonDefaults
@@ -44,7 +45,9 @@ fun LoginScreenContent(
     with(state) {
         with(eventHandler) {
             Column(modifier = modifier) {
+                Spacer(height = 16.dp)
                 Wordmark()
+                Spacer(height = 32.dp)
                 UsernameField(
                     username = username,
                     onUsernameChange = onUsernameChange,

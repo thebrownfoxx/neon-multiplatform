@@ -2,6 +2,8 @@ package com.thebrownfoxx.neon.client.application.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import com.thebrownfoxx.neon.client.application.ui.extension.LocalInDarkTheme
 
 @Composable
 actual fun NeonTheme(
@@ -14,9 +16,11 @@ actual fun NeonTheme(
         else -> lightScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content
-    )
+    CompositionLocalProvider(LocalInDarkTheme provides darkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content,
+        )
+    }
 }
