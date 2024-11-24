@@ -1,13 +1,13 @@
 package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.hash.Hasher
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.getOrElse
-import com.thebrownfoxx.neon.common.model.mapError
-import com.thebrownfoxx.neon.common.model.onFailure
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.mapError
+import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.groupmember.model.RepositoryAddGroupMemberError
@@ -36,9 +36,9 @@ class DefaultMemberManager(
     private val usernameMaxLength = 16
     private val passwordMinLength = 8
 
-    override fun getMember(id: MemberId): Flow<Result<Member, GetMemberError>> {
-        return memberRepository.get(id).mapLatest { memberResult ->
-            memberResult.mapError { error ->
+    override fun getMember(id: MemberId): Flow<Outcome<Member, GetMemberError>> {
+        return memberRepository.get(id).mapLatest { memberOutcome ->
+            memberOutcome.mapError { error ->
                 when (error) {
                     RepositoryGetMemberError.NotFound -> GetMemberError.NotFound
                     RepositoryGetMemberError.ConnectionError -> GetMemberError.ConnectionError
@@ -51,7 +51,7 @@ class DefaultMemberManager(
         inviteCode: String,
         username: String,
         password: String,
-    ): Result<MemberId, RegisterMemberError> {
+    ): Outcome<MemberId, RegisterMemberError> {
         val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode).getOrElse {
             return Failure(
                 when (it) {

@@ -1,7 +1,5 @@
-package com.thebrownfoxx.neon.common.model
+package com.thebrownfoxx.neon.common.type.id
 
-import com.thebrownfoxx.neon.common.type.Id
-import com.thebrownfoxx.neon.common.type.Uuid
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind

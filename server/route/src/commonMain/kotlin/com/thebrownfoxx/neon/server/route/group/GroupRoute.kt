@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.route.group
 
-import com.thebrownfoxx.neon.common.model.GroupId
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import io.ktor.resources.Resource
 
 @Resource("/group")

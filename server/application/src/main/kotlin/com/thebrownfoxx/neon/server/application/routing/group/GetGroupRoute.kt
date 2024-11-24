@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.application.routing.group
 
-import com.thebrownfoxx.neon.common.model.getOrElse
+import com.thebrownfoxx.neon.common.type.getOrElse
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.AuthenticationType
 import com.thebrownfoxx.neon.server.application.plugin.authenticate

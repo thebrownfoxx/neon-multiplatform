@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.application.dependency
 
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
-import com.thebrownfoxx.neon.common.model.MemberId
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.server.application.routing.websocket.ktor.KtorWebSocketManager
 import com.thebrownfoxx.neon.server.repository.data.integrate

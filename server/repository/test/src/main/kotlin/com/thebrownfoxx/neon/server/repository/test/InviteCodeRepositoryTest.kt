@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.test
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeError
@@ -66,8 +66,8 @@ abstract class InviteCodeRepositoryTest {
         val groupId = GroupId()
         val inviteCode = "f4"
 
-        val setResult = inviteCodeRepository.set(groupId, inviteCode)
-        setResult mustBe unitSuccess()
+        val setOutcome = inviteCodeRepository.set(groupId, inviteCode)
+        setOutcome mustBe unitSuccess()
 
         val actualInviteCode = inviteCodeRepository.get(groupId)
         actualInviteCode mustBe Success(inviteCode)
@@ -78,8 +78,8 @@ abstract class InviteCodeRepositoryTest {
         val groupId = GroupId()
         val inviteCode = initialInviteCodes.first().value
 
-        val setResult = inviteCodeRepository.set(groupId, inviteCode)
-        setResult mustBe Failure(RepositorySetInviteCodeError.DuplicateInviteCode)
+        val setOutcome = inviteCodeRepository.set(groupId, inviteCode)
+        setOutcome mustBe Failure(RepositorySetInviteCodeError.DuplicateInviteCode)
     }
 }
 

@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.test
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
@@ -52,8 +52,8 @@ abstract class GroupRepositoryTest {
     fun getShouldReturnGroup() {
         runTest {
             for (expectedGroup in initialGroups) {
-                val actualGroupResult = groupRepository.get(expectedGroup.id).first()
-                actualGroupResult mustBe Success(expectedGroup)
+                val actualGroupOutcome = groupRepository.get(expectedGroup.id).first()
+                actualGroupOutcome mustBe Success(expectedGroup)
             }
         }
     }
@@ -61,8 +61,8 @@ abstract class GroupRepositoryTest {
     @Test
     fun getShouldReturnNotFoundIfGroupDoesNotExist() {
         runTest {
-            val actualGroupResult = groupRepository.get(GroupId()).first()
-            actualGroupResult mustBe Failure(RepositoryGetGroupError.NotFound)
+            val actualGroupOutcome = groupRepository.get(GroupId()).first()
+            actualGroupOutcome mustBe Failure(RepositoryGetGroupError.NotFound)
         }
     }
 
@@ -75,11 +75,11 @@ abstract class GroupRepositoryTest {
                 god = false,
             )
 
-            val addResult = groupRepository.add(expectedGroup)
-            addResult.mustBeA<UnitSuccess>()
+            val addOutcome = groupRepository.add(expectedGroup)
+            addOutcome.mustBeA<UnitSuccess>()
 
-            val actualGroupResult = groupRepository.get(expectedGroup.id).first()
-            actualGroupResult mustBe Success(expectedGroup)
+            val actualGroupOutcome = groupRepository.get(expectedGroup.id).first()
+            actualGroupOutcome mustBe Success(expectedGroup)
         }
     }
 
@@ -88,8 +88,8 @@ abstract class GroupRepositoryTest {
         runTest {
             val duplicateGroup = ChatGroup(id = initialGroups[0].id)
 
-            val actualAddResult = groupRepository.add(duplicateGroup)
-            actualAddResult mustBe Failure(RepositoryAddGroupError.DuplicateId)
+            val actualAddOutcome = groupRepository.add(duplicateGroup)
+            actualAddOutcome mustBe Failure(RepositoryAddGroupError.DuplicateId)
         }
     }
 }

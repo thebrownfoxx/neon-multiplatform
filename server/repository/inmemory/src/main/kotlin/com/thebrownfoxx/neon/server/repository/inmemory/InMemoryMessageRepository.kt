@@ -2,15 +2,15 @@ package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.annotation.TestApi
 import com.thebrownfoxx.neon.common.extension.coercedSubList
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.MessageId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.getOrElse
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
@@ -40,7 +40,7 @@ class InMemoryMessageRepository(
     @TestApi
     val messageList = messages.value.map { it.value }
 
-    override fun get(id: MessageId): Flow<Result<Message, RepositoryGetMessageError>> {
+    override fun get(id: MessageId): Flow<Outcome<Message, RepositoryGetMessageError>> {
         return messages.mapLatest { messages ->
             when (val message = messages[id]) {
                 null -> Failure(RepositoryGetMessageError.NotFound)
@@ -49,19 +49,17 @@ class InMemoryMessageRepository(
         }
     }
 
-    override suspend fun add(message: Message): UnitResult<RepositoryAddMessageError> {
-        val result = when {
+    override suspend fun add(message: Message): UnitOutcome<RepositoryAddMessageError> {
+        return when {
             messages.value.containsKey(message.id) -> Failure(RepositoryAddMessageError.DuplicateId)
             else -> {
                 messages.update { it + (message.id to message) }
                 unitSuccess()
             }
         }
-
-        return result
     }
 
-    override suspend fun update(message: Message): UnitResult<RepositoryUpdateMessageError> {
+    override suspend fun update(message: Message): UnitOutcome<RepositoryUpdateMessageError> {
         if (!this.messages.value.containsKey(message.id)) return Failure(
             RepositoryUpdateMessageError.NotFound
         )
@@ -75,13 +73,13 @@ class InMemoryMessageRepository(
         offset: Int,
         read: Boolean?,
         descending: Boolean,
-    ): Flow<Result<Set<GroupId>, RepositoryGetConversationsError>> {
+    ): Flow<Outcome<Set<GroupId>, RepositoryGetConversationsError>> {
         // TODO: OMG this is crazy
 
         return messages.flatMapLatest { messages ->
             val groupMemberIds = messages.values.map { message ->
-                groupMemberRepository.getMembers(message.groupId).map { membersResult ->
-                    val members = membersResult.getOrElse { emptyList() }
+                groupMemberRepository.getMembers(message.groupId).map { membersOutcome ->
+                    val members = membersOutcome.getOrElse { emptyList() }
                     message to members
                 }
             }
@@ -108,11 +106,11 @@ class InMemoryMessageRepository(
     override fun getConversationCount(
         memberId: MemberId,
         read: Boolean?,
-    ): Flow<Result<Int, RepositoryGetConversationCountError>> {
+    ): Flow<Outcome<Int, RepositoryGetConversationCountError>> {
         return messages.flatMapLatest { messages ->
             val groupMemberIds = messages.values.map { message ->
-                groupMemberRepository.getMembers(message.groupId).map { membersResult ->
-                    val members = membersResult.getOrElse { emptyList() }
+                groupMemberRepository.getMembers(message.groupId).map { membersOutcome ->
+                    val members = membersOutcome.getOrElse { emptyList() }
                     message to members
                 }
             }
@@ -131,7 +129,7 @@ class InMemoryMessageRepository(
 
     override fun getConversationPreview(
         id: GroupId,
-    ): Flow<Result<MessageId?, RepositoryGetConversationPreviewError>> {
+    ): Flow<Outcome<MessageId?, RepositoryGetConversationPreviewError>> {
         return messages.mapLatest { messages ->
             val message = messages.values
                 .filter { it.groupId == id }
@@ -145,7 +143,7 @@ class InMemoryMessageRepository(
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<Result<Set<MessageId>, RepositoryGetMessagesError>> {
+    ): Flow<Outcome<Set<MessageId>, RepositoryGetMessagesError>> {
         return messages.mapLatest { messages ->
             val messageIds = messages.values
                 .filter { it.groupId == groupId }
@@ -160,7 +158,7 @@ class InMemoryMessageRepository(
 
     override fun getUnreadMessages(
         groupId: GroupId,
-    ): Flow<Result<Set<MessageId>, RepositoryGetMessagesError>> {
+    ): Flow<Outcome<Set<MessageId>, RepositoryGetMessagesError>> {
         return messages.mapLatest { messages ->
             val messageIds = messages.values
                 .filter { it.groupId == groupId && it.delivery != Delivery.Read }

@@ -1,12 +1,12 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.groupmember.model.RepositoryAddGroupMemberError
 import com.thebrownfoxx.neon.server.repository.groupmember.model.RepositoryGetAdminsError
@@ -24,7 +24,7 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
 
     override fun getMembers(
         groupId: GroupId,
-    ): Flow<Result<List<MemberId>, RepositoryGetGroupMembersError>> {
+    ): Flow<Outcome<List<MemberId>, RepositoryGetGroupMembersError>> {
         return groupMembers.mapLatest { groupMembers ->
             Success(groupMembers[groupId]?.map { it.id } ?: emptyList())
         }
@@ -32,7 +32,7 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
 
     override fun getGroups(
         memberId: MemberId,
-    ): Flow<Result<List<GroupId>, RepositoryGetMemberGroupsError>> {
+    ): Flow<Outcome<List<GroupId>, RepositoryGetMemberGroupsError>> {
         return groupMembers.mapLatest { groupMembers ->
             val groups = groupMembers.filter { (_, members) ->
                 members.any { it.id == memberId }
@@ -44,7 +44,7 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
 
     override fun getAdmins(
         groupId: GroupId,
-    ): Flow<Result<List<MemberId>, RepositoryGetAdminsError>> {
+    ): Flow<Outcome<List<MemberId>, RepositoryGetAdminsError>> {
         return groupMembers.mapLatest { groupMembers ->
             val admins = groupMembers[groupId]?.filter { it.admin }?.map { it.id } ?: emptyList()
             Success(admins)
@@ -55,7 +55,7 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
         groupId: GroupId,
         memberId: MemberId,
         admin: Boolean,
-    ): UnitResult<RepositoryAddGroupMemberError> {
+    ): UnitOutcome<RepositoryAddGroupMemberError> {
         val groupMembers = groupMembers.value[groupId] ?: emptyList()
         val duplicateMembership = groupMembers.any { it.id == memberId }
 

@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.test
 
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import kotlinx.coroutines.flow.first
@@ -69,8 +69,8 @@ abstract class GroupMemberRepositoryTest {
     fun addMemberShouldAddMember() = runTest {
         val memberId = MemberId()
 
-        val addResult = groupMemberRepository.addMember(groupXId, memberId)
-        addResult mustBe unitSuccess()
+        val addOutcome = groupMemberRepository.addMember(groupXId, memberId)
+        addOutcome mustBe unitSuccess()
 
         val actualMembers = groupMemberRepository.getMembers(groupXId).first()
 

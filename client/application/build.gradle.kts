@@ -42,8 +42,11 @@ kotlin {
             implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.websockets)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(projects.common)
+            implementation(projects.server.model)
+            implementation(projects.server.route)
             implementation(projects.client.service)
             implementation(projects.client.service.default)
         }

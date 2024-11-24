@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.data
 
-import com.thebrownfoxx.neon.common.model.MemberId
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord

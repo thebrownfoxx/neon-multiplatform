@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.server.service.default
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.Payload
-import com.thebrownfoxx.neon.common.model.Jwt
+import com.thebrownfoxx.neon.common.type.Jwt
 import com.thebrownfoxx.neon.server.service.jwt.JwtProcessor
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaim
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaimKey

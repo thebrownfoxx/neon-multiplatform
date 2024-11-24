@@ -2,10 +2,10 @@ package com.thebrownfoxx.neon.server.repository.test
 
 import com.thebrownfoxx.neon.common.hash.Hasher
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeTrue
 import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
@@ -39,9 +39,9 @@ abstract class PasswordRepositoryTest : Hasher by MultiplatformHasher() {
     fun getHashShouldReturnPasswordHash() {
         runTest {
             for ((memberId, password) in passwords) {
-                val actualHashResult = passwordRepository.getHash(memberId)
-                (actualHashResult is Success &&
-                        password matches actualHashResult.value).mustBeTrue()
+                val actualHashOutcome = passwordRepository.getHash(memberId)
+                (actualHashOutcome is Success &&
+                        password matches actualHashOutcome.value).mustBeTrue()
             }
         }
     }

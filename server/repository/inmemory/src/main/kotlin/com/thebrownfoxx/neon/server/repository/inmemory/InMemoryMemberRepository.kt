@@ -1,12 +1,12 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.annotation.TestApi
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.repository.member.MemberRepository
 import com.thebrownfoxx.neon.server.repository.member.model.RepositoryAddMemberError
@@ -25,7 +25,7 @@ class InMemoryMemberRepository : MemberRepository {
     @TestApi
     val memberList get() = members.value.map { it.value }
 
-    override fun get(id: MemberId): Flow<Result<Member, RepositoryGetMemberError>> {
+    override fun get(id: MemberId): Flow<Outcome<Member, RepositoryGetMemberError>> {
         return members.mapLatest { members ->
             when (val member = members[id]) {
                 null -> Failure(RepositoryGetMemberError.NotFound)
@@ -34,7 +34,7 @@ class InMemoryMemberRepository : MemberRepository {
         }
     }
 
-    override fun getId(username: String): Flow<Result<MemberId, RepositoryGetMemberIdError>> {
+    override fun getId(username: String): Flow<Outcome<MemberId, RepositoryGetMemberIdError>> {
         return members.mapLatest { members ->
             when (val member = members.values.find { it.username == username }) {
                 null -> Failure(RepositoryGetMemberIdError.NotFound)
@@ -43,7 +43,7 @@ class InMemoryMemberRepository : MemberRepository {
         }
     }
 
-    override suspend fun add(member: Member): UnitResult<RepositoryAddMemberError> {
+    override suspend fun add(member: Member): UnitOutcome<RepositoryAddMemberError> {
         return when {
             members.value.containsKey(member.id) -> Failure(RepositoryAddMemberError.DuplicateId)
             members.value.values.any { it.username == member.username } ->

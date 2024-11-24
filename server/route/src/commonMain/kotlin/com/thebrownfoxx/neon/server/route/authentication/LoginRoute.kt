@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.route.authentication
 
-import com.thebrownfoxx.neon.common.model.Jwt
-import com.thebrownfoxx.neon.common.model.MemberId
+import com.thebrownfoxx.neon.common.type.Jwt
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.Response
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable

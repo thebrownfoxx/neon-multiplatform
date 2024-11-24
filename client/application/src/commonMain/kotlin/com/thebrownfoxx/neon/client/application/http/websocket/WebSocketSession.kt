@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.application.routing.websocket
+package com.thebrownfoxx.neon.client.application.http.websocket
 
 import com.thebrownfoxx.neon.common.type.id.Id
 import com.thebrownfoxx.neon.common.type.id.Uuid

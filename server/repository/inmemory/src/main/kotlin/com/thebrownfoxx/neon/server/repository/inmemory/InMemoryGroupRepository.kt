@@ -1,12 +1,12 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.annotation.TestApi
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
 import com.thebrownfoxx.neon.server.repository.group.model.RepositoryAddGroupError
@@ -24,7 +24,7 @@ class InMemoryGroupRepository : GroupRepository {
     @TestApi
     val groupList get() = groups.value.map { it.value }
 
-    override fun get(id: GroupId): Flow<Result<Group, RepositoryGetGroupError>> {
+    override fun get(id: GroupId): Flow<Outcome<Group, RepositoryGetGroupError>> {
         return groups.mapLatest { groups ->
             when (val group = groups[id]) {
                 null -> Failure(RepositoryGetGroupError.NotFound)
@@ -33,7 +33,7 @@ class InMemoryGroupRepository : GroupRepository {
         }
     }
 
-    override suspend fun add(group: Group): UnitResult<RepositoryAddGroupError> {
+    override suspend fun add(group: Group): UnitOutcome<RepositoryAddGroupError> {
         return when {
             groups.value.containsKey(group.id) -> Failure(RepositoryAddGroupError.DuplicateId)
             else -> {

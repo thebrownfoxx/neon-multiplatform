@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.hash.Hasher
-import com.thebrownfoxx.neon.common.model.getOrElse
-import com.thebrownfoxx.neon.common.model.onFailure
+import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository

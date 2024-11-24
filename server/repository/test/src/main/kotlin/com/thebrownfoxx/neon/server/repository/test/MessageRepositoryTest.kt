@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.server.repository.test
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.MessageId
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitSuccess
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
 import com.thebrownfoxx.neon.server.model.ChatGroup
@@ -80,8 +80,8 @@ abstract class MessageRepositoryTest {
     fun getShouldReturnMessage() {
         runTest {
             for (expectedMessage in initialMessages) {
-                val actualMessageResult = messageRepository.get(expectedMessage.id).first()
-                actualMessageResult mustBe Success(expectedMessage)
+                val actualMessageOutcome = messageRepository.get(expectedMessage.id).first()
+                actualMessageOutcome mustBe Success(expectedMessage)
             }
         }
     }
@@ -89,8 +89,8 @@ abstract class MessageRepositoryTest {
     @Test
     fun getShouldReturnNotFoundIfMessageDoesNotExist() {
         runTest {
-            val actualMessageResult = messageRepository.get(MessageId()).first()
-            actualMessageResult mustBe Failure(RepositoryGetMessageError.NotFound)
+            val actualMessageOutcome = messageRepository.get(MessageId()).first()
+            actualMessageOutcome mustBe Failure(RepositoryGetMessageError.NotFound)
         }
     }
 
@@ -106,11 +106,11 @@ abstract class MessageRepositoryTest {
                 delivery = Delivery.Read,
             )
 
-            val addResult = messageRepository.add(expectedMessage)
-            addResult.mustBeA<UnitSuccess>()
+            val addOutcome = messageRepository.add(expectedMessage)
+            addOutcome.mustBeA<UnitSuccess>()
 
-            val actualMessageResult = messageRepository.get(expectedMessage.id).first()
-            actualMessageResult mustBe Success(expectedMessage)
+            val actualMessageOutcome = messageRepository.get(expectedMessage.id).first()
+            actualMessageOutcome mustBe Success(expectedMessage)
         }
     }
 
@@ -119,8 +119,8 @@ abstract class MessageRepositoryTest {
         runTest {
             val duplicateMessage = initialMessages[0].copy()
 
-            val actualAddResult = messageRepository.add(duplicateMessage)
-            actualAddResult mustBe Failure(RepositoryAddMessageError.DuplicateId)
+            val actualAddOutcome = messageRepository.add(duplicateMessage)
+            actualAddOutcome mustBe Failure(RepositoryAddMessageError.DuplicateId)
         }
     }
 
@@ -131,13 +131,13 @@ abstract class MessageRepositoryTest {
                 .map { it.groupId }
                 .filter { it == groupX.id }
                 .toSet()
-            val actualConversationsResult = messageRepository.getConversations(
+            val actualConversationsOutcome = messageRepository.getConversations(
                 memberId = memberXId,
                 count = 10,
                 offset = 0,
                 read = false,
             ).first()
-            actualConversationsResult mustBe Success(expectedConversations)
+            actualConversationsOutcome mustBe Success(expectedConversations)
         }
     }
 
@@ -145,13 +145,13 @@ abstract class MessageRepositoryTest {
     fun getConversationsShouldReturnEmptySetIfNoConversations() {
         runTest {
             val expectedConversations = emptySet<GroupId>()
-            val actualConversationsResult = messageRepository.getConversations(
+            val actualConversationsOutcome = messageRepository.getConversations(
                 memberId = MemberId(),
                 count = 10,
                 offset = 0,
                 read = false,
             ).first()
-            actualConversationsResult mustBe Success(expectedConversations)
+            actualConversationsOutcome mustBe Success(expectedConversations)
         }
     }
 
@@ -162,16 +162,16 @@ abstract class MessageRepositoryTest {
                 .sortedByDescending { it.timestamp }
                 .first { it.groupId == groupX.id }
                 .id
-            val actualPreviewResult = messageRepository.getConversationPreview(groupX.id).first()
-            actualPreviewResult mustBe Success(expectedPreview)
+            val actualPreviewOutcome = messageRepository.getConversationPreview(groupX.id).first()
+            actualPreviewOutcome mustBe Success(expectedPreview)
         }
     }
 
     @Test
     fun getConversationPreviewShouldReturnNotFoundIfNoPreview() {
         runTest {
-            val actualPreviewResult = messageRepository.getConversationPreview(GroupId()).first()
-//            actualPreviewResult mustBe Failure(RepositoryGetConversationPreviewError.NotFound)
+            val actualPreviewOutcome = messageRepository.getConversationPreview(GroupId()).first()
+//            actualPreviewOutcome mustBe Failure(RepositoryGetConversationPreviewError.NotFound)
         }
     }
 
@@ -182,12 +182,12 @@ abstract class MessageRepositoryTest {
                 .filter { it.groupId == groupX.id }
                 .map { it.id }
                 .toSet()
-            val actualMessagesResult = messageRepository.getMessages(
+            val actualMessagesOutcome = messageRepository.getMessages(
                 groupId = groupX.id,
                 count = 10,
                 offset = 0,
             ).first()
-            actualMessagesResult mustBe Success(expectedMessages)
+            actualMessagesOutcome mustBe Success(expectedMessages)
         }
     }
 
@@ -195,12 +195,12 @@ abstract class MessageRepositoryTest {
     fun getMessagesShouldReturnEmptySetIfNoMessages() {
         runTest {
             val expectedMessages = emptySet<MessageId>()
-            val actualMessagesResult = messageRepository.getMessages(
+            val actualMessagesOutcome = messageRepository.getMessages(
                 groupId = GroupId(),
                 count = 10,
                 offset = 0,
             ).first()
-            actualMessagesResult mustBe Success(expectedMessages)
+            actualMessagesOutcome mustBe Success(expectedMessages)
         }
     }
 }

@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.server.service.messenger
 
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.MessageId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.service.messenger.model.Conversations
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
@@ -21,35 +21,35 @@ interface Messenger {
         actorId: MemberId,
         count: Int,
         offset: Int,
-    ): Result<Conversations, GetConversationsError>
+    ): Outcome<Conversations, GetConversationsError>
 
     fun getMessage(
         actorId: MemberId,
         id: MessageId,
-    ): Flow<Result<Message, GetMessageError>>
+    ): Flow<Outcome<Message, GetMessageError>>
 
     fun getConversationPreview(
         actorId: MemberId,
         groupId: GroupId,
-    ): Flow<Result<MessageId?, GetConversationPreviewError>>
+    ): Flow<Outcome<MessageId?, GetConversationPreviewError>>
 
     suspend fun getMessages(
         actorId: MemberId,
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Result<Set<MessageId>, GetMessagesError>
+    ): Outcome<Set<MessageId>, GetMessagesError>
 
-    suspend fun newConversation(memberIds: Set<MemberId>): UnitResult<NewConversationError>
+    suspend fun newConversation(memberIds: Set<MemberId>): UnitOutcome<NewConversationError>
 
     suspend fun sendMessage(
         actorId: MemberId,
         groupId: GroupId,
         content: String,
-    ): UnitResult<SendMessageError>
+    ): UnitOutcome<SendMessageError>
 
     suspend fun markConversationAsRead(
         actorId: MemberId,
         groupId: GroupId,
-    ): UnitResult<MarkConversationAsReadError>
+    ): UnitOutcome<MarkConversationAsReadError>
 }

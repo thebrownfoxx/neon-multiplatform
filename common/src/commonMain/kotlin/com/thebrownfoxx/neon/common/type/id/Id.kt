@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.common.type
+package com.thebrownfoxx.neon.common.type.id
 
 interface Id {
     val uuid: Uuid

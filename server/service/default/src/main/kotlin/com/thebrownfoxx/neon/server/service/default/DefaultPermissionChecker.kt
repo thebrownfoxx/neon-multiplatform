@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.server.service.default
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.getOrElse
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.getOrElse
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.groupmember.model.RepositoryGetAdminsError
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.first
 class DefaultPermissionChecker(
     private val groupMemberRepository: GroupMemberRepository,
 ) : PermissionChecker {
-    override suspend fun isGod(memberId: MemberId): Result<Boolean, IsGodError> {
+    override suspend fun isGod(memberId: MemberId): Outcome<Boolean, IsGodError> {
         val communities = groupMemberRepository.getGroups(memberId).first().getOrElse {
             return Failure(
                 when (it) {
@@ -33,7 +33,7 @@ class DefaultPermissionChecker(
     override suspend fun isGroupAdmin(
         groupId: GroupId,
         memberId: MemberId,
-    ): Result<Boolean, IsGroupAdminError> {
+    ): Outcome<Boolean, IsGroupAdminError> {
         val admins = groupMemberRepository.getAdmins(groupId).first().getOrElse {
             return Failure(
                 when (it) {

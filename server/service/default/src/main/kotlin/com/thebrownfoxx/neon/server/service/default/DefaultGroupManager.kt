@@ -1,15 +1,15 @@
 package com.thebrownfoxx.neon.server.service.default
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.fold
-import com.thebrownfoxx.neon.common.model.getOrElse
-import com.thebrownfoxx.neon.common.model.map
-import com.thebrownfoxx.neon.common.model.mapError
-import com.thebrownfoxx.neon.common.model.onFailure
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.fold
+import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.map
+import com.thebrownfoxx.neon.common.type.mapError
+import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.repository.group.GroupRepository
@@ -45,7 +45,7 @@ class DefaultGroupManager(
     // TODO: Move this to a more central location
     private val maxCommunityNameLength = 16
 
-    override fun getGroup(id: GroupId): Flow<Result<Group, GetGroupError>> {
+    override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
         return groupRepository.get(id).map { group ->
             group.mapError {
                 when (it) {
@@ -60,7 +60,7 @@ class DefaultGroupManager(
         actorId: MemberId,
         name: String,
         god: Boolean,
-    ): Result<GroupId, CreateCommunityError> {
+    ): Outcome<GroupId, CreateCommunityError> {
         val authorizationError = authorizeCreateCommunity(actorId)
         if (authorizationError != null) return Failure(authorizationError)
 
@@ -102,7 +102,7 @@ class DefaultGroupManager(
         actorId: MemberId,
         groupId: GroupId,
         inviteCode: String,
-    ): UnitResult<SetInviteCodeError> {
+    ): UnitOutcome<SetInviteCodeError> {
         val authorizationError = authorizeSetInviteCode(actorId, groupId)
         if (authorizationError != null) return Failure(authorizationError)
 
@@ -166,7 +166,7 @@ class DefaultGroupManager(
         groupId: GroupId,
         memberId: MemberId,
         isAdmin: Boolean,
-    ): UnitResult<AddGroupMemberError> {
+    ): UnitOutcome<AddGroupMemberError> {
         val authorizationError = authorizeAddMember(actorId, groupId)
 
         if (authorizationError != null) return Failure(authorizationError)

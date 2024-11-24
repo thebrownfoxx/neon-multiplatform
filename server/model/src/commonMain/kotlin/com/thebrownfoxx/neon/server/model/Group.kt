@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.model
 
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.type.IgnoredUuid
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.IgnoredUuid
 import com.thebrownfoxx.neon.common.type.Url
 import kotlinx.serialization.Serializable
 

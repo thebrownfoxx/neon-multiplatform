@@ -6,13 +6,13 @@ import com.thebrownfoxx.neon.client.service.default.extension.bodyOrNull
 import com.thebrownfoxx.neon.client.service.default.extension.enumValueOfOrNull
 import com.thebrownfoxx.neon.client.service.jwt.TokenStorage
 import com.thebrownfoxx.neon.client.service.jwt.model.SetTokenError
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.getOrElse
-import com.thebrownfoxx.neon.common.model.onFailure
-import com.thebrownfoxx.neon.common.model.runFailing
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.onFailure
+import com.thebrownfoxx.neon.common.type.runFailing
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.route.Response
 import com.thebrownfoxx.neon.server.route.authentication.LoginBody
 import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
@@ -31,7 +31,7 @@ class RemoteAuthenticator(
 ) : Authenticator {
     override val loggedInMember = MutableStateFlow<MemberId?>(null)
 
-    override suspend fun login(username: String, password: String): UnitResult<LoginError> {
+    override suspend fun login(username: String, password: String): UnitOutcome<LoginError> {
         val response = runFailing {
             httpClient.post(Login()) {
                 contentType(ContentType.Application.Json)

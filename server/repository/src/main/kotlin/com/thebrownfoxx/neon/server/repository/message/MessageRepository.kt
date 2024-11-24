@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.server.repository.message
 
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.MessageId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryAddMessageError
 import com.thebrownfoxx.neon.server.repository.message.model.RepositoryGetConversationCountError
@@ -16,11 +16,11 @@ import com.thebrownfoxx.neon.server.repository.message.model.RepositoryUpdateMes
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    fun get(id: MessageId): Flow<Result<Message, RepositoryGetMessageError>>
+    fun get(id: MessageId): Flow<Outcome<Message, RepositoryGetMessageError>>
 
-    suspend fun add(message: Message): UnitResult<RepositoryAddMessageError>
+    suspend fun add(message: Message): UnitOutcome<RepositoryAddMessageError>
 
-    suspend fun update(message: Message): UnitResult<RepositoryUpdateMessageError>
+    suspend fun update(message: Message): UnitOutcome<RepositoryUpdateMessageError>
 
     fun getConversations(
         memberId: MemberId,
@@ -28,24 +28,24 @@ interface MessageRepository {
         offset: Int,
         read: Boolean? = null,
         descending: Boolean = false,
-    ): Flow<Result<Set<GroupId>, RepositoryGetConversationsError>>
+    ): Flow<Outcome<Set<GroupId>, RepositoryGetConversationsError>>
 
     fun getConversationCount(
         memberId: MemberId,
         read: Boolean? = null,
-    ): Flow<Result<Int, RepositoryGetConversationCountError>>
+    ): Flow<Outcome<Int, RepositoryGetConversationCountError>>
 
     fun getConversationPreview(
         id: GroupId,
-    ): Flow<Result<MessageId?, RepositoryGetConversationPreviewError>>
+    ): Flow<Outcome<MessageId?, RepositoryGetConversationPreviewError>>
 
     fun getMessages(
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<Result<Set<MessageId>, RepositoryGetMessagesError>>
+    ): Flow<Outcome<Set<MessageId>, RepositoryGetMessagesError>>
 
     fun getUnreadMessages(
         groupId: GroupId,
-    ): Flow<Result<Set<MessageId>, RepositoryGetMessagesError>>
+    ): Flow<Outcome<Set<MessageId>, RepositoryGetMessagesError>>
 }

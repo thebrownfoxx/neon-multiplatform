@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.model
 
-import com.thebrownfoxx.neon.common.model.GroupId
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.Url
 import kotlinx.serialization.Serializable
 

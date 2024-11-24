@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.service.group
 
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.UnitResult
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.service.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.server.service.group.model.CreateCommunityError
@@ -12,24 +12,24 @@ import com.thebrownfoxx.neon.server.service.group.model.SetInviteCodeError
 import kotlinx.coroutines.flow.Flow
 
 interface GroupManager {
-    fun getGroup(id: GroupId): Flow<Result<Group, GetGroupError>>
+    fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>>
 
     suspend fun createCommunity(
         actorId: MemberId,
         name: String,
         god: Boolean = false,
-    ): Result<GroupId, CreateCommunityError>
+    ): Outcome<GroupId, CreateCommunityError>
 
     suspend fun setInviteCode(
         actorId: MemberId,
         groupId: GroupId,
         inviteCode: String,
-    ): UnitResult<SetInviteCodeError>
+    ): UnitOutcome<SetInviteCodeError>
 
     suspend fun addMember(
         actorId: MemberId,
         groupId: GroupId,
         memberId: MemberId,
         isAdmin: Boolean = false,
-    ): UnitResult<AddGroupMemberError>
+    ): UnitOutcome<AddGroupMemberError>
 }

@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.common.model
+package com.thebrownfoxx.neon.common.type
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

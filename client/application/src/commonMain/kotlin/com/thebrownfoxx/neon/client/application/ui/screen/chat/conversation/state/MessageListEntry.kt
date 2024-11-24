@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state
 
-import com.thebrownfoxx.neon.common.type.Id
-import com.thebrownfoxx.neon.common.type.Uuid
+import com.thebrownfoxx.neon.common.type.id.Id
+import com.thebrownfoxx.neon.common.type.id.Uuid
 import kotlinx.datetime.LocalDateTime
 
 sealed interface MessageListEntry {

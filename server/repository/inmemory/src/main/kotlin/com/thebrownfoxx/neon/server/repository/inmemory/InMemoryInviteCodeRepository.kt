@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.Result
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitResult
-import com.thebrownfoxx.neon.common.model.unitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeError
 import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeGroupError
@@ -22,7 +22,7 @@ private typealias InviteCode = String
 class InMemoryInviteCodeRepository : InviteCodeRepository {
     private val inviteCodes = MutableStateFlow<Map<GroupId, InviteCode>>(emptyMap())
 
-    override fun get(groupId: GroupId): Flow<Result<String, RepositoryGetInviteCodeError>> {
+    override fun get(groupId: GroupId): Flow<Outcome<String, RepositoryGetInviteCodeError>> {
         return inviteCodes.mapLatest { inviteCodes ->
             when (val inviteCode = inviteCodes[groupId]) {
                 null -> Failure(RepositoryGetInviteCodeError.NotFound)
@@ -33,7 +33,7 @@ class InMemoryInviteCodeRepository : InviteCodeRepository {
 
     override suspend fun getGroup(
         inviteCode: String,
-    ): Result<GroupId, RepositoryGetInviteCodeGroupError> {
+    ): Outcome<GroupId, RepositoryGetInviteCodeGroupError> {
         val group = inviteCodes.value
             .filter { (_, groupInviteCode) -> groupInviteCode == inviteCode }
             .map { it.key }
@@ -48,7 +48,7 @@ class InMemoryInviteCodeRepository : InviteCodeRepository {
     override suspend fun set(
         groupId: GroupId,
         inviteCode: String,
-    ): UnitResult<RepositorySetInviteCodeError> {
+    ): UnitOutcome<RepositorySetInviteCodeError> {
         if (inviteCode in inviteCodes.value.values)
             return Failure(RepositorySetInviteCodeError.DuplicateInviteCode)
 

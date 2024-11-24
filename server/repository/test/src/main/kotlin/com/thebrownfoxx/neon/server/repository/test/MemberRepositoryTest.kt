@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.test
 
-import com.thebrownfoxx.neon.common.model.Failure
-import com.thebrownfoxx.neon.common.model.MemberId
-import com.thebrownfoxx.neon.common.model.Success
-import com.thebrownfoxx.neon.common.model.UnitSuccess
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.UnitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.must.mustBe
 import com.thebrownfoxx.neon.must.mustBeA
@@ -47,8 +47,8 @@ abstract class MemberRepositoryTest {
     fun getShouldGetMember() {
         runTest {
             for (expectedMember in members) {
-                val actualMemberResult = memberRepository.get(expectedMember.id).first()
-                actualMemberResult mustBe Success(expectedMember)
+                val actualMemberOutcome = memberRepository.get(expectedMember.id).first()
+                actualMemberOutcome mustBe Success(expectedMember)
             }
         }
     }

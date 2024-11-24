@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.service.group.model
 
-import com.thebrownfoxx.neon.common.model.GroupId
-import com.thebrownfoxx.neon.common.model.MemberId
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
 
 sealed interface SetInviteCodeError {
     data class Unauthorized(val memberId: MemberId) : SetInviteCodeError

@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.route
 
-import com.thebrownfoxx.neon.common.type.Id
-import com.thebrownfoxx.neon.common.type.Uuid
+import com.thebrownfoxx.neon.common.type.id.Id
+import com.thebrownfoxx.neon.common.type.id.Uuid
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
