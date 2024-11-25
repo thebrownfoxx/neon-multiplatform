@@ -54,12 +54,14 @@ inline fun <RE, T, E> Outcome<T, E>.mapError(onFailure: (E) -> RE): Outcome<T, R
     }
 }
 
-inline fun <T, E> Outcome<T, E>.onSuccess(function: (T) -> Unit) {
+inline fun <T, E> Outcome<T, E>.onSuccess(function: (T) -> Unit): Outcome<T, E> {
     if (this is Success) function(value)
+    return this
 }
 
-inline fun <T, E> Outcome<T, E>.onFailure(function: (E) -> Unit) {
+inline fun <T, E> Outcome<T, E>.onFailure(function: (E) -> Unit): Outcome<T, E> {
     if (this is Failure) function(error)
+    return this
 }
 
 inline fun <T> runFailing(function: () -> T): Outcome<T, Exception> {

@@ -2,7 +2,6 @@ package com.thebrownfoxx.neon.server.application.routing
 
 import com.thebrownfoxx.neon.server.application.routing.authentication.login
 import com.thebrownfoxx.neon.server.application.routing.group.getGroup
-import com.thebrownfoxx.neon.server.application.routing.websocket.webSocketConnectionRoute
 import io.ktor.resources.Resource
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
@@ -24,7 +23,7 @@ fun Application.configureRouting() {
     }
 
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(Json)
+        contentConverter = KotlinxWebsocketSerializationConverter(Json { ignoreUnknownKeys = true })
     }
 
     routing {

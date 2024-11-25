@@ -1,16 +1,17 @@
 package com.thebrownfoxx.neon.server.route.websocket
 
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
+import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessageLabel
 import kotlinx.serialization.Serializable
 
 object WebSocketConnectionResponse {
     @Serializable
     class ConnectionSuccessful : WebSocketMessage(
-        label = LABEL,
+        label = Label,
         description = "Connection successful",
     ) {
         companion object {
-            const val LABEL = "ConnectionSuccessful"
+            val Label = WebSocketMessageLabel("ConnectionSuccessful")
         }
     }
 }

@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.client.model
 
-import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ChatLocalGroup(
+data class LocalChatGroup(
     override val id: GroupId = GroupId(),
 ) : LocalGroup
 

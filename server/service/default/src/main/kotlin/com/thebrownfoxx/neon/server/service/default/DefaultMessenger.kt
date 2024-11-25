@@ -1,16 +1,16 @@
 package com.thebrownfoxx.neon.server.service.default
 
-import com.thebrownfoxx.neon.common.extension.asFlow
+import com.thebrownfoxx.neon.common.extension.flow
 import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.id.MemberId
-import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.common.type.asFailure
 import com.thebrownfoxx.neon.common.type.asSuccess
 import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.type.mapError
 import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.common.type.unitSuccess
@@ -162,7 +162,7 @@ class DefaultMessenger(
                 return@flatMapLatest when (error) {
                     RepositoryGetMessageError.NotFound -> GetMessageError.NotFound(id)
                     RepositoryGetMessageError.ConnectionError -> GetMessageError.ConnectionError
-                }.asFailure().asFlow()
+                }.asFailure().flow()
             }
 
             groupMemberRepository.getMembers(message.groupId).mapLatest { groupMemberIdsOutcome ->
@@ -193,7 +193,7 @@ class DefaultMessenger(
 
                     RepositoryGetGroupError.ConnectionError ->
                         GetConversationPreviewError.ConnectionError
-                }.asFailure().asFlow()
+                }.asFailure().flow()
             }
             getConversationPreviewFromRepository(groupId, actorId)
         }
@@ -208,7 +208,7 @@ class DefaultMessenger(
                 return@flatMapLatest when (error) {
                     RepositoryGetConversationPreviewError.ConnectionError ->
                         GetConversationPreviewError.ConnectionError
-                }.asFailure().asFlow()
+                }.asFailure().flow()
             }
 
             groupMemberRepository.getMembers(groupId).mapLatest { groupMemberIdsOutcome ->

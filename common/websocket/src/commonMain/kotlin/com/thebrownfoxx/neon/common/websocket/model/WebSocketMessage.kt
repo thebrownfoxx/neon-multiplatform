@@ -1,7 +1,5 @@
 package com.thebrownfoxx.neon.common.websocket.model
 
-import com.thebrownfoxx.neon.common.type.id.Id
-import com.thebrownfoxx.neon.common.type.id.Uuid
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -12,22 +10,22 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 open class WebSocketMessage(
-    val label: String,
-    @Suppress("unused") val description: String,
+    val label: WebSocketMessageLabel,
+    @Suppress("unused") val description: String? = null,
 )
 
-@Serializable(with = WebSocketMessageIdSerializer::class)
-data class WebSocketMessageId(override val uuid: Uuid = Uuid()) : Id
+@Serializable(with = WebSocketMessageLabelSerializer::class)
+data class WebSocketMessageLabel(val value: String)
 
-object WebSocketMessageIdSerializer : KSerializer<WebSocketMessageId> {
+object WebSocketMessageLabelSerializer : KSerializer<WebSocketMessageLabel> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("memberId", PrimitiveKind.STRING)
 
-    override fun deserialize(decoder: Decoder): WebSocketMessageId {
-        return WebSocketMessageId(Uuid(decoder.decodeString()))
+    override fun deserialize(decoder: Decoder): WebSocketMessageLabel {
+        return WebSocketMessageLabel(decoder.decodeString())
     }
 
-    override fun serialize(encoder: Encoder, value: WebSocketMessageId) {
+    override fun serialize(encoder: Encoder, value: WebSocketMessageLabel) {
         encoder.encodeString(value.value)
     }
 }

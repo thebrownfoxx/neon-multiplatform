@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.common.websocket.model
 
 interface SerializedWebSocketMessage {
-    suspend fun getLabel(): String
+    suspend fun getLabel(): WebSocketMessageLabel
     suspend fun deserialize(type: Type): Any?
 }
 
