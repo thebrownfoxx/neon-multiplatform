@@ -22,13 +22,13 @@ interface MessageRepository {
 
     suspend fun update(message: Message): UnitOutcome<RepositoryUpdateMessageError>
 
-    fun getConversations(
+    suspend fun getConversations(
         memberId: MemberId,
         count: Int,
         offset: Int,
         read: Boolean? = null,
         descending: Boolean = false,
-    ): Flow<Outcome<Set<GroupId>, RepositoryGetConversationsError>>
+    ): Outcome<Set<GroupId>, RepositoryGetConversationsError>
 
     fun getConversationCount(
         memberId: MemberId,

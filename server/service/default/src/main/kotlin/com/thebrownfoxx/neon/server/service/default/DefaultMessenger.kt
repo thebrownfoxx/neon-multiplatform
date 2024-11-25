@@ -120,7 +120,7 @@ class DefaultMessenger(
             offset = offset,
             read = false,
             descending = true,
-        ).first()
+        )
     }
 
     private suspend fun getUnreadConversations(
@@ -133,7 +133,7 @@ class DefaultMessenger(
             count = count,
             offset = offset,
             read = false,
-        ).first()
+        )
     }
 
     private suspend fun getReadConversations(
@@ -146,7 +146,7 @@ class DefaultMessenger(
             count = count,
             offset = offset,
             read = true,
-        ).first()
+        )
     }
 
     private fun RepositoryGetConversationsError.toGetConversationsError() = when (this) {

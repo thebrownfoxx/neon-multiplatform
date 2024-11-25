@@ -26,6 +26,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -67,13 +68,13 @@ class InMemoryMessageRepository(
         return unitSuccess()
     }
 
-    override fun getConversations(
+    override suspend fun getConversations(
         memberId: MemberId,
         count: Int,
         offset: Int,
         read: Boolean?,
         descending: Boolean,
-    ): Flow<Outcome<Set<GroupId>, RepositoryGetConversationsError>> {
+    ): Outcome<Set<GroupId>, RepositoryGetConversationsError> {
         // TODO: OMG this is crazy
 
         return messages.flatMapLatest { messages ->
@@ -100,7 +101,7 @@ class InMemoryMessageRepository(
                         .toSet()
                 )
             }
-        }
+        }.first()
     }
 
     override fun getConversationCount(
