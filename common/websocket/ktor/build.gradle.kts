@@ -9,11 +9,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines)
-            implementation(libs.kotlinx.serialization)
-            implementation(libs.ktor.resources)
+            implementation(libs.ktor.websockets)
+            implementation(libs.ktor.serialization)
             implementation(projects.common)
             implementation(projects.common.websocket)
-            implementation(projects.server.model)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

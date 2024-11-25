@@ -10,16 +10,11 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.websockets)
             implementation(projects.common)
             implementation(projects.common.websocket)
             implementation(projects.common.websocket.ktor)
-            implementation(projects.server.model)
             implementation(projects.server.route)
-            implementation(projects.client.websocket)
-            implementation(projects.client.service)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

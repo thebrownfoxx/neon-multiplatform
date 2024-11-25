@@ -10,7 +10,7 @@ kotlincrypto-hash = "0.5.3"
 kotlincrypto-random = "0.3.2"
 
 # Server
-ktor = "3.0.0"
+ktor = "3.0.1"
 logback = "1.5.11"
 exposed = "0.56.0"
 h2 = "2.1.214"
@@ -45,8 +45,10 @@ kotlincrypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "kotl
 kotlincrypto-random = { module = "org.kotlincrypto:secure-random", version.ref = "kotlincrypto-random" }
 
 # Ktor Common
+ktor-serialization = { module = "io.ktor:ktor-serialization", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-resources = { module = "io.ktor:ktor-resources", version.ref = "ktor" }
+ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 
 # Ktor Server
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
