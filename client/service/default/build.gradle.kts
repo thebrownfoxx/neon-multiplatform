@@ -19,6 +19,8 @@ kotlin {
             implementation(projects.server.model)
             implementation(projects.server.route)
             implementation(projects.client.websocket)
+            implementation(projects.client.model)
+            implementation(projects.client.repository)
             implementation(projects.client.service)
         }
         commonTest.dependencies {

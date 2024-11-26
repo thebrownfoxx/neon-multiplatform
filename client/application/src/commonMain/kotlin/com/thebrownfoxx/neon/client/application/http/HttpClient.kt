@@ -12,14 +12,16 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 fun HttpClient() = HttpClient(CIO) {
+    val json = Json { ignoreUnknownKeys = true }
+
     install(ContentNegotiation) {
-        json(Json { ignoreUnknownKeys = true })
+        json(json)
     }
 
     install(Resources)
 
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(Json)
+        contentConverter = KotlinxWebsocketSerializationConverter(json)
     }
 
     defaultRequest {

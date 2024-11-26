@@ -125,7 +125,6 @@ private fun generateInitialServiceData() = serviceData {
                 Instant.fromEpochSeconds(3),
             )
         }
-        println(this)
     }
 
     community(
