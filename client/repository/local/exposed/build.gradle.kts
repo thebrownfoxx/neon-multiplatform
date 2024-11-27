@@ -13,8 +13,9 @@ kotlin {
             implementation(libs.exposed.core)
             implementation(libs.exposed.jdbc)
             implementation(libs.exposed.kotlin.datetime)
-            implementation(libs.sqlite.jdbc)
             implementation(projects.common)
+            implementation(projects.common.data)
+            implementation(projects.common.data.exposed)
             implementation(projects.client.model)
             implementation(projects.client.repository.local)
         }

@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.server.repository.test
 
+import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
-import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.must.mustBe
-import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
+import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -16,9 +16,9 @@ abstract class GroupMemberRepositoryTest {
     private val memberYId = MemberId()
 
     private val initialGroupMembers = listOf(
-        GroupMember(groupXId, MemberId(), admin = true),
+        GroupMember(groupXId, MemberId(), isAdmin = true),
         GroupMember(groupXId, memberYId),
-        GroupMember(GroupId(), memberYId, admin = true),
+        GroupMember(GroupId(), memberYId, isAdmin = true),
     )
 
     private lateinit var groupMemberRepository: GroupMemberRepository
@@ -59,7 +59,7 @@ abstract class GroupMemberRepositoryTest {
         val actualAdmins = groupMemberRepository.getAdmins(groupXId).first()
 
         val expectedAdmins = initialGroupMembers
-            .filter { it.groupId == groupXId && it.admin }
+            .filter { it.groupId == groupXId && it.isAdmin }
             .map { it.memberId }
 
         actualAdmins mustBe Success(expectedAdmins)
@@ -85,5 +85,5 @@ abstract class GroupMemberRepositoryTest {
 private data class GroupMember(
     val groupId: GroupId,
     val memberId: MemberId,
-    val admin: Boolean = false,
+    val isAdmin: Boolean = false,
 )

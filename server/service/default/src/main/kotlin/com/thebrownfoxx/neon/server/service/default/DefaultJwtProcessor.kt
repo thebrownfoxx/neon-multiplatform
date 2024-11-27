@@ -12,12 +12,13 @@ import java.util.Date
 
 class DefaultJwtProcessor(override val config: JwtConfig) : JwtProcessor {
     override fun generateJwt(vararg claims: JwtClaim): Jwt {
+        val expiry = Date(System.currentTimeMillis() + config.validity.inWholeMilliseconds)
         var jwt =
             JWT
                 .create()
                 .withAudience(config.audience)
                 .withIssuer(config.issuer)
-                .withExpiresAt(Date(System.currentTimeMillis() + config.validity.inWholeMilliseconds))
+                .withExpiresAt(expiry)
 
         for (claim in claims) {
             jwt = jwt.withClaim(claim.key.name, claim.value)

@@ -1,22 +1,22 @@
 package com.thebrownfoxx.neon.server.service.default
 
+import com.thebrownfoxx.neon.common.data.AddError
+import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.hash.Hasher
 import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
+import com.thebrownfoxx.neon.common.type.asFailure
 import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.mapError
 import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.server.model.Member
-import com.thebrownfoxx.neon.server.repository.groupmember.GroupMemberRepository
-import com.thebrownfoxx.neon.server.repository.groupmember.model.RepositoryAddGroupMemberError
-import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeGroupError
-import com.thebrownfoxx.neon.server.repository.member.MemberRepository
-import com.thebrownfoxx.neon.server.repository.member.model.RepositoryAddMemberError
-import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberError
-import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
+import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
+import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
+import com.thebrownfoxx.neon.server.repository.MemberRepository
+import com.thebrownfoxx.neon.server.repository.PasswordRepository
+import com.thebrownfoxx.neon.server.repository.RepositoryAddMemberError
 import com.thebrownfoxx.neon.server.service.member.MemberManager
 import com.thebrownfoxx.neon.server.service.member.model.GetMemberError
 import com.thebrownfoxx.neon.server.service.member.model.RegisterMemberError
@@ -40,8 +40,8 @@ class DefaultMemberManager(
         return memberRepository.get(id).mapLatest { memberOutcome ->
             memberOutcome.mapError { error ->
                 when (error) {
-                    RepositoryGetMemberError.NotFound -> GetMemberError.NotFound
-                    RepositoryGetMemberError.ConnectionError -> GetMemberError.ConnectionError
+                    GetError.NotFound -> GetMemberError.NotFound
+                    GetError.ConnectionError -> GetMemberError.ConnectionError
                 }
             }
         }
@@ -52,16 +52,11 @@ class DefaultMemberManager(
         username: String,
         password: String,
     ): Outcome<MemberId, RegisterMemberError> {
-        val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode).getOrElse {
-            return Failure(
-                when (it) {
-                    RepositoryGetInviteCodeGroupError.NotFound ->
-                        RegisterMemberError.InvalidInviteCode(inviteCode)
-
-                    RepositoryGetInviteCodeGroupError.ConnectionError ->
-                        RegisterMemberError.ConnectionError
-                }
-            )
+        val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode).getOrElse { error ->
+            return when (error) {
+                GetError.NotFound -> RegisterMemberError.InvalidInviteCode(inviteCode)
+                GetError.ConnectionError -> RegisterMemberError.ConnectionError
+            }.asFailure()
         }
 
         if (username.length > usernameMaxLength)
@@ -78,8 +73,8 @@ class DefaultMemberManager(
             avatarUrl = null,
         )
 
-        memberRepository.add(member).onFailure {
-            when (it) {
+        memberRepository.add(member).onFailure { error ->
+            when (error) {
                 RepositoryAddMemberError.DuplicateId ->
                     error("Cannot add member with duplicate id")
 
@@ -90,11 +85,10 @@ class DefaultMemberManager(
             }
         }
 
-        groupMemberRepository.addMember(inviteCodeGroupId, member.id).onFailure {
-            when (it) {
-                RepositoryAddGroupMemberError.DuplicateMembership -> {}
-                RepositoryAddGroupMemberError.ConnectionError ->
-                    RegisterMemberError.ConnectionError
+        groupMemberRepository.addMember(inviteCodeGroupId, member.id).onFailure { error ->
+            when (error) {
+                AddError.Duplicate -> {}
+                AddError.ConnectionError -> RegisterMemberError.ConnectionError
             }
         }
 

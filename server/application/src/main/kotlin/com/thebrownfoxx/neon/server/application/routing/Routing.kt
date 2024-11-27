@@ -1,7 +1,6 @@
 package com.thebrownfoxx.neon.server.application.routing
 
 import com.thebrownfoxx.neon.server.application.routing.authentication.login
-import com.thebrownfoxx.neon.server.application.routing.group.getGroup
 import io.ktor.resources.Resource
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
@@ -29,7 +28,6 @@ fun Application.configureRouting() {
     routing {
         get<HelloWorld> { call.respondText("Hello, world!") }
         login()
-        getGroup()
         webSocketConnectionRoute()
     }
 }

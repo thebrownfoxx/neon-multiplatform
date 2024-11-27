@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.repository.data
 
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.GroupRecord
@@ -12,7 +12,7 @@ typealias CommunityBuilder = CommunityBuilderScope.() -> Unit
 open class CommunityBuilderScope internal constructor(
     protected val name: String,
     protected val avatarUrl: Url?,
-    protected val god: Boolean,
+    protected val isGod: Boolean,
 ) {
     private val memberIds = mutableSetOf<MemberId>()
 
@@ -25,7 +25,7 @@ open class CommunityBuilderScope internal constructor(
         val community = Community(
             name = name,
             avatarUrl = avatarUrl,
-            god = god,
+            isGod = isGod,
         )
 
         val communityRecord =

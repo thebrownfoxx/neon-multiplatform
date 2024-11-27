@@ -1,20 +1,19 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
-import com.thebrownfoxx.neon.common.annotation.TestApi
+import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.Member
-import com.thebrownfoxx.neon.server.repository.member.MemberRepository
-import com.thebrownfoxx.neon.server.repository.member.model.RepositoryAddMemberError
-import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberError
-import com.thebrownfoxx.neon.server.repository.member.model.RepositoryGetMemberIdError
+import com.thebrownfoxx.neon.server.repository.MemberRepository
+import com.thebrownfoxx.neon.server.repository.RepositoryAddMemberError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 
@@ -22,25 +21,22 @@ import kotlinx.coroutines.flow.update
 class InMemoryMemberRepository : MemberRepository {
     private val members = MutableStateFlow<Map<MemberId, Member>>(emptyMap())
 
-    @TestApi
-    val memberList get() = members.value.map { it.value }
-
-    override fun get(id: MemberId): Flow<Outcome<Member, RepositoryGetMemberError>> {
+    override fun get(id: MemberId): Flow<Outcome<Member, GetError>> {
         return members.mapLatest { members ->
             when (val member = members[id]) {
-                null -> Failure(RepositoryGetMemberError.NotFound)
+                null -> Failure(GetError.NotFound)
                 else -> Success(member)
             }
         }
     }
 
-    override fun getId(username: String): Flow<Outcome<MemberId, RepositoryGetMemberIdError>> {
+    override suspend fun getId(username: String): Outcome<MemberId, GetError> {
         return members.mapLatest { members ->
             when (val member = members.values.find { it.username == username }) {
-                null -> Failure(RepositoryGetMemberIdError.NotFound)
+                null -> Failure(GetError.NotFound)
                 else -> Success(member.id)
             }
-        }
+        }.first()
     }
 
     override suspend fun add(member: Member): UnitOutcome<RepositoryAddMemberError> {

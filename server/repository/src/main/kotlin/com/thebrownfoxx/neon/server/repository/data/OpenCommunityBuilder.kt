@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.repository.data
 
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
@@ -12,9 +12,9 @@ typealias OpenCommunityBuilder = OpenCommunityBuilderScope.() -> Unit
 class OpenCommunityBuilderScope internal constructor(
     name: String,
     avatarUrl: Url?,
-    god: Boolean,
+    isGod: Boolean,
     private val inviteCode: String,
-) : CommunityBuilderScope(name, avatarUrl, god) {
+) : CommunityBuilderScope(name, avatarUrl, isGod) {
     private val members = mutableListOf<MemberRecord>()
     private val memberIds = mutableListOf<MemberId>()
 
@@ -33,7 +33,7 @@ class OpenCommunityBuilderScope internal constructor(
         val community = Community(
             name = name,
             avatarUrl = avatarUrl,
-            god = god,
+            isGod = isGod,
         )
         val memberIds = (members.map { it.member.id } + memberIds).toSet()
 

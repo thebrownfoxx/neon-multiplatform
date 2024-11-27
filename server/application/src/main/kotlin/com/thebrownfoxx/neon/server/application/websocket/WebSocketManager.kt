@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.application.websocket
 
 class WebSocketManager {
-    private val sessions: MutableMap<WebSocketSessionId, KtorServerWebSocketSession> = HashMap()
+    private val sessions = HashMap<WebSocketSessionId, KtorServerWebSocketSession>()
 
     fun getSession(id: WebSocketSessionId): KtorServerWebSocketSession? {
         return sessions[id]

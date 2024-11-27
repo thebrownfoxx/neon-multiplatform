@@ -19,7 +19,7 @@ class WebSocketGroupFetcher(
 ) : WebSocketObserver(session) {
     init {
         subscribe<GetGroupRequest>(GetGroupRequest.Label) { request ->
-            coroutineScope.launch { getGroup(request.id) }
+            observerScope.launch { getGroup(request.id) }
         }
     }
 

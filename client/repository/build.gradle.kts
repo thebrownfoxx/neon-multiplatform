@@ -11,6 +11,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
             implementation(projects.common)
+            implementation(projects.common.data)
             implementation(projects.client.model)
         }
         commonTest.dependencies {

@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.service.group
 
-import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.service.group.model.AddGroupMemberError
 import com.thebrownfoxx.neon.server.service.group.model.CreateCommunityError
@@ -17,7 +17,7 @@ interface GroupManager {
     suspend fun createCommunity(
         actorId: MemberId,
         name: String,
-        god: Boolean = false,
+        isGod: Boolean = false,
     ): Outcome<GroupId, CreateCommunityError>
 
     suspend fun setInviteCode(

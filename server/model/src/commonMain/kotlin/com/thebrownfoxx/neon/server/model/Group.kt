@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.server.model
 
+import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.IgnoredUuid
-import com.thebrownfoxx.neon.common.type.Url
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,7 +17,7 @@ data class Community(
     override val id: GroupId = GroupId(),
     val name: String,
     val avatarUrl: Url?,
-    val god: Boolean,
+    val isGod: Boolean,
 ) : Group {
     override fun ignoreId() = copy(id = ignoredGroupId)
 }

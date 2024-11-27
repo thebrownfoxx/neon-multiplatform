@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.repository.remote.websocket
 
-import com.thebrownfoxx.neon.client.repository.remote.group.RemoteGroupDataSource
-import com.thebrownfoxx.neon.client.repository.remote.group.model.RemoteGetGroupError
+import com.thebrownfoxx.neon.client.repository.remote.RemoteGroupDataSource
+import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
@@ -17,15 +17,14 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupResponse as Re
 class WebSocketRemoteGroupDataSource(
     session: WebSocketSession,
 ) : RemoteGroupDataSource, WebSocketObserver(session) {
-    private val flows: MutableMap<GroupId, MutableSharedFlow<Outcome<Group, RemoteGetGroupError>>> =
-        HashMap()
+    private val flows = HashMap<GroupId, MutableSharedFlow<Outcome<Group, GetError>>>()
 
     init {
         subscribe<Response.NotFound>(Response.NotFound.Label) { response ->
-            emit(response.id, Failure(RemoteGetGroupError.NotFound))
+            emit(response.id, Failure(GetError.NotFound))
         }
         subscribe<Response.ConnectionError>(Response.ConnectionError.Label) { response ->
-            emit(response.id, Failure(RemoteGetGroupError.ConnectionError))
+            emit(response.id, Failure(GetError.ConnectionError))
         }
         subscribe<Response.SuccessfulChatGroup>(Response.SuccessfulChatGroup.Label) { response ->
             emit(response.chatGroup.id, Success(response.chatGroup))
@@ -35,15 +34,15 @@ class WebSocketRemoteGroupDataSource(
         }
     }
 
-    private fun emit(id: GroupId, outcome: Outcome<Group, RemoteGetGroupError>) {
-        flows[id]?.let { coroutineScope.launch { it.emit(outcome) } }
+    private fun emit(id: GroupId, outcome: Outcome<Group, GetError>) {
+        flows[id]?.let { observerScope.launch { it.emit(outcome) } }
     }
 
-    override fun get(id: GroupId): Flow<Outcome<Group, RemoteGetGroupError>> {
+    override fun get(id: GroupId): Flow<Outcome<Group, GetError>> {
         val savedFlow = flows[id]
         if (savedFlow != null) return savedFlow
 
-        val sharedFlow = MutableSharedFlow<Outcome<Group, RemoteGetGroupError>>(replay = 1)
+        val sharedFlow = MutableSharedFlow<Outcome<Group, GetError>>(replay = 1)
         flows[id] = sharedFlow
         return sharedFlow
     }

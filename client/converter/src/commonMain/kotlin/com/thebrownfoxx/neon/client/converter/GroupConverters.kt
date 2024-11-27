@@ -17,5 +17,5 @@ fun Community.toLocalCommunity() = LocalCommunity(
     id = id,
     name = name,
     avatarUrl = avatarUrl,
-    god = god,
+    isGod = isGod,
 )

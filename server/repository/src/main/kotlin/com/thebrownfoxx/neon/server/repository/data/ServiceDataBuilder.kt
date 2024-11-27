@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.repository.data
 
-import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.data.model.GroupRecord
 import com.thebrownfoxx.neon.server.repository.data.model.MemberRecord
@@ -22,13 +22,13 @@ class ServiceDataBuilderScope internal constructor() {
     fun community(
         name: String,
         avatarUrl: Url?,
-        god: Boolean = false,
+        isGod: Boolean = false,
         builder: CommunityBuilder = {},
     ): GroupId {
         val communityBuilderScope = CommunityBuilderScope(
             name = name,
             avatarUrl = avatarUrl,
-            god = god,
+            isGod = isGod,
         ).apply(builder)
         return communityBuilderScope.build().apply()
     }
@@ -37,14 +37,14 @@ class ServiceDataBuilderScope internal constructor() {
         name: String,
         avatarUrl: Url?,
         inviteCode: String,
-        god: Boolean = false,
+        isGod: Boolean = false,
         builder: OpenCommunityBuilder = {},
     ): GroupId {
         val communityBuilderScope = OpenCommunityBuilderScope(
             name = name,
             avatarUrl = avatarUrl,
             inviteCode = inviteCode,
-            god = god,
+            isGod = isGod,
         ).apply(builder)
         return communityBuilderScope.build().apply()
     }

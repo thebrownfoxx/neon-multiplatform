@@ -70,8 +70,6 @@ registerEditorAction(
             true,
         )
 
-        // TODO: This is currently using an internal API. Find a public API that accomplishes
-        //  the same thing.
         @Suppress("UnstableApiUsage")
         GitSilentFileAdderProvider.create(project).apply {
             markFileForAdding(virtualPreviewFile)

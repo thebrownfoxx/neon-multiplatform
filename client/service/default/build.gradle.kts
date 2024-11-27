@@ -14,6 +14,7 @@ kotlin {
             implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.websockets)
             implementation(projects.common)
+            implementation(projects.common.data)
             implementation(projects.common.websocket)
             implementation(projects.common.websocket.ktor)
             implementation(projects.server.model)

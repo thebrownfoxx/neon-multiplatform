@@ -11,6 +11,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
             implementation(projects.common)
+            implementation(projects.common.data)
             implementation(projects.client.converter)
             implementation(projects.client.model)
             implementation(projects.client.repository)

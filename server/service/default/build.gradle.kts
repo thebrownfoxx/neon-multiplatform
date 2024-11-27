@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.auth0.jwt)
     implementation(projects.common)
+    implementation(projects.common.data)
     implementation(projects.common.hash)
     implementation(projects.server.model)
     implementation(projects.server.service)

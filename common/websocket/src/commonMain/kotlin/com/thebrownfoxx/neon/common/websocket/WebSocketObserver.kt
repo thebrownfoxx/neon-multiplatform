@@ -10,10 +10,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
 abstract class WebSocketObserver(protected val session: WebSocketSession) {
-    protected val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
+    protected val observerScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     init {
-        coroutineScope.launch {
+        observerScope.launch {
             session.close.collect {
                 close()
             }
@@ -27,7 +27,7 @@ abstract class WebSocketObserver(protected val session: WebSocketSession) {
     protected inline fun <reified T : WebSocketMessage> subscribe(
         label: WebSocketMessageLabel,
         crossinline action: (T) -> Unit,
-    ) = session.subscribe<T>(coroutineScope, label, action)
+    ) = session.subscribe<T>(observerScope, label, action)
 
-    private fun close() = coroutineScope.cancel()
+    private fun close() = observerScope.cancel()
 }

@@ -91,7 +91,7 @@ private fun generateInitialServiceData() = serviceData {
         name = "Formula 1 Drivers",
         avatarUrl = Url("https://example.com/formula1.jpg"),
         inviteCode = "f1",
-        god = true,
+        isGod = true,
     ) {
         lando = member(
             username = "lando_norris",

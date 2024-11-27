@@ -1,15 +1,14 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
+import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.unitSuccess
-import com.thebrownfoxx.neon.server.repository.invite.InviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeError
-import com.thebrownfoxx.neon.server.repository.invite.model.RepositoryGetInviteCodeGroupError
-import com.thebrownfoxx.neon.server.repository.invite.model.RepositorySetInviteCodeError
+import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
+import com.thebrownfoxx.neon.server.repository.RepositorySetInviteCodeError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,10 +21,10 @@ private typealias InviteCode = String
 class InMemoryInviteCodeRepository : InviteCodeRepository {
     private val inviteCodes = MutableStateFlow<Map<GroupId, InviteCode>>(emptyMap())
 
-    override fun get(groupId: GroupId): Flow<Outcome<String, RepositoryGetInviteCodeError>> {
+    override fun get(groupId: GroupId): Flow<Outcome<String, GetError>> {
         return inviteCodes.mapLatest { inviteCodes ->
             when (val inviteCode = inviteCodes[groupId]) {
-                null -> Failure(RepositoryGetInviteCodeError.NotFound)
+                null -> Failure(GetError.NotFound)
                 else -> Success(inviteCode)
             }
         }
@@ -33,14 +32,14 @@ class InMemoryInviteCodeRepository : InviteCodeRepository {
 
     override suspend fun getGroup(
         inviteCode: String,
-    ): Outcome<GroupId, RepositoryGetInviteCodeGroupError> {
+    ): Outcome<GroupId, GetError> {
         val group = inviteCodes.value
             .filter { (_, groupInviteCode) -> groupInviteCode == inviteCode }
             .map { it.key }
             .firstOrNull()
 
         return when (group) {
-            null -> Failure(RepositoryGetInviteCodeGroupError.NotFound)
+            null -> Failure(GetError.NotFound)
             else -> Success(group)
         }
     }

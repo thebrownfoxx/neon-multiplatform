@@ -1,31 +1,27 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
-import com.thebrownfoxx.neon.common.annotation.TestApi
+import com.thebrownfoxx.neon.common.data.ConnectionError
+import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.hash.Hash
 import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.unitSuccess
-import com.thebrownfoxx.neon.server.repository.password.PasswordRepository
-import com.thebrownfoxx.neon.server.repository.password.model.RepositoryGetPasswordHashError
-import com.thebrownfoxx.neon.server.repository.password.model.RepositorySetPasswordHashError
+import com.thebrownfoxx.neon.server.repository.PasswordRepository
 
 class InMemoryPasswordRepository : PasswordRepository {
     private val passwordHashes = mutableMapOf<MemberId, Hash>()
 
-    @TestApi
-    val passwordHashList = passwordHashes.toList()
-
-    override suspend fun getHash(memberId: MemberId): Outcome<Hash, RepositoryGetPasswordHashError> {
+    override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
         return when (val passwordHash = passwordHashes[memberId]) {
-            null -> Failure(RepositoryGetPasswordHashError.NotFound)
+            null -> Failure(GetError.NotFound)
             else -> Success(passwordHash)
         }
     }
 
-    override suspend fun setHash(memberId: MemberId, hash: Hash): UnitOutcome<RepositorySetPasswordHashError> {
+    override suspend fun setHash(memberId: MemberId, hash: Hash): UnitOutcome<ConnectionError> {
         passwordHashes[memberId] = hash
         return unitSuccess()
     }
