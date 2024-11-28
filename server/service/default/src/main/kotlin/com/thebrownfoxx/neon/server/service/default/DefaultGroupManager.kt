@@ -29,7 +29,6 @@ import com.thebrownfoxx.neon.server.service.permission.PermissionChecker
 import com.thebrownfoxx.neon.server.service.permission.model.IsGodError
 import com.thebrownfoxx.neon.server.service.permission.model.IsGroupAdminError
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class DefaultGroupManager(
@@ -43,7 +42,7 @@ class DefaultGroupManager(
     private val maxCommunityNameLength = 16
 
     override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
-        return groupRepository.get(id).map { group ->
+        return groupRepository.getAsFlow(id).map { group ->
             group.mapError { error ->
                 when (error) {
                     GetError.NotFound -> GetGroupError.NotFound(id)
@@ -58,8 +57,13 @@ class DefaultGroupManager(
         name: String,
         isGod: Boolean,
     ): Outcome<GroupId, CreateCommunityError> {
-        val authorizationError = authorizeCreateCommunity(actorId)
-        if (authorizationError != null) return Failure(authorizationError)
+        val isActorGod = permissionChecker.isGod(actorId).getOrElse { error ->
+            return when (error) {
+                IsGodError.ConnectionError -> CreateCommunityError.ConnectionError
+            }.asFailure()
+        }
+
+        if (!isActorGod) return Failure(CreateCommunityError.Unauthorized(actorId))
 
         if (name.length > maxCommunityNameLength)
             return Failure(CreateCommunityError.NameTooLong(name, maxCommunityNameLength))
@@ -70,7 +74,7 @@ class DefaultGroupManager(
             isGod = isGod,
         )
 
-        return groupRepository.add(community).map(
+        return groupRepository.add(community).result.map(
             onSuccess = { community.id },
             onFailure = { error ->
                 when (error) {
@@ -81,25 +85,24 @@ class DefaultGroupManager(
         )
     }
 
-    private suspend fun authorizeCreateCommunity(actorId: MemberId): CreateCommunityError? {
-        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
-            return when (error) {
-                IsGodError.ConnectionError -> CreateCommunityError.ConnectionError
-            }
-        }
-
-        if (!isGod) return CreateCommunityError.Unauthorized(actorId)
-
-        return null
-    }
-
     override suspend fun setInviteCode(
         actorId: MemberId,
         groupId: GroupId,
         inviteCode: String,
     ): UnitOutcome<SetInviteCodeError> {
-        val authorizationError = authorizeSetInviteCode(actorId, groupId)
-        if (authorizationError != null) return Failure(authorizationError)
+        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
+            return when (error) {
+                IsGodError.ConnectionError -> SetInviteCodeError.ConnectionError
+            }.asFailure()
+        }
+
+        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
+            return when (error) {
+                IsGroupAdminError.ConnectionError -> SetInviteCodeError.ConnectionError
+            }.asFailure()
+        }
+
+        if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized(actorId))
 
         val inviteCodeExists = inviteCodeRepository.getGroup(inviteCode).fold(
             onSuccess = { true },
@@ -113,7 +116,7 @@ class DefaultGroupManager(
 
         if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode(inviteCode))
 
-        val group = groupRepository.get(groupId).first().getOrElse { error ->
+        val group = groupRepository.get(groupId).getOrElse { error ->
             return when (error) {
                 GetError.NotFound -> SetInviteCodeError.GroupNotFound(groupId)
                 GetError.ConnectionError -> SetInviteCodeError.ConnectionError
@@ -122,7 +125,7 @@ class DefaultGroupManager(
 
         if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity(groupId))
 
-        return inviteCodeRepository.set(groupId, inviteCode).mapError { error ->
+        return inviteCodeRepository.set(groupId, inviteCode).result.mapError { error ->
             when (error) {
                 RepositorySetInviteCodeError.DuplicateInviteCode ->
                     SetInviteCodeError.DuplicateInviteCode(inviteCode)
@@ -132,58 +135,47 @@ class DefaultGroupManager(
         }
     }
 
-    private suspend fun authorizeSetInviteCode(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): SetInviteCodeError? {
-        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
-            return when (error) {
-                IsGodError.ConnectionError -> SetInviteCodeError.ConnectionError
-            }
-        }
-
-        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
-            return when (error) {
-                IsGroupAdminError.ConnectionError -> SetInviteCodeError.ConnectionError
-            }
-        }
-
-        if (!(isGod) || isGroupAdmin) return SetInviteCodeError.Unauthorized(actorId)
-
-        return null
-    }
-
     override suspend fun addMember(
         actorId: MemberId,
         groupId: GroupId,
         memberId: MemberId,
         isAdmin: Boolean,
     ): UnitOutcome<AddGroupMemberError> {
-        val authorizationError = authorizeAddMember(actorId, groupId)
+        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
+            return when (error) {
+                IsGodError.ConnectionError -> AddGroupMemberError.ConnectionError
+            }.asFailure()
+        }
 
-        if (authorizationError != null) return Failure(authorizationError)
+        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
+            return when (error) {
+                IsGroupAdminError.ConnectionError -> AddGroupMemberError.ConnectionError
+            }.asFailure()
+        }
 
-        groupRepository.get(groupId).first().onFailure { error ->
+        if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized(actorId))
+
+        groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> AddGroupMemberError.GroupNotFound(groupId)
                 GetError.ConnectionError -> AddGroupMemberError.ConnectionError
             }.asFailure()
         }
 
-        memberRepository.get(memberId).first().onFailure { error ->
+        memberRepository.get(memberId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> AddGroupMemberError.MemberNotFound(memberId)
                 GetError.ConnectionError -> AddGroupMemberError.ConnectionError
             }.asFailure()
         }
 
-        val groupMembers = groupMemberRepository.getMembers(groupId).first().getOrElse {
+        val groupMembers = groupMemberRepository.getMembers(groupId).getOrElse {
             return Failure(AddGroupMemberError.ConnectionError)
         }
 
         if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember(memberId))
 
-        return groupMemberRepository.addMember(groupId, memberId, isAdmin).map(
+        return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
             onSuccess = {},
             onFailure = { error ->
                 when (error) {
@@ -192,26 +184,5 @@ class DefaultGroupManager(
                 }
             },
         )
-    }
-
-    private suspend fun authorizeAddMember(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): AddGroupMemberError? {
-        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
-            return when (error) {
-                IsGodError.ConnectionError -> AddGroupMemberError.ConnectionError
-            }
-        }
-
-        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
-            return when (error) {
-                IsGroupAdminError.ConnectionError -> AddGroupMemberError.ConnectionError
-            }
-        }
-
-        if (!(isGod) || isGroupAdmin) return AddGroupMemberError.Unauthorized(actorId)
-
-        return null
     }
 }

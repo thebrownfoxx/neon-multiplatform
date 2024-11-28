@@ -14,7 +14,7 @@ open class CommunityBuilderScope internal constructor(
     protected val avatarUrl: Url?,
     protected val isGod: Boolean,
 ) {
-    private val memberIds = mutableSetOf<MemberId>()
+    protected val memberIds = mutableSetOf<MemberId>()
 
     fun member(id: MemberId): MemberId {
         memberIds.add(id)

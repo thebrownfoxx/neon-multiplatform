@@ -1,34 +1,70 @@
-//package com.thebrownfoxx.neon.server.repository.exposed
-//
-//import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
-//import com.thebrownfoxx.neon.common.hash.Hash
-//import com.thebrownfoxx.neon.common.type.Outcome
-//import com.thebrownfoxx.neon.common.type.UnitOutcome
-//import com.thebrownfoxx.neon.common.type.id.MemberId
-//import com.thebrownfoxx.neon.server.repository.PasswordRepository
-//import com.thebrownfoxx.neon.server.repository.password.model.RepositoryGetPasswordHashError
-//import com.thebrownfoxx.neon.server.repository.password.model.RepositorySetPasswordHashError
-//import org.jetbrains.exposed.sql.Database
-//import org.jetbrains.exposed.sql.Table
-//
-//class ExposedPasswordRepository(
-//    database: Database,
-//) : PasswordRepository, ExposedDataSource(database) {
-//    override suspend fun getHash(memberId: MemberId): Outcome<Hash, RepositoryGetPasswordHashError> {
-//        TODO("Not yet implemented")
-//    }
-//
-//    // TODO: Make a wrapper for exposed, or even like any generic repository? that will automatically
-//    //  handle flows since they are such a pain to write over and over
-//
-//    override suspend fun setHash(
-//        memberId: MemberId,
-//        hash: Hash,
-//    ): UnitOutcome<RepositorySetPasswordHashError> {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override val table: Table
-//        get() = TODO("Not yet implemented")
-//
-//}
+package com.thebrownfoxx.neon.server.repository.exposed
+
+import com.thebrownfoxx.neon.common.data.ConnectionError
+import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
+import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
+import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
+import com.thebrownfoxx.neon.common.data.transaction.asReversible
+import com.thebrownfoxx.neon.common.hash.Hash
+import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.map
+import com.thebrownfoxx.neon.common.type.unitSuccess
+import com.thebrownfoxx.neon.server.repository.PasswordRepository
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.upsert
+import java.util.UUID
+
+@OptIn(ExperimentalStdlibApi::class)
+class ExposedPasswordRepository(
+    database: Database,
+) : PasswordRepository, ExposedDataSource(database, PasswordTable) {
+    private val hexFormat = HexFormat {}
+
+    override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
+        return dbQuery {
+            PasswordTable
+                .selectAll()
+                .where(PasswordTable.memberId eq memberId.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toHash() }
+        }
+    }
+
+    override suspend fun setHash(memberId: MemberId, hash: Hash): ReversibleUnitOutcome<ConnectionError> {
+        val id = UUID.randomUUID()
+        dbQuery {
+            PasswordTable.upsert {
+                it[this.id] = id
+                it[this.memberId] = memberId.toJavaUuid()
+                it[this.passwordHash] = hash.value.toHexString(hexFormat)
+                it[this.passwordSalt] =  hash.value.toHexString(hexFormat)
+            }
+        }
+        return unitSuccess().asReversible {
+            dbQuery { PasswordTable.deleteWhere { PasswordTable.id eq id } }
+        }
+    }
+
+    private fun ResultRow.toHash() = Hash(
+        value = this[PasswordTable.passwordHash].hexToByteArray(hexFormat),
+        salt = this[PasswordTable.passwordSalt].hexToByteArray(hexFormat),
+    )
+}
+
+private object PasswordTable : Table("password") {
+    val id = uuid("id")
+    val memberId = uuid("member_id").uniqueIndex()
+    val passwordHash = varchar("password_hash", 512)
+    val passwordSalt = varchar("password_salt", 128)
+
+    override val primaryKey = PrimaryKey(id)
+}

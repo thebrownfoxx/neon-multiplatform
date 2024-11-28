@@ -16,7 +16,6 @@ class OpenCommunityBuilderScope internal constructor(
     private val inviteCode: String,
 ) : CommunityBuilderScope(name, avatarUrl, isGod) {
     private val members = mutableListOf<MemberRecord>()
-    private val memberIds = mutableListOf<MemberId>()
 
     fun member(
         username: String,
@@ -27,7 +26,6 @@ class OpenCommunityBuilderScope internal constructor(
         members.add(MemberRecord(member = member, inviteCode = inviteCode, password = password))
         return member.id
     }
-
 
     override fun build(): CommunityBuilderData {
         val community = Community(

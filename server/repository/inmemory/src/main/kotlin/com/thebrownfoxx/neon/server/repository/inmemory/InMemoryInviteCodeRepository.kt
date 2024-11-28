@@ -1,10 +1,11 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
+import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
@@ -21,7 +22,7 @@ private typealias InviteCode = String
 class InMemoryInviteCodeRepository : InviteCodeRepository {
     private val inviteCodes = MutableStateFlow<Map<GroupId, InviteCode>>(emptyMap())
 
-    override fun get(groupId: GroupId): Flow<Outcome<String, GetError>> {
+    override fun getAsFlow(groupId: GroupId): Flow<Outcome<String, GetError>> {
         return inviteCodes.mapLatest { inviteCodes ->
             when (val inviteCode = inviteCodes[groupId]) {
                 null -> Failure(GetError.NotFound)
@@ -47,11 +48,11 @@ class InMemoryInviteCodeRepository : InviteCodeRepository {
     override suspend fun set(
         groupId: GroupId,
         inviteCode: String,
-    ): UnitOutcome<RepositorySetInviteCodeError> {
+    ): ReversibleUnitOutcome<RepositorySetInviteCodeError> {
         if (inviteCode in inviteCodes.value.values)
-            return Failure(RepositorySetInviteCodeError.DuplicateInviteCode)
+            return Failure(RepositorySetInviteCodeError.DuplicateInviteCode).asReversible()
 
         inviteCodes.update { it + (groupId to inviteCode) }
-        return unitSuccess()
+        return unitSuccess().asReversible { inviteCodes.update { it - groupId } }
     }
 }

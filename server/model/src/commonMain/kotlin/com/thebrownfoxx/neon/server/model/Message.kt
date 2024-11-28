@@ -16,8 +16,8 @@ data class Message(
     val delivery: Delivery,
 )
 
-sealed interface Delivery {
-    data object Sent : Delivery
-    data object Delivered : Delivery
-    data object Read : Delivery
+enum class Delivery {
+    Sent,
+    Delivered,
+    Read,
 }

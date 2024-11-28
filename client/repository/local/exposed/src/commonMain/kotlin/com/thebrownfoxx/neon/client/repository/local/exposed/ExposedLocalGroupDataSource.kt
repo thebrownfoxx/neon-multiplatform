@@ -6,7 +6,6 @@ import com.thebrownfoxx.neon.client.model.LocalGroup
 import com.thebrownfoxx.neon.client.repository.local.LocalGroupDataSource
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dbQuery
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
@@ -28,19 +27,9 @@ import org.jetbrains.exposed.sql.upsert
 internal class ExposedLocalGroupDataSource(
     database: Database,
 ) : LocalGroupDataSource, ExposedDataSource(database, LocalGroupTable) {
-    private val reactiveCache = ReactiveCache(daoScope, ::get)
+    private val reactiveCache = ReactiveCache(::get)
 
     override fun getAsFlow(id: GroupId) = reactiveCache.getAsFlow(id)
-
-    suspend fun get(id: GroupId): Outcome<LocalGroup, GetError> {
-        return dbQuery {
-            LocalGroupTable
-                .selectAll()
-                .where(LocalGroupTable.id eq id.toJavaUuid())
-                .firstOrNotFound()
-                .map { it.toLocalGroup() }
-        }
-    }
 
     override suspend fun upsert(group: LocalGroup): UnitOutcome<ConnectionError> {
         dbQuery {
@@ -55,6 +44,16 @@ internal class ExposedLocalGroupDataSource(
         }
         reactiveCache.updateCache(group.id)
         return unitSuccess()
+    }
+
+    private suspend fun get(id: GroupId): Outcome<LocalGroup, GetError> {
+        return dbQuery {
+            LocalGroupTable
+                .selectAll()
+                .where(LocalGroupTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toLocalGroup() }
+        }
     }
 
     private fun ResultRow.toLocalGroup(): LocalGroup {

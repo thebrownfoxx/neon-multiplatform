@@ -1,10 +1,11 @@
 package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
+import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.Member
@@ -21,13 +22,17 @@ import kotlinx.coroutines.flow.update
 class InMemoryMemberRepository : MemberRepository {
     private val members = MutableStateFlow<Map<MemberId, Member>>(emptyMap())
 
-    override fun get(id: MemberId): Flow<Outcome<Member, GetError>> {
+    override fun getAsFlow(id: MemberId): Flow<Outcome<Member, GetError>> {
         return members.mapLatest { members ->
             when (val member = members[id]) {
                 null -> Failure(GetError.NotFound)
                 else -> Success(member)
             }
         }
+    }
+
+    override suspend fun get(id: MemberId): Outcome<Member, GetError> {
+        return getAsFlow(id).first()
     }
 
     override suspend fun getId(username: String): Outcome<MemberId, GetError> {
@@ -39,7 +44,7 @@ class InMemoryMemberRepository : MemberRepository {
         }.first()
     }
 
-    override suspend fun add(member: Member): UnitOutcome<RepositoryAddMemberError> {
+    override suspend fun add(member: Member): ReversibleUnitOutcome<RepositoryAddMemberError> {
         return when {
             members.value.containsKey(member.id) -> Failure(RepositoryAddMemberError.DuplicateId)
             members.value.values.any { it.username == member.username } ->
@@ -49,6 +54,6 @@ class InMemoryMemberRepository : MemberRepository {
                 members.update { it + (member.id to member) }
                 unitSuccess()
             }
-        }
+        }.asReversible { members.update { it - member.id } }
     }
 }

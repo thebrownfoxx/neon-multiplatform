@@ -6,12 +6,13 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.application.websocket.WebSocketManager
 import com.thebrownfoxx.neon.server.repository.data.integrate
 import com.thebrownfoxx.neon.server.repository.data.serviceData
-import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupMemberRepository
-import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryGroupRepository
-import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryInviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryMemberRepository
-import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryMessageRepository
-import com.thebrownfoxx.neon.server.repository.inmemory.InMemoryPasswordRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedConfigurationRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedGroupMemberRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedGroupRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedInviteCodeRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedMemberRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedMessageRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedPasswordRepository
 import com.thebrownfoxx.neon.server.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.server.service.default.DefaultGroupManager
 import com.thebrownfoxx.neon.server.service.default.DefaultJwtProcessor
@@ -22,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import org.jetbrains.exposed.sql.Database
 import kotlin.time.Duration.Companion.days
 
 class DefaultDependencies : Dependencies {
@@ -38,12 +40,20 @@ class DefaultDependencies : Dependencies {
 
     override val jwtProcessor = DefaultJwtProcessor(jwtConfig)
 
-    private val groupRepository = InMemoryGroupRepository()
-    private val memberRepository = InMemoryMemberRepository()
-    private val groupMemberRepository = InMemoryGroupMemberRepository()
-    private val inviteCodeRepository = InMemoryInviteCodeRepository()
-    private val passwordRepository = InMemoryPasswordRepository()
-    private val messageRepository = InMemoryMessageRepository(groupMemberRepository)
+    private val database = Database.connect(
+        url = "jdbc:postgresql://localhost:5432/neon",
+        driver = "org.postgresql.Driver",
+        user = "postgres",
+        password = "development", // TODO: Move to env
+    )
+
+    private val configurationRepository = ExposedConfigurationRepository(database)
+    private val groupRepository = ExposedGroupRepository(database)
+    private val memberRepository = ExposedMemberRepository(database)
+    private val groupMemberRepository = ExposedGroupMemberRepository(database)
+    private val inviteCodeRepository = ExposedInviteCodeRepository(database)
+    private val passwordRepository = ExposedPasswordRepository(database)
+    private val messageRepository = ExposedMessageRepository(database)
     private val hasher = MultiplatformHasher()
     private val permissionChecker = DefaultPermissionChecker(groupMemberRepository)
 
@@ -67,7 +77,9 @@ class DefaultDependencies : Dependencies {
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            generateInitialServiceData().integrate(
+            val serviceData = generateInitialServiceData()
+            serviceData.integrate(
+                configurationRepository,
                 groupRepository,
                 memberRepository,
                 groupMemberRepository,
@@ -76,6 +88,7 @@ class DefaultDependencies : Dependencies {
                 messageRepository,
                 hasher,
             )
+            print(serviceData)
         }
     }
 }

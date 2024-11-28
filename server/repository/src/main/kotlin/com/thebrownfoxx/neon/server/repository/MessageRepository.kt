@@ -4,8 +4,8 @@ import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
+import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -13,11 +13,17 @@ import com.thebrownfoxx.neon.server.model.Message
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    fun get(id: MessageId): Flow<Outcome<Message, GetError>>
+    fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>>
 
-    suspend fun add(message: Message): UnitOutcome<AddError>
+    fun getConversationPreviewAsFlow(
+        id: GroupId,
+    ): Flow<Outcome<MessageId?, ConnectionError>>
 
-    suspend fun update(message: Message): UnitOutcome<UpdateError>
+    suspend fun get(id: MessageId): Outcome<Message, GetError>
+
+    suspend fun add(message: Message): ReversibleUnitOutcome<AddError>
+
+    suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
 
     suspend fun getConversations(
         memberId: MemberId,
@@ -27,22 +33,19 @@ interface MessageRepository {
         descending: Boolean = false,
     ): Outcome<Set<GroupId>, ConnectionError>
 
-    fun getConversationCount(
+    suspend fun getConversationCount(
         memberId: MemberId,
         read: Boolean? = null,
-    ): Flow<Outcome<Int, ConnectionError>>
+    ): Outcome<Int, ConnectionError>
 
-    fun getConversationPreview(
-        id: GroupId,
-    ): Flow<Outcome<MessageId?, ConnectionError>>
-
-    fun getMessages(
+    suspend fun getMessages(
         groupId: GroupId,
         count: Int,
         offset: Int,
-    ): Flow<Outcome<Set<MessageId>, ConnectionError>>
+    ): Outcome<Set<MessageId>, ConnectionError>
 
-    fun getUnreadMessages(
+    // TODO: We should paginate this
+    suspend fun getUnreadMessages(
         groupId: GroupId,
-    ): Flow<Outcome<Set<MessageId>, ConnectionError>>
+    ): Outcome<Set<MessageId>, ConnectionError>
 }

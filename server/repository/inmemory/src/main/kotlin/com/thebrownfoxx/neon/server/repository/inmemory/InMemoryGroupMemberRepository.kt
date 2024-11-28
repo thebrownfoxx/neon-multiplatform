@@ -2,10 +2,11 @@ package com.thebrownfoxx.neon.server.repository.inmemory
 
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.ConnectionError
+import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
+import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.unitSuccess
@@ -13,6 +14,7 @@ import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 
@@ -20,7 +22,7 @@ import kotlinx.coroutines.flow.update
 class InMemoryGroupMemberRepository : GroupMemberRepository {
     private val groupMembers = MutableStateFlow<Map<GroupId, List<GroupMember>>>(emptyMap())
 
-    override fun getMembers(
+    override fun getMembersAsFlow(
         groupId: GroupId,
     ): Flow<Outcome<List<MemberId>, ConnectionError>> {
         return groupMembers.mapLatest { groupMembers ->
@@ -28,7 +30,7 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
         }
     }
 
-    override fun getGroups(
+    override fun getGroupsAsFlow(
         memberId: MemberId,
     ): Flow<Outcome<List<GroupId>, ConnectionError>> {
         return groupMembers.mapLatest { groupMembers ->
@@ -40,7 +42,7 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
         }
     }
 
-    override fun getAdmins(
+    override fun getAdminsAsFlow(
         groupId: GroupId,
     ): Flow<Outcome<List<MemberId>, ConnectionError>> {
         return groupMembers.mapLatest { groupMembers ->
@@ -49,21 +51,37 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
         }
     }
 
+    override suspend fun getMembers(groupId: GroupId): Outcome<List<MemberId>, ConnectionError> {
+        return getMembersAsFlow(groupId).first()
+    }
+
+    override suspend fun getGroups(memberId: MemberId): Outcome<List<GroupId>, ConnectionError> {
+        return getGroupsAsFlow(memberId).first()
+    }
+
+    override suspend fun getAdmins(groupId: GroupId): Outcome<List<MemberId>, ConnectionError> {
+        return getAdminsAsFlow(groupId).first()
+    }
+
     override suspend fun addMember(
         groupId: GroupId,
         memberId: MemberId,
         isAdmin: Boolean,
-    ): UnitOutcome<AddError> {
+    ): ReversibleUnitOutcome<AddError> {
         val groupMembers = groupMembers.value[groupId] ?: emptyList()
         val duplicateMembership = groupMembers.any { it.id == memberId }
 
-        if (duplicateMembership) return Failure(AddError.Duplicate)
+        if (duplicateMembership) return Failure(AddError.Duplicate).asReversible()
 
         this.groupMembers.update {
             it + (groupId to groupMembers + GroupMember(memberId, isAdmin))
         }
 
-        return unitSuccess()
+        return unitSuccess().asReversible {
+            this.groupMembers.update { oldGroupMembers ->
+                oldGroupMembers + (groupId to groupMembers.filter { it.id != memberId })
+            }
+        }
     }
 }
 

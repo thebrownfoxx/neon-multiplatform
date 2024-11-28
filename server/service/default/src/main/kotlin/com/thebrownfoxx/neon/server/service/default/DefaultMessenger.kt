@@ -4,6 +4,7 @@ import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
+import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.extension.flow
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
@@ -36,7 +37,6 @@ import com.thebrownfoxx.neon.server.service.messenger.model.NewConversationError
 import com.thebrownfoxx.neon.server.service.messenger.model.SendMessageError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.Clock
@@ -56,7 +56,7 @@ class DefaultMessenger(
         count: Int,
         offset: Int,
     ): Outcome<Conversations, GetConversationsError> {
-        memberRepository.get(actorId).first().onFailure { error ->
+        memberRepository.get(actorId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> GetConversationsError.MemberNotFound(actorId)
                 GetError.ConnectionError -> GetConversationsError.ConnectionError
@@ -76,7 +76,6 @@ class DefaultMessenger(
         ).getOrElse { return Failure(GetConversationsError.ConnectionError) }
 
         val unreadCount = messageRepository.getConversationCount(memberId = actorId, read = false)
-            .first()
             .getOrElse { return Failure(GetConversationsError.ConnectionError) }
 
         val readConversations = getReadConversations(
@@ -137,7 +136,7 @@ class DefaultMessenger(
         actorId: MemberId,
         id: MessageId,
     ): Flow<Outcome<Message, GetMessageError>> {
-        return messageRepository.get(id).flatMapLatest { messageOutcome ->
+        return messageRepository.getAsFlow(id).flatMapLatest { messageOutcome ->
             val message = messageOutcome.getOrElse { error ->
                 return@flatMapLatest when (error) {
                     GetError.NotFound -> GetMessageError.NotFound(id)
@@ -145,16 +144,17 @@ class DefaultMessenger(
                 }.asFailure().flow()
             }
 
-            groupMemberRepository.getMembers(message.groupId).mapLatest { groupMemberIdsOutcome ->
-                val groupMemberId = groupMemberIdsOutcome.getOrElse {
-                    return@mapLatest Failure(GetMessageError.ConnectionError)
+            groupMemberRepository.getMembersAsFlow(message.groupId)
+                .mapLatest { groupMemberIdsOutcome ->
+                    val groupMemberId = groupMemberIdsOutcome.getOrElse {
+                        return@mapLatest Failure(GetMessageError.ConnectionError)
+                    }
+
+                    if (actorId !in groupMemberId)
+                        return@mapLatest Failure(GetMessageError.Unauthorized(actorId))
+
+                    Success(message)
                 }
-
-                if (actorId !in groupMemberId)
-                    return@mapLatest Failure(GetMessageError.Unauthorized(actorId))
-
-                Success(message)
-            }
         }
     }
 
@@ -162,7 +162,7 @@ class DefaultMessenger(
         actorId: MemberId,
         groupId: GroupId,
     ): Flow<Outcome<MessageId?, GetConversationPreviewError>> {
-        return groupRepository.get(groupId).flatMapLatest { group ->
+        return groupRepository.getAsFlow(groupId).flatMapLatest { group ->
             group.onFailure { error ->
                 return@flatMapLatest when (error) {
                     GetError.NotFound -> GetConversationPreviewError.GroupNotFound(groupId)
@@ -177,12 +177,12 @@ class DefaultMessenger(
         groupId: GroupId,
         actorId: MemberId,
     ): Flow<Outcome<MessageId?, GetConversationPreviewError>> {
-        return messageRepository.getConversationPreview(groupId).flatMapLatest { messageOutcome ->
+        return messageRepository.getConversationPreviewAsFlow(groupId).flatMapLatest { messageOutcome ->
             val previewId = messageOutcome.getOrElse {
                 return@flatMapLatest Failure(GetConversationPreviewError.ConnectionError).flow()
             }
 
-            groupMemberRepository.getMembers(groupId).mapLatest { groupMemberIdsOutcome ->
+            groupMemberRepository.getMembersAsFlow(groupId).mapLatest { groupMemberIdsOutcome ->
                 val groupMemberId = groupMemberIdsOutcome.getOrElse {
                     return@mapLatest Failure(GetConversationPreviewError.ConnectionError)
                 }
@@ -201,20 +201,20 @@ class DefaultMessenger(
         count: Int,
         offset: Int,
     ): Outcome<Set<MessageId>, GetMessagesError> {
-        groupRepository.get(groupId).first().onFailure { error ->
+        groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> GetMessagesError.GroupNotFound(groupId)
                 GetError.ConnectionError -> GetMessagesError.ConnectionError
             }.asFailure()
         }
 
-        val groupMemberIds = groupMemberRepository.getMembers(groupId).first().getOrElse { error ->
+        val groupMemberIds = groupMemberRepository.getMembers(groupId).getOrElse { error ->
             return Failure(GetMessagesError.ConnectionError)
         }
 
         if (actorId !in groupMemberIds) return Failure(GetMessagesError.Unauthorized(actorId))
 
-        return messageRepository.getMessages(groupId, count, offset).first()
+        return messageRepository.getMessages(groupId, count, offset)
             .mapError { GetMessagesError.ConnectionError }
     }
 
@@ -222,7 +222,7 @@ class DefaultMessenger(
         memberIds: Set<MemberId>,
     ): UnitOutcome<NewConversationError> {
         for (memberId in memberIds) {
-            memberRepository.get(memberId).first().onFailure { error ->
+            memberRepository.get(memberId).onFailure { error ->
                 return when (error) {
                     GetError.NotFound -> NewConversationError.MemberNotFound(memberId)
                     GetError.ConnectionError -> NewConversationError.ConnectionError
@@ -231,27 +231,30 @@ class DefaultMessenger(
         }
 
         val chatGroup = ChatGroup()
-        groupRepository.add(chatGroup).onFailure { error ->
-            return when (error) {
-                AddError.Duplicate -> error("What are the chances?")
-                AddError.ConnectionError -> NewConversationError.ConnectionError
-            }.asFailure()
-        }
 
-        for (memberId in memberIds) {
-            groupMemberRepository.addMember(
-                groupId = chatGroup.id,
-                memberId = memberId,
-                isAdmin = false,
-            ).onFailure { error ->
-                return when (error) {
+        return transaction {
+            groupRepository.add(chatGroup).register().onFailure { error ->
+                return@transaction when (error) {
+                    AddError.Duplicate -> error("What are the chances?")
                     AddError.ConnectionError -> NewConversationError.ConnectionError
-                    AddError.Duplicate -> error("Can't be?")
                 }.asFailure()
             }
-        }
 
-        return unitSuccess()
+            for (memberId in memberIds) {
+                groupMemberRepository.addMember(
+                    groupId = chatGroup.id,
+                    memberId = memberId,
+                    isAdmin = false,
+                ).register().onFailure { error ->
+                    return@transaction when (error) {
+                        AddError.ConnectionError -> NewConversationError.ConnectionError
+                        AddError.Duplicate -> error("Can't be?")
+                    }.asFailure()
+                }
+            }
+
+            unitSuccess()
+        }
     }
 
     override suspend fun sendMessage(
@@ -259,14 +262,14 @@ class DefaultMessenger(
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError> {
-        groupRepository.get(groupId).first().onFailure { error ->
+        groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> SendMessageError.GroupNotFound(groupId)
                 GetError.ConnectionError -> SendMessageError.ConnectionError
             }.asFailure()
         }
 
-        val groupMemberIds = groupMemberRepository.getMembers(groupId).first()
+        val groupMemberIds = groupMemberRepository.getMembers(groupId)
             .getOrElse { return Failure(SendMessageError.ConnectionError) }
 
         if (actorId !in groupMemberIds) return Failure(SendMessageError.Unauthorized(actorId))
@@ -279,7 +282,7 @@ class DefaultMessenger(
             delivery = Delivery.Sent,
         )
 
-        messageRepository.add(message).onFailure { error ->
+        messageRepository.add(message).result.onFailure { error ->
             return when (error) {
                 AddError.Duplicate -> error("What are the chances?")
                 AddError.ConnectionError -> SendMessageError.ConnectionError
@@ -293,25 +296,25 @@ class DefaultMessenger(
         actorId: MemberId,
         groupId: GroupId,
     ): UnitOutcome<MarkConversationAsReadError> {
-        groupRepository.get(groupId).first().onFailure { error ->
+        groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> MarkConversationAsReadError.GroupNotFound(groupId)
                 GetError.ConnectionError -> MarkConversationAsReadError.ConnectionError
             }.asFailure()
         }
 
-        val groupMemberIds = groupMemberRepository.getMembers(groupId).first()
+        val groupMemberIds = groupMemberRepository.getMembers(groupId)
             .getOrElse { return Failure(MarkConversationAsReadError.ConnectionError) }
 
         if (actorId !in groupMemberIds)
             return Failure(MarkConversationAsReadError.Unauthorized(actorId))
 
         val unreadMessageIds =
-            messageRepository.getUnreadMessages(groupId).first()
+            messageRepository.getUnreadMessages(groupId)
                 .getOrElse { return Failure(MarkConversationAsReadError.ConnectionError) }
 
         val unreadMessages = unreadMessageIds.map {
-            messageRepository.get(it).first().getOrElse { error ->
+            messageRepository.get(it).getOrElse { error ->
                 when (error) {
                     GetError.NotFound -> null
                     GetError.ConnectionError ->
@@ -322,16 +325,19 @@ class DefaultMessenger(
 
         if (unreadMessages.isEmpty()) return Failure(MarkConversationAsReadError.AlreadyRead)
 
-        for (message in unreadMessages) {
-            messageRepository.update(message.copy(delivery = Delivery.Read)).onFailure { error ->
-                when (error) {
-                    UpdateError.NotFound -> {}
-                    UpdateError.ConnectionError ->
-                        return Failure(MarkConversationAsReadError.ConnectionError)
-                }
+        return transaction {
+            for (message in unreadMessages) {
+                messageRepository.update(message.copy(delivery = Delivery.Read)).register()
+                    .onFailure { error ->
+                        when (error) {
+                            UpdateError.NotFound -> {}
+                            UpdateError.ConnectionError ->
+                                return@transaction Failure(MarkConversationAsReadError.ConnectionError)
+                        }
+                    }
             }
-        }
 
-        return unitSuccess()
+            unitSuccess()
+        }
     }
 }

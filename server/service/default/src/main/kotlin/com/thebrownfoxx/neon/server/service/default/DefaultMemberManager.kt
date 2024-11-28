@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.hash.Hasher
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
@@ -32,12 +33,12 @@ class DefaultMemberManager(
     private val groupMemberRepository: GroupMemberRepository,
     private val hasher: Hasher,
 ) : MemberManager {
-    // TODO: Move these to a more central place?
+    // TODO: Move these to a more central place
     private val usernameMaxLength = 16
     private val passwordMinLength = 8
 
     override fun getMember(id: MemberId): Flow<Outcome<Member, GetMemberError>> {
-        return memberRepository.get(id).mapLatest { memberOutcome ->
+        return memberRepository.getAsFlow(id).mapLatest { memberOutcome ->
             memberOutcome.mapError { error ->
                 when (error) {
                     GetError.NotFound -> GetMemberError.NotFound
@@ -73,31 +74,32 @@ class DefaultMemberManager(
             avatarUrl = null,
         )
 
-        memberRepository.add(member).onFailure { error ->
-            when (error) {
-                RepositoryAddMemberError.DuplicateId ->
-                    error("Cannot add member with duplicate id")
+        return transaction {
+            memberRepository.add(member).register().onFailure { error ->
+                return@transaction when (error) {
+                    RepositoryAddMemberError.DuplicateId ->
+                        error("Cannot add member with duplicate id")
 
-                RepositoryAddMemberError.DuplicateUsername ->
-                    RegisterMemberError.UsernameTaken(username)
+                    RepositoryAddMemberError.DuplicateUsername ->
+                        RegisterMemberError.UsernameTaken(username)
 
-                RepositoryAddMemberError.ConnectionError -> RegisterMemberError.ConnectionError
+                    RepositoryAddMemberError.ConnectionError -> RegisterMemberError.ConnectionError
+                }.asFailure()
             }
+
+            groupMemberRepository.addMember(inviteCodeGroupId, member.id).register()
+                .onFailure { error ->
+                    when (error) {
+                        AddError.Duplicate -> {}
+                        AddError.ConnectionError ->
+                            return@transaction Failure(RegisterMemberError.ConnectionError)
+                    }
+                }
+
+            passwordRepository.setHash(member.id, hasher.hash(password)).register()
+                .onFailure { return@transaction Failure(RegisterMemberError.ConnectionError) }
+
+            Success(member.id)
         }
-
-        groupMemberRepository.addMember(inviteCodeGroupId, member.id).onFailure { error ->
-            when (error) {
-                AddError.Duplicate -> {}
-                AddError.ConnectionError -> RegisterMemberError.ConnectionError
-            }
-        }
-
-        passwordRepository.setHash(
-            memberId = member.id,
-            hash = hasher.hash(password),
-        )
-
-        return Success(member.id)
     }
-
 }

@@ -17,7 +17,7 @@ class DefaultPermissionChecker(
     private val groupMemberRepository: GroupMemberRepository,
 ) : PermissionChecker {
     override suspend fun isGod(memberId: MemberId): Outcome<Boolean, IsGodError> {
-        val communities = groupMemberRepository.getGroups(memberId).first().getOrElse {
+        val communities = groupMemberRepository.getGroupsAsFlow(memberId).first().getOrElse {
             return Failure(IsGodError.ConnectionError)
         }.filterIsInstance<Community>()
 
@@ -28,7 +28,7 @@ class DefaultPermissionChecker(
         groupId: GroupId,
         memberId: MemberId,
     ): Outcome<Boolean, IsGroupAdminError> {
-        val admins = groupMemberRepository.getAdmins(groupId).first().getOrElse {
+        val admins = groupMemberRepository.getAdminsAsFlow(groupId).first().getOrElse {
             return Failure(IsGroupAdminError.ConnectionError)
         }
 

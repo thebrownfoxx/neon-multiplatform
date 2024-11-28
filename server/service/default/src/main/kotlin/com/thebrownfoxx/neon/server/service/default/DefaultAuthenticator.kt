@@ -13,7 +13,6 @@ import com.thebrownfoxx.neon.server.repository.PasswordRepository
 import com.thebrownfoxx.neon.server.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.server.service.authenticator.model.AuthenticationError
 import com.thebrownfoxx.neon.server.service.authenticator.model.LoginError
-import kotlinx.coroutines.flow.first
 
 class DefaultAuthenticator(
     private val memberRepository: MemberRepository,
@@ -21,16 +20,7 @@ class DefaultAuthenticator(
     private val hasher: Hasher,
 ) : Authenticator {
     override suspend fun exists(memberId: MemberId): Outcome<Boolean, AuthenticationError> {
-        /*
-        TODO: IMPORTANT!! get(): Flow usually returns their old value before being updated with
-         with the new value asynchronously. Although this is fine sometimes, it can lead to
-         race conditions leading to unexpected behavior. For example, in this context, if the
-         update about a member's deletion successfully updates the flow after .get().first() was
-         executed, it would still log the user on?
-         Maybe consider having separate synchronous get methods instead?
-         Or maybe it isn't even worth it. research it...
-         */
-        return when (val memberOutcome = memberRepository.get(memberId).first()) {
+        return when (val memberOutcome = memberRepository.get(memberId)) {
             is Success -> return Success(true)
             is Failure -> when (memberOutcome.error) {
                 GetError.NotFound -> Success(false)

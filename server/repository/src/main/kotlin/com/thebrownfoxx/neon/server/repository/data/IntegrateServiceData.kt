@@ -1,8 +1,13 @@
 package com.thebrownfoxx.neon.server.repository.data
 
+import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.hash.Hasher
+import com.thebrownfoxx.neon.common.type.Failure
+import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.common.type.getOrElse
 import com.thebrownfoxx.neon.common.type.onFailure
+import com.thebrownfoxx.neon.common.type.unitSuccess
+import com.thebrownfoxx.neon.server.repository.ConfigurationRepository
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
@@ -13,6 +18,7 @@ import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData
 
 suspend fun ServiceData.integrate(
+    configurationRepository: ConfigurationRepository,
     groupRepository: GroupRepository,
     memberRepository: MemberRepository,
     groupMemberRepository: GroupMemberRepository,
@@ -20,37 +26,47 @@ suspend fun ServiceData.integrate(
     passwordRepository: PasswordRepository,
     messageRepository: MessageRepository,
     hasher: Hasher,
-) {
-    for (groupRecord in groupRecords) {
-        val (group, memberIds) = groupRecord
+): UnitOutcome<Any> {
+    if (configurationRepository.getInitialized().getOrElse { return Failure(it) })
+        return unitSuccess()
 
-        groupRepository.add(groupRecord.group).onFailure { error() }
+    return transaction {
+        for (groupRecord in groupRecords) {
+            val (group, memberIds) = groupRecord
 
-        for (memberId in memberIds) {
-            groupMemberRepository.addMember(group.id, memberId).onFailure { error() }
-        }
+            groupRepository.add(groupRecord.group).register()
+                .onFailure { return@transaction Failure(it) }
 
-        if (groupRecord is CommunityRecord) {
-            val inviteCode = groupRecord.inviteCode
+            for (memberId in memberIds) {
+                groupMemberRepository.addMember(group.id, memberId).register()
+                    .onFailure { return@transaction Failure(it) }
+            }
 
-            if (inviteCode != null) {
-                inviteCodeRepository.set(group.id, inviteCode).onFailure { error() }
+            if (groupRecord is CommunityRecord) {
+                val inviteCode = groupRecord.inviteCode
+
+                if (inviteCode != null) {
+                    inviteCodeRepository.set(group.id, inviteCode).register()
+                        .onFailure { return@transaction Failure(it) }
+                }
             }
         }
-    }
 
-    for ((member, inviteCode, password) in memberRecords) {
-        memberRepository.add(member).onFailure { error() }
-        val groupId = inviteCodeRepository.getGroup(inviteCode).getOrElse { error() }
-        groupMemberRepository.addMember(groupId, member.id)
-        passwordRepository.setHash(member.id, hasher.hash(password))
-    }
+        for ((member, _, password) in memberRecords) {
+            memberRepository.add(member).register()
+                .onFailure { return@transaction Failure(it) }
+            passwordRepository.setHash(member.id, hasher.hash(password)).register()
+                .onFailure { return@transaction Failure(it) }
+        }
 
-    for (message in messages) {
-        messageRepository.add(message)
-    }
-}
+        for (message in messages) {
+            messageRepository.add(message).register()
+                .onFailure { return@transaction Failure(it) }
+        }
 
-private fun ServiceData.error(): Nothing {
-    error("Illegal service data $this")
+        configurationRepository.setInitialized(true).register()
+            .onFailure { return@transaction Failure(it) }
+
+        unitSuccess()
+    }
 }
