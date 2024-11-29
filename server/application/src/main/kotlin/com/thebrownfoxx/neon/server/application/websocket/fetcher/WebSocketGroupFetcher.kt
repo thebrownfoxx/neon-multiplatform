@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.server.application.websocket.fetcher
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.common.type.onSuccess
 import com.thebrownfoxx.neon.common.websocket.WebSocketObserver
@@ -11,28 +12,38 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupResponse
 import com.thebrownfoxx.neon.server.service.group.GroupManager
 import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 class WebSocketGroupFetcher(
     session: WebSocketSession,
     private val groupManager: GroupManager,
 ) : WebSocketObserver(session) {
+    private val getGroupJobs = ConcurrentHashMap<GroupId, Job>()
+
     init {
         subscribe<GetGroupRequest>(GetGroupRequest.Label) { request ->
             getGroup(request.id)
         }
     }
 
-    private suspend fun getGroup(id: GroupId) {
-        groupManager.getGroup(id).collect { groupOutcome ->
-            groupOutcome.onSuccess { group ->
-                when (group) {
-                    is ChatGroup -> send(GetGroupResponse.SuccessfulChatGroup(group))
-                    is Community -> send(GetGroupResponse.SuccessfulCommunity(group))
-                }
-            }.onFailure { error ->
-                when (error) {
-                    is GetGroupError.NotFound -> send(GetGroupResponse.NotFound(id))
-                    GetGroupError.ConnectionError -> send(GetGroupResponse.ConnectionError(id))
+    private fun getGroup(id: GroupId) {
+        getGroupJobs[id]?.cancel()
+        getGroupJobs[id] = observerScope.launch {
+            val jobId = Uuid()
+            groupManager.getGroup(id).collect { groupOutcome ->
+                println("Collected in $jobId")
+                groupOutcome.onSuccess { group ->
+                    when (group) {
+                        is ChatGroup -> send(GetGroupResponse.SuccessfulChatGroup(group))
+                        is Community -> send(GetGroupResponse.SuccessfulCommunity(group))
+                    }
+                }.onFailure { error ->
+                    when (error) {
+                        is GetGroupError.NotFound -> send(GetGroupResponse.NotFound(id))
+                        GetGroupError.ConnectionError -> send(GetGroupResponse.ConnectionError(id))
+                    }
                 }
             }
         }

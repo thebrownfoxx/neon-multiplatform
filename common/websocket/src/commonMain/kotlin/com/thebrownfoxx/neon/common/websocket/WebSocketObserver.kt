@@ -26,7 +26,7 @@ abstract class WebSocketObserver(protected val session: WebSocketSession) {
 
     protected inline fun <reified T : WebSocketMessage> subscribe(
         label: WebSocketMessageLabel,
-        crossinline action: suspend (T) -> Unit,
+        crossinline action: (T) -> Unit,
     ) = session.subscribe<T>(observerScope, label, action)
 
     private fun close() = observerScope.cancel()

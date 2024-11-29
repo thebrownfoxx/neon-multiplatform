@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.common.websocket.model.typeOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 interface WebSocketSession {
@@ -25,14 +26,14 @@ suspend inline fun <reified T : WebSocketMessage> WebSocketSession.send(message:
 inline fun <reified T : WebSocketMessage> WebSocketSession.subscribe(
     scope: CoroutineScope,
     label: WebSocketMessageLabel,
-    crossinline action: suspend (T) -> Unit,
+    crossinline action: (T) -> Unit,
 ): Job {
     return scope.launch {
-        incomingMessages.collect { serializedMessage ->
-            println("Collected ${serializedMessage.getLabel()} at subscribe")
-            if (serializedMessage.getLabel() == label) {
-                scope.launch { action(serializedMessage.deserialize<T>()) }
+        incomingMessages
+            .filter { it.getLabel() == label }
+            .collect { serializedMessage ->
+                println("Collected ${serializedMessage.getLabel()} at subscribe")
+                action(serializedMessage.deserialize<T>())
             }
-        }
     }
 }

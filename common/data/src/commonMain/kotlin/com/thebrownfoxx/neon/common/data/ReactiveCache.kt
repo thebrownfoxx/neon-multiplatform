@@ -3,7 +3,6 @@ package com.thebrownfoxx.neon.common.data
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
@@ -15,20 +14,20 @@ class ReactiveCache<in K, out V>(
 
     fun getAsFlow(key: K): Flow<V> {
         return flows.getOrPut(key) {
-            MutableSharedFlow<V>(replay = 1).also {
-                scope.launch { 
+            MutableSharedFlow<V>(replay = 1).apply {
+                scope.launch {
                     updateCache(key)
-                    it.removeWhenNoSubscribers(key)
+                    // Implement flow removal :D
                 }
             }
         }
     }
 
     suspend fun updateCache(key: K) {
-        flows[key]?.emit(gettable.get(key))
+        flows[key]?.updateCache(key)
     }
 
-    private suspend fun MutableSharedFlow<V>.removeWhenNoSubscribers(key: K) {
-        subscriptionCount.drop(1).collect { if (it == 0) flows.remove(key) }
+    private suspend fun MutableSharedFlow<V>.updateCache(key: K) {
+        emit(gettable.get(key))
     }
 }
