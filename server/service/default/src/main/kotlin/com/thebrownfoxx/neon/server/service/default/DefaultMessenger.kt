@@ -51,6 +51,7 @@ class DefaultMessenger(
 ) : Messenger {
     private val maxNudgedCount = 2
 
+    @Deprecated("Use getConversations(MemberId) instead")
     override suspend fun getConversations(
         actorId: MemberId,
         count: Int,
@@ -132,6 +133,35 @@ class DefaultMessenger(
         )
     }
 
+    override suspend fun getConversations(
+        actorId: MemberId,
+    ): Outcome<Conversations, GetConversationsError> {
+        memberRepository.get(actorId).onFailure { error ->
+            return when (error) {
+                GetError.NotFound -> GetConversationsError.MemberNotFound(actorId)
+                GetError.ConnectionError -> GetConversationsError.ConnectionError
+            }.asFailure()
+        }
+
+        val conversations = messageRepository.getConversations(actorId).getOrElse {
+            return Failure(GetConversationsError.ConnectionError)
+        }
+
+        val nudgedConversations = when {
+            conversations.unreadGroupIds.size > 10 ->
+                conversations.unreadGroupIds.take(maxNudgedCount)
+            else -> emptyList()
+        }.toSet()
+
+        return Success(
+            Conversations(
+                nudgedGroupIds = nudgedConversations,
+                unreadGroupIds = conversations.unreadGroupIds,
+                readGroupIds = conversations.readGroupIds,
+            )
+        )
+    }
+
     override fun getMessage(
         actorId: MemberId,
         id: MessageId,
@@ -195,6 +225,7 @@ class DefaultMessenger(
         }
     }
 
+    @Deprecated("Use getMessages(MemberId, GroupId) instead")
     override suspend fun getMessages(
         actorId: MemberId,
         groupId: GroupId,
@@ -216,6 +247,13 @@ class DefaultMessenger(
 
         return messageRepository.getMessages(groupId, count, offset)
             .mapError { GetMessagesError.ConnectionError }
+    }
+
+    override suspend fun getMessages(
+        actorId: MemberId,
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, GetMessagesError> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun newConversation(

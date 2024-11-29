@@ -17,11 +17,14 @@ import com.thebrownfoxx.neon.server.service.messenger.model.SendMessageError
 import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
+    @Deprecated("Use getConversations(MemberId) instead")
     suspend fun getConversations(
         actorId: MemberId,
         count: Int,
         offset: Int,
     ): Outcome<Conversations, GetConversationsError>
+
+    suspend fun getConversations(actorId: MemberId): Outcome<Conversations, GetConversationsError>
 
     fun getMessage(
         actorId: MemberId,
@@ -33,11 +36,17 @@ interface Messenger {
         groupId: GroupId,
     ): Flow<Outcome<MessageId?, GetConversationPreviewError>>
 
+    @Deprecated("Use getMessages(MemberId, GroupId) instead")
     suspend fun getMessages(
         actorId: MemberId,
         groupId: GroupId,
         count: Int,
         offset: Int,
+    ): Outcome<Set<MessageId>, GetMessagesError>
+
+    suspend fun getMessages(
+        actorId: MemberId,
+        groupId: GroupId,
     ): Outcome<Set<MessageId>, GetMessagesError>
 
     suspend fun newConversation(memberIds: Set<MemberId>): UnitOutcome<NewConversationError>

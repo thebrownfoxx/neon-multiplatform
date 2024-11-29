@@ -15,6 +15,7 @@ import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.type.Success
 import com.thebrownfoxx.neon.common.type.asSuccess
 import com.thebrownfoxx.neon.common.type.getOrElse
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -23,6 +24,7 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.type.map
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
+import com.thebrownfoxx.neon.server.repository.CategorizedConversations
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -30,9 +32,14 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.not
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 
@@ -101,6 +108,7 @@ class ExposedMessageRepository(
         }
     }
 
+    @Deprecated("Use getConversations(MemberId) instead")
     override suspend fun getConversations(
         memberId: MemberId,
         count: Int,
@@ -108,23 +116,49 @@ class ExposedMessageRepository(
         read: Boolean?,
         descending: Boolean,
     ): Outcome<Set<GroupId>, ConnectionError> {
-        val query = dbQuery {
-            MessageTable
+        error("Use the other getConversations")
+    }
+
+    override suspend fun getConversations(
+        memberId: MemberId,
+    ): Outcome<CategorizedConversations, ConnectionError> {
+        return dbQuery {
+            val maxTimestamp = MessageTable.timestamp.max().alias("max_timestamp")
+
+            val conversations = MessageTable
                 .join(
                     GroupMemberTable,
                     JoinType.INNER,
                     onColumn = MessageTable.groupId,
                     otherColumn = GroupMemberTable.groupId,
                 )
+                .select(MessageTable.groupId, maxTimestamp)
+                .groupBy(MessageTable.groupId)
+
+            val inConversation = GroupMemberTable.memberId eq memberId.toJavaUuid()
+            val sent = MessageTable.senderId eq memberId.toJavaUuid()
+            val messageRead = MessageTable.delivery eq Delivery.Read.name or sent
+
+            val unreadMessages = conversations
+                .where(inConversation and not(messageRead))
+                .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
+                .toSet()
+
+            val readMessages = conversations
+                .where(inConversation and messageRead)
+                .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
+                .toSet()
+
+            Success(CategorizedConversations(unreadMessages, readMessages))
         }
-        TODO("Not yet implemented")
     }
 
+    @Deprecated("Use getConversations instead")
     override suspend fun getConversationCount(
         memberId: MemberId,
         read: Boolean?,
     ): Outcome<Int, ConnectionError> {
-        TODO("Not yet implemented")
+        error("Use getConversations instead")
     }
 
     override suspend fun getMessages(

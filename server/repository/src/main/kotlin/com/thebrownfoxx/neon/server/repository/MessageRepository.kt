@@ -25,6 +25,7 @@ interface MessageRepository {
 
     suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
 
+    @Deprecated("Use getConversations(MemberId) instead")
     suspend fun getConversations(
         memberId: MemberId,
         count: Int,
@@ -33,6 +34,11 @@ interface MessageRepository {
         descending: Boolean = false,
     ): Outcome<Set<GroupId>, ConnectionError>
 
+    suspend fun getConversations(
+        memberId: MemberId,
+    ): Outcome<CategorizedConversations, ConnectionError>
+
+    @Deprecated("Use getConversations instead")
     suspend fun getConversationCount(
         memberId: MemberId,
         read: Boolean? = null,
@@ -44,8 +50,12 @@ interface MessageRepository {
         offset: Int,
     ): Outcome<Set<MessageId>, ConnectionError>
 
-    // TODO: We should paginate this
     suspend fun getUnreadMessages(
         groupId: GroupId,
     ): Outcome<Set<MessageId>, ConnectionError>
 }
+
+data class CategorizedConversations(
+    val unreadGroupIds: Set<GroupId>,
+    val readGroupIds: Set<GroupId>,
+)

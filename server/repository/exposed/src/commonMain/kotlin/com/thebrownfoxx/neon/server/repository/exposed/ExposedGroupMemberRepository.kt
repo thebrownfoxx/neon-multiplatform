@@ -4,11 +4,13 @@ import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.exposed.tryAdd
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
+import com.thebrownfoxx.neon.common.type.Failure
 import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.common.type.asSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -52,6 +54,16 @@ class ExposedGroupMemberRepository(
         memberId: MemberId,
         isAdmin: Boolean,
     ): ReversibleUnitOutcome<AddError> {
+        dbQuery {
+            GroupMemberTable
+                .selectAll()
+                .where(
+                    (GroupMemberTable.groupId eq groupId.toJavaUuid()) and
+                            (GroupMemberTable.memberId eq memberId.toJavaUuid())
+                )
+                .firstOrNotFound()
+        }.onSuccess { return Failure(AddError.Duplicate).asReversible() }
+
         val id = UUID.randomUUID()
         return tryAdd {
             dbQuery {

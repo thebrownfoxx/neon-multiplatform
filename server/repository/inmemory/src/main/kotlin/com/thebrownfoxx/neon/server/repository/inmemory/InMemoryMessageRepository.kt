@@ -17,6 +17,7 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
+import com.thebrownfoxx.neon.server.repository.CategorizedConversations
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -77,6 +78,7 @@ class InMemoryMessageRepository(
         return unitSuccess().asReversible { this.messages.update { it - message.id } }
     }
 
+    @Deprecated("Use ExposedMessageRepository since getConversations(MemberId) is not yet implemented here")
     override suspend fun getConversations(
         memberId: MemberId,
         count: Int,
@@ -113,6 +115,13 @@ class InMemoryMessageRepository(
         }.first()
     }
 
+    override suspend fun getConversations(
+        memberId: MemberId,
+    ): Outcome<CategorizedConversations, ConnectionError> {
+        TODO("Not yet implemented")
+    }
+
+    @Deprecated("Use getConversations instead")
     override suspend fun getConversationCount(
         memberId: MemberId,
         read: Boolean?,
