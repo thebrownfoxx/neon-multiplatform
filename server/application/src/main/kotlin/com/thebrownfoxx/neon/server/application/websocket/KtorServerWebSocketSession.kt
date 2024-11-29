@@ -23,7 +23,11 @@ class KtorServerWebSocketSession(
     override val close = _close.asSharedFlow()
 
     override val incomingMessages = session.incoming.receiveAsFlow()
-        .map { KtorSerializedWebSocketMessage(converter = session.converter!!, frame = it) }
+        .map {
+            KtorSerializedWebSocketMessage(converter = session.converter!!, frame = it).also { message ->
+                println("Received ${message.getLabel()} at KtorServerWebSocketSession")
+            }
+        }
         .onCompletion { _close.emit(Unit) }
 
     override suspend fun send(message: Any?, type: Type) {

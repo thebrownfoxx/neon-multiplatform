@@ -11,7 +11,6 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupResponse
 import com.thebrownfoxx.neon.server.service.group.GroupManager
 import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
-import kotlinx.coroutines.launch
 
 class WebSocketGroupFetcher(
     session: WebSocketSession,
@@ -19,7 +18,7 @@ class WebSocketGroupFetcher(
 ) : WebSocketObserver(session) {
     init {
         subscribe<GetGroupRequest>(GetGroupRequest.Label) { request ->
-            observerScope.launch { getGroup(request.id) }
+            getGroup(request.id)
         }
     }
 

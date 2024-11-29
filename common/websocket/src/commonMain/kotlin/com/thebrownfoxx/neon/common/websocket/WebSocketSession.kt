@@ -25,12 +25,13 @@ suspend inline fun <reified T : WebSocketMessage> WebSocketSession.send(message:
 inline fun <reified T : WebSocketMessage> WebSocketSession.subscribe(
     scope: CoroutineScope,
     label: WebSocketMessageLabel,
-    crossinline action: (T) -> Unit,
+    crossinline action: suspend (T) -> Unit,
 ): Job {
     return scope.launch {
         incomingMessages.collect { serializedMessage ->
+            println("Collected ${serializedMessage.getLabel()} at subscribe")
             if (serializedMessage.getLabel() == label) {
-                action(serializedMessage.deserialize<T>())
+                scope.launch { action(serializedMessage.deserialize<T>()) }
             }
         }
     }

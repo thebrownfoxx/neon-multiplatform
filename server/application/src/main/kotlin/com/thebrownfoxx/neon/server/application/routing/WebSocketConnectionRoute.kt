@@ -14,7 +14,6 @@ fun Route.webSocketConnectionRoute() {
     with(DependencyProvider.dependencies) {
         authenticate(AuthenticationType.Jwt) {
             webSocket("/connect") {
-                val webSocketManager = webSocketManager
                 val session = KtorServerWebSocketSession(session = this)
                 webSocketManager.addSession(session)
                 session.send(WebSocketConnectionResponse.ConnectionSuccessful())
@@ -22,7 +21,7 @@ fun Route.webSocketConnectionRoute() {
                     session = session,
                     groupManager = groupManager,
                 )
-                session.incomingMessages.collect {} // Just so it doesn't terminate :/
+                session.incomingMessages.collect {}
             }
         }
     }

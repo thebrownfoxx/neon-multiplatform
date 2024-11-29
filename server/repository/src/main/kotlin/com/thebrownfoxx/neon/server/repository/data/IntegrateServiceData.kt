@@ -30,6 +30,7 @@ suspend fun ServiceData.integrate(
     if (configurationRepository.getInitialized().getOrElse { return Failure(it) })
         return unitSuccess()
 
+    println("Integrating $this")
     return transaction {
         for (groupRecord in groupRecords) {
             val (group, memberIds) = groupRecord

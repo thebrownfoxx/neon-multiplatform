@@ -27,8 +27,6 @@ import java.util.UUID
 class ExposedPasswordRepository(
     database: Database,
 ) : PasswordRepository, ExposedDataSource(database, PasswordTable) {
-    private val hexFormat = HexFormat {}
-
     override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
         return dbQuery {
             PasswordTable
@@ -45,8 +43,8 @@ class ExposedPasswordRepository(
             PasswordTable.upsert {
                 it[this.id] = id
                 it[this.memberId] = memberId.toJavaUuid()
-                it[this.passwordHash] = hash.value.toHexString(hexFormat)
-                it[this.passwordSalt] =  hash.value.toHexString(hexFormat)
+                it[this.passwordHash] = hash.value.toHexString()
+                it[this.passwordSalt] =  hash.salt.toHexString()
             }
         }
         return unitSuccess().asReversible {
@@ -55,16 +53,16 @@ class ExposedPasswordRepository(
     }
 
     private fun ResultRow.toHash() = Hash(
-        value = this[PasswordTable.passwordHash].hexToByteArray(hexFormat),
-        salt = this[PasswordTable.passwordSalt].hexToByteArray(hexFormat),
+        value = this[PasswordTable.passwordHash].hexToByteArray(),
+        salt = this[PasswordTable.passwordSalt].hexToByteArray(),
     )
 }
 
 private object PasswordTable : Table("password") {
     val id = uuid("id")
     val memberId = uuid("member_id").uniqueIndex()
-    val passwordHash = varchar("password_hash", 512)
-    val passwordSalt = varchar("password_salt", 128)
+    val passwordHash = varchar("password_hash", 128)
+    val passwordSalt = varchar("password_salt", 32)
 
     override val primaryKey = PrimaryKey(id)
 }

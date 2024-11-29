@@ -77,8 +77,7 @@ class DefaultDependencies : Dependencies {
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            val serviceData = generateInitialServiceData()
-            serviceData.integrate(
+            generateInitialServiceData().integrate(
                 configurationRepository,
                 groupRepository,
                 memberRepository,
@@ -88,7 +87,6 @@ class DefaultDependencies : Dependencies {
                 messageRepository,
                 hasher,
             )
-            print(serviceData)
         }
     }
 }
