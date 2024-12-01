@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.common.type.onFailure
 import com.thebrownfoxx.neon.common.type.onSuccess
-import com.thebrownfoxx.neon.common.websocket.WebSocketObserver
+import com.thebrownfoxx.neon.common.websocket.WebSocketManager
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
@@ -16,10 +16,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-class WebSocketGroupFetcher(
+class GroupWebSocketManager(
     session: WebSocketSession,
     private val groupManager: GroupManager,
-) : WebSocketObserver(session) {
+) : WebSocketManager(session) {
     private val getGroupJobs = ConcurrentHashMap<GroupId, Job>()
 
     init {

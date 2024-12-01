@@ -10,6 +10,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
+            implementation(libs.exposed.core)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)
             implementation(libs.ktor.client.websockets)
@@ -22,6 +23,11 @@ kotlin {
             implementation(projects.client.websocket)
             implementation(projects.client.model)
             implementation(projects.client.repository)
+            implementation(projects.client.repository.local)
+            implementation(projects.client.repository.local.exposed)
+            implementation(projects.client.repository.remote)
+            implementation(projects.client.repository.remote.websocket)
+            implementation(projects.client.repository.offlinefirst)
             implementation(projects.client.service)
         }
         commonTest.dependencies {

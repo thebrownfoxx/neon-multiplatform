@@ -9,7 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
-abstract class WebSocketObserver(protected val session: WebSocketSession) {
+abstract class WebSocketManager(protected val session: WebSocketSession) {
     protected val observerScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     init {

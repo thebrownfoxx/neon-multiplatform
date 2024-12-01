@@ -24,7 +24,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
-internal class ExposedLocalGroupDataSource(
+class ExposedLocalGroupDataSource(
     database: Database,
 ) : LocalGroupDataSource, ExposedDataSource(database, LocalGroupTable) {
     private val reactiveCache = ReactiveCache(::get)
