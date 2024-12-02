@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.application.websocket.fetcher
+package com.thebrownfoxx.neon.server.application.websocket.manager
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.Uuid

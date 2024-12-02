@@ -5,42 +5,42 @@ import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorSerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
 import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
+import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.converter
 import io.ktor.server.websocket.sendSerialized
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import io.ktor.websocket.Frame
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.plus
 
-class KtorServerWebSocketSession(
+abstract class KtorServerWebSocketSession(
     val id: WebSocketSessionId = WebSocketSessionId(),
     private val session: WebSocketServerSession,
 ) : KtorWebSocketSession(session) {
-    private val sessionScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
-
     private val _close = MutableSharedFlow<Unit>()
     override val close = _close.asSharedFlow()
 
-    override val incomingMessages = session.incoming.receiveAsFlow()
-        .map {
-            KtorSerializedWebSocketMessage(converter = session.converter!!, frame = it).also { message ->
-                println("Received ${message.getLabel()} at KtorServerWebSocketSession")
-            }
-        }
-        .shareIn(sessionScope, SharingStarted.Eagerly)
-        .onCompletion { _close.emit(Unit) }
-
     override suspend fun send(message: Any?, type: Type) {
         session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
+    }
+}
+
+class MutableKtorServerWebSocketSession(
+    id: WebSocketSessionId = WebSocketSessionId(),
+    private val session: WebSocketServerSession,
+) : KtorServerWebSocketSession(id, session) {
+    private val _close = MutableSharedFlow<Unit>()
+    override val close = _close.asSharedFlow()
+
+    private val _incomingMessages = MutableSharedFlow<SerializedWebSocketMessage>()
+    override val incomingMessages = _incomingMessages.asSharedFlow()
+        .onCompletion { _close.emit(Unit) }
+
+    suspend fun emitFrame(frame: Frame) {
+        _incomingMessages
+            .emit(KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame))
     }
 }
 
