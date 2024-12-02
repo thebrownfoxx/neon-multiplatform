@@ -5,23 +5,25 @@ import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
-import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.mapAddTransaction
+import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
+import com.thebrownfoxx.neon.common.data.exposed.mapUpdateTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.exposed.tryAdd
 import com.thebrownfoxx.neon.common.data.exposed.tryUpdate
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
-import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.asSuccess
-import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.getOrElse
+import com.thebrownfoxx.neon.common.outcome.map
+import com.thebrownfoxx.neon.common.outcome.mapError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.type.map
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.CategorizedConversations
@@ -35,7 +37,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
@@ -55,57 +56,59 @@ class ExposedMessageRepository(
         reactiveConversationPreviewCache.getAsFlow(id)
 
     override suspend fun get(id: MessageId): Outcome<Message, GetError> {
-        return dbQuery {
+        return dataTransaction {
             MessageTable
                 .selectAll()
                 .where(MessageTable.id eq id.toJavaUuid())
                 .firstOrNotFound()
                 .map { it.toMessage() }
-        }
+        }.mapGetTransaction()
     }
 
     override suspend fun add(message: Message): ReversibleUnitOutcome<AddError> {
-        return tryAdd {
-            dbQuery {
-                MessageTable.insert {
-                    it[id] = message.id.toJavaUuid()
-                    it[groupId] = message.groupId.toJavaUuid()
-                    it[senderId] = message.senderId.toJavaUuid()
-                    it[content] = message.content
-                    it[timestamp] = message.timestamp
-                    it[delivery] = message.delivery.name
-                }
+        return dataTransaction {
+            MessageTable.tryAdd {
+                it[id] = message.id.toJavaUuid()
+                it[groupId] = message.groupId.toJavaUuid()
+                it[senderId] = message.senderId.toJavaUuid()
+                it[content] = message.content
+                it[timestamp] = message.timestamp
+                it[delivery] = message.delivery.name
             }
-        }.asReversible { dbQuery { MessageTable.deleteWhere { id eq message.id.toJavaUuid() } } }
+        }
+            .mapAddTransaction()
+            .asReversible {
+                dataTransaction { MessageTable.deleteWhere { id eq message.id.toJavaUuid() } }
+            }
     }
 
     override suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError> {
         val oldMessage = get(message.id)
             .getOrElse { return Failure(UpdateError.NotFound).asReversible() }
 
-        return tryUpdate {
-            dbQuery {
-                MessageTable.update {
-                    it[id] = message.id.toJavaUuid()
-                    it[groupId] = message.groupId.toJavaUuid()
-                    it[senderId] = message.senderId.toJavaUuid()
-                    it[content] = message.content
-                    it[timestamp] = message.timestamp
-                    it[delivery] = message.delivery.name
-                }
-            }
-        }.asReversible {
-            dbQuery {
-                MessageTable.update {
-                    it[id] = oldMessage.id.toJavaUuid()
-                    it[groupId] = oldMessage.groupId.toJavaUuid()
-                    it[senderId] = oldMessage.senderId.toJavaUuid()
-                    it[content] = oldMessage.content
-                    it[timestamp] = oldMessage.timestamp
-                    it[delivery] = oldMessage.delivery.name
-                }
+        return dataTransaction {
+            MessageTable.tryUpdate {
+                it[id] = message.id.toJavaUuid()
+                it[groupId] = message.groupId.toJavaUuid()
+                it[senderId] = message.senderId.toJavaUuid()
+                it[content] = message.content
+                it[timestamp] = message.timestamp
+                it[delivery] = message.delivery.name
             }
         }
+            .mapUpdateTransaction()
+            .asReversible {
+                dataTransaction {
+                    MessageTable.update {
+                        it[id] = oldMessage.id.toJavaUuid()
+                        it[groupId] = oldMessage.groupId.toJavaUuid()
+                        it[senderId] = oldMessage.senderId.toJavaUuid()
+                        it[content] = oldMessage.content
+                        it[timestamp] = oldMessage.timestamp
+                        it[delivery] = oldMessage.delivery.name
+                    }
+                }
+            }
     }
 
     @Deprecated("Use getConversations(MemberId) instead")
@@ -122,7 +125,7 @@ class ExposedMessageRepository(
     override suspend fun getConversations(
         memberId: MemberId,
     ): Outcome<CategorizedConversations, ConnectionError> {
-        return dbQuery {
+        return dataTransaction {
             val maxTimestamp = MessageTable.timestamp.max().alias("max_timestamp")
 
             val conversations = MessageTable
@@ -149,8 +152,8 @@ class ExposedMessageRepository(
                 .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
                 .toSet()
 
-            Success(CategorizedConversations(unreadMessages, readMessages))
-        }
+            CategorizedConversations(unreadMessages, readMessages)
+        }.mapError { ConnectionError }
     }
 
     @Deprecated("Use getConversations instead")
@@ -174,15 +177,14 @@ class ExposedMessageRepository(
     }
 
     private suspend fun getConversationPreview(id: GroupId): Outcome<MessageId?, ConnectionError> {
-        return dbQuery {
+        return dataTransaction {
             MessageTable
                 .selectAll()
                 .where(MessageTable.groupId eq id.toJavaUuid())
                 .orderBy(MessageTable.timestamp to SortOrder.DESC)
                 .firstOrNull()
-                ?.let { MessageId(it.get(MessageTable.id).toCommonUuid()) }
-                .asSuccess()
-        }
+                ?.let { MessageId(it[MessageTable.id].toCommonUuid()) }
+        }.mapError { ConnectionError }
     }
 
     private fun ResultRow.toMessage() = Message(

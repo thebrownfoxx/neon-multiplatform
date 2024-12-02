@@ -11,12 +11,12 @@ import com.thebrownfoxx.neon.common.data.exposed.dbQuery
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.UnitOutcome
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.UnitOutcome
+import com.thebrownfoxx.neon.common.outcome.map
+import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.map
-import com.thebrownfoxx.neon.common.type.unitSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

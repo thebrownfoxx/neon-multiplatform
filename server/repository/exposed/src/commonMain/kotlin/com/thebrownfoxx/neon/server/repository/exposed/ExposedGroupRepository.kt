@@ -3,17 +3,19 @@ package com.thebrownfoxx.neon.server.repository.exposed
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
-import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.mapAddTransaction
+import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.exposed.tryAdd
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
-import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.map
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.map
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.model.Group
@@ -23,39 +25,40 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 
 class ExposedGroupRepository(
     database: Database,
 ) : GroupRepository, ExposedDataSource(database, GroupTable) {
     private val reactiveCache = ReactiveCache(::get)
-    
+
     override fun getAsFlow(id: GroupId) = reactiveCache.getAsFlow(id)
 
     override suspend fun get(id: GroupId): Outcome<Group, GetError> {
-        return dbQuery {
+        return dataTransaction {
             GroupTable
                 .selectAll()
                 .where(GroupTable.id eq id.toJavaUuid())
                 .firstOrNotFound()
                 .map { it.toGroup() }
-        }
+        }.mapGetTransaction()
     }
 
     override suspend fun add(group: Group): ReversibleUnitOutcome<AddError> {
-        return tryAdd {
-            dbQuery {
-                GroupTable.insert {
-                    it[id] = group.id.toJavaUuid()
-                    if (group is Community) {
-                        it[name] = group.name
-                        it[avatarUrl] = group.avatarUrl?.value
-                        it[isGod] = group.isGod
-                    }
+        return dataTransaction {
+            GroupTable.tryAdd {
+                it[id] = group.id.toJavaUuid()
+                if (group is Community) {
+                    it[name] = group.name
+                    it[avatarUrl] = group.avatarUrl?.value
+                    it[isGod] = group.isGod
                 }
             }
-        }.asReversible { dbQuery { GroupTable.deleteWhere { id eq group.id.toJavaUuid() } } }
+        }
+            .mapAddTransaction()
+            .asReversible {
+                dataTransaction { GroupTable.deleteWhere { id eq group.id.toJavaUuid() } }
+            }
     }
 
     private fun ResultRow.toGroup(): Group {

@@ -5,7 +5,7 @@ import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
-import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId

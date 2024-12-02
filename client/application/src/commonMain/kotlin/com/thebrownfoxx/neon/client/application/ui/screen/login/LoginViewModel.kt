@@ -8,8 +8,8 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.MissingCredential
 import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.client.service.authenticator.model.LoginError
-import com.thebrownfoxx.neon.common.type.onFailure
-import com.thebrownfoxx.neon.common.type.onSuccess
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.onSuccess
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

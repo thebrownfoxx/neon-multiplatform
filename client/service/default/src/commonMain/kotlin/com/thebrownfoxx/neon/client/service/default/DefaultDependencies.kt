@@ -7,10 +7,10 @@ import com.thebrownfoxx.neon.client.service.dependencies.Dependencies
 import com.thebrownfoxx.neon.client.service.dependencies.model.GetGroupRepositoryError
 import com.thebrownfoxx.neon.client.service.group.GroupManager
 import com.thebrownfoxx.neon.client.websocket.model.ConnectWebSocketError
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.asFailure
-import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.Success
+import com.thebrownfoxx.neon.common.outcome.asFailure
+import com.thebrownfoxx.neon.common.outcome.getOrElse
 import io.ktor.client.HttpClient
 import org.jetbrains.exposed.sql.Database
 

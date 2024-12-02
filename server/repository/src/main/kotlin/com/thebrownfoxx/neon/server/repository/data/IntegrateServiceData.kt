@@ -2,11 +2,11 @@ package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.hash.Hasher
-import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.UnitOutcome
-import com.thebrownfoxx.neon.common.type.getOrElse
-import com.thebrownfoxx.neon.common.type.onFailure
-import com.thebrownfoxx.neon.common.type.unitSuccess
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.UnitOutcome
+import com.thebrownfoxx.neon.common.outcome.getOrElse
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.server.repository.ConfigurationRepository
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.GroupRepository

@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.common.data.transaction
 
-import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.Outcome
 
 suspend fun <T, E> transaction(
     block: suspend TransactionContext.() -> Outcome<T, E>,

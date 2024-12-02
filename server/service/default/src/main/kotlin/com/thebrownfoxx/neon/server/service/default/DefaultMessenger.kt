@@ -6,19 +6,19 @@ import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.extension.flow
-import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.UnitOutcome
-import com.thebrownfoxx.neon.common.type.asFailure
-import com.thebrownfoxx.neon.common.type.asSuccess
-import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.Success
+import com.thebrownfoxx.neon.common.outcome.UnitOutcome
+import com.thebrownfoxx.neon.common.outcome.asFailure
+import com.thebrownfoxx.neon.common.outcome.asSuccess
+import com.thebrownfoxx.neon.common.outcome.getOrElse
+import com.thebrownfoxx.neon.common.outcome.mapError
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.type.mapError
-import com.thebrownfoxx.neon.common.type.onFailure
-import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
@@ -51,6 +51,7 @@ class DefaultMessenger(
 ) : Messenger {
     private val maxNudgedCount = 2
 
+    @Suppress("DEPRECATION")
     @Deprecated("Use getConversations(MemberId) instead")
     override suspend fun getConversations(
         actorId: MemberId,
@@ -92,6 +93,8 @@ class DefaultMessenger(
         ).asSuccess()
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Use getConversations(MemberId) instead")
     private suspend fun getNudgedConversations(
         actorId: MemberId,
         count: Int,
@@ -107,6 +110,8 @@ class DefaultMessenger(
         )
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Use getConversations(MemberId) instead")
     private suspend fun getUnreadConversations(
         actorId: MemberId,
         count: Int,
@@ -120,6 +125,8 @@ class DefaultMessenger(
         )
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Use getConversations(MemberId) instead")
     private suspend fun getReadConversations(
         actorId: MemberId,
         count: Int,
@@ -239,7 +246,7 @@ class DefaultMessenger(
             }.asFailure()
         }
 
-        val groupMemberIds = groupMemberRepository.getMembers(groupId).getOrElse { error ->
+        val groupMemberIds = groupMemberRepository.getMembers(groupId).getOrElse {
             return Failure(GetMessagesError.ConnectionError)
         }
 

@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.server.service.messenger
 
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.UnitOutcome
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.UnitOutcome
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.service.messenger.model.Conversations
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError

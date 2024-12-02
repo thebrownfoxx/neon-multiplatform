@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.common.websocket.model
 
-import com.thebrownfoxx.neon.common.type.getOrNull
-import com.thebrownfoxx.neon.common.type.runFailing
+import com.thebrownfoxx.neon.common.outcome.getOrNull
+import com.thebrownfoxx.neon.common.outcome.runFailing
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf

@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.service.member
 
+import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.type.id.MemberId
-import com.thebrownfoxx.neon.common.type.Outcome
 import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.service.member.model.GetMemberError
 import com.thebrownfoxx.neon.server.service.member.model.RegisterMemberError

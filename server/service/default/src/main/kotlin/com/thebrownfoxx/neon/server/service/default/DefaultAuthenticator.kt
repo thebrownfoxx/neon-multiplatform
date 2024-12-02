@@ -2,11 +2,11 @@ package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.hash.Hasher
-import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.Success
-import com.thebrownfoxx.neon.common.type.asFailure
-import com.thebrownfoxx.neon.common.type.getOrElse
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.Success
+import com.thebrownfoxx.neon.common.outcome.asFailure
+import com.thebrownfoxx.neon.common.outcome.getOrElse
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.MemberRepository
 import com.thebrownfoxx.neon.server.repository.PasswordRepository

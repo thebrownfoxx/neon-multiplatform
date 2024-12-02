@@ -3,16 +3,19 @@ package com.thebrownfoxx.neon.server.repository.exposed
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
-import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.hash.Hash
-import com.thebrownfoxx.neon.common.type.Outcome
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.map
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.id.MemberId
-import com.thebrownfoxx.neon.common.type.map
-import com.thebrownfoxx.neon.common.type.unitSuccess
 import com.thebrownfoxx.neon.server.repository.PasswordRepository
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -28,27 +31,27 @@ class ExposedPasswordRepository(
     database: Database,
 ) : PasswordRepository, ExposedDataSource(database, PasswordTable) {
     override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
-        return dbQuery {
+        return dataTransaction {
             PasswordTable
                 .selectAll()
                 .where(PasswordTable.memberId eq memberId.toJavaUuid())
                 .firstOrNotFound()
                 .map { it.toHash() }
-        }
+        }.mapGetTransaction()
     }
 
     override suspend fun setHash(memberId: MemberId, hash: Hash): ReversibleUnitOutcome<ConnectionError> {
         val id = UUID.randomUUID()
-        dbQuery {
+        dataTransaction {
             PasswordTable.upsert {
                 it[this.id] = id
                 it[this.memberId] = memberId.toJavaUuid()
                 it[this.passwordHash] = hash.value.toHexString()
                 it[this.passwordSalt] =  hash.salt.toHexString()
             }
-        }
+        }.onFailure { return Failure(ConnectionError).asReversible() }
         return unitSuccess().asReversible {
-            dbQuery { PasswordTable.deleteWhere { PasswordTable.id eq id } }
+            dataTransaction { PasswordTable.deleteWhere { PasswordTable.id eq id } }
         }
     }
 

@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.application.websocket.manager
 
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.Uuid
-import com.thebrownfoxx.neon.common.type.onFailure
-import com.thebrownfoxx.neon.common.type.onSuccess
 import com.thebrownfoxx.neon.common.websocket.WebSocketManager
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup

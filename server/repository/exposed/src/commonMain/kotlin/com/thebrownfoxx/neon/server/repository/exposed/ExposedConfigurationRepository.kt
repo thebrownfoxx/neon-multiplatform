@@ -2,16 +2,17 @@ package com.thebrownfoxx.neon.server.repository.exposed
 
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
-import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
-import com.thebrownfoxx.neon.common.type.Failure
-import com.thebrownfoxx.neon.common.type.Outcome
-import com.thebrownfoxx.neon.common.type.asSuccess
-import com.thebrownfoxx.neon.common.type.fold
-import com.thebrownfoxx.neon.common.type.getOrElse
-import com.thebrownfoxx.neon.common.type.unitSuccess
+import com.thebrownfoxx.neon.common.outcome.Failure
+import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.common.outcome.fold
+import com.thebrownfoxx.neon.common.outcome.getOrElse
+import com.thebrownfoxx.neon.common.outcome.mapError
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.server.repository.ConfigurationRepository
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -23,7 +24,7 @@ class ExposedConfigurationRepository(
     database: Database,
 ) : ConfigurationRepository, ExposedDataSource(database, ConfigurationTable) {
     override suspend fun getInitialized(): Outcome<Boolean, ConnectionError> {
-        return dbQuery {
+        return dataTransaction {
             ConfigurationTable
                 .selectAll()
                 .where(ConfigurationTable.key eq ConfigurationTable.INITIALIZED_KEY)
@@ -32,8 +33,7 @@ class ExposedConfigurationRepository(
                     onSuccess = { it[ConfigurationTable.value].toBoolean() },
                     onFailure = { false },
                 )
-                .asSuccess()
-        }
+        }.mapError { ConnectionError }
     }
 
     override suspend fun setInitialized(
@@ -42,16 +42,19 @@ class ExposedConfigurationRepository(
         val oldInitialized = getInitialized()
             .getOrElse { return Failure(ConnectionError).asReversible() }
 
-        dbQuery {
+        dataTransaction {
             ConfigurationTable.upsert {
                 it[key] = INITIALIZED_KEY
                 it[value] = initialized.toString()
             }
-        }
+        }.onFailure { return Failure(ConnectionError).asReversible() }
+
         return unitSuccess().asReversible {
-            ConfigurationTable.upsert {
-                it[key] = INITIALIZED_KEY
-                it[value] = oldInitialized.toString()
+            dataTransaction {
+                ConfigurationTable.upsert {
+                    it[key] = INITIALIZED_KEY
+                    it[value] = oldInitialized.toString()
+                }
             }
         }
     }
