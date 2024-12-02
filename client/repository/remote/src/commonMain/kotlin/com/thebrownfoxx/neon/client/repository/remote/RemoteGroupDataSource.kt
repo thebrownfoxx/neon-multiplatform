@@ -7,5 +7,5 @@ import com.thebrownfoxx.neon.server.model.Group
 import kotlinx.coroutines.flow.Flow
 
 interface RemoteGroupDataSource {
-    fun get(id: GroupId): Flow<Outcome<Group, GetError>>
+    fun getAsFlow(id: GroupId): Flow<Outcome<Group, GetError>>
 }

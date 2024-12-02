@@ -48,8 +48,8 @@ class RemoteAuthenticator(
             LoginResponse.Status.Successful -> {
                 val successfulBody = response.body<LoginResponse.Successful>()
                 loggedInMember.value = successfulBody.memberId
-                tokenStorage.set(successfulBody.token).onFailure {
-                    return when (it) {
+                tokenStorage.set(successfulBody.token).onFailure { error ->
+                    return when (error) {
                         SetTokenError.ConnectionError -> Failure(LoginError.ConnectionError)
                     }
                 }

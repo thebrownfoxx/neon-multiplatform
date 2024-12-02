@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.server.application.websocket.manager
+package com.thebrownfoxx.neon.server.application.websocket.entity
 
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.service.group.GroupManager
@@ -8,6 +8,6 @@ class WebSocketEntityManagers(
     groupManager: GroupManager,
 ) {
     init {
-        GroupWebSocketManager(session, groupManager)
+        GroupWebSocketEntityManager(session, groupManager)
     }
 }

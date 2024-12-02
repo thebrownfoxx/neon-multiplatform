@@ -27,7 +27,7 @@ class OfflineFirstGroupRepository(
     private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 
     override fun get(id: GroupId): Flow<Outcome<LocalGroup, GetError>> {
-        val sharedFlow = MutableSharedFlow<Outcome<LocalGroup, GetError>>()
+        val sharedFlow = MutableSharedFlow<Outcome<LocalGroup, GetError>>(replay = 1)
 
         coroutineScope.launch {
             localDataSource.getAsFlow(id).collect { localGroupOutcome ->
@@ -44,7 +44,7 @@ class OfflineFirstGroupRepository(
         }
 
         coroutineScope.launch {
-            remoteDataSource.get(id).collect { remoteGroupOutcome ->
+            remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
                 val remoteGroup = remoteGroupOutcome.getOrElse { error ->
                     sharedFlow.emit(Failure(error))
                     return@collect

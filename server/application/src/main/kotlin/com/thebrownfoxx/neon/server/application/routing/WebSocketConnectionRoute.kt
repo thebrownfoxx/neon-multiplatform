@@ -5,7 +5,7 @@ import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.AuthenticationType
 import com.thebrownfoxx.neon.server.application.plugin.authenticate
 import com.thebrownfoxx.neon.server.application.websocket.MutableKtorServerWebSocketSession
-import com.thebrownfoxx.neon.server.application.websocket.manager.WebSocketEntityManagers
+import com.thebrownfoxx.neon.server.application.websocket.entity.WebSocketEntityManagers
 import com.thebrownfoxx.neon.server.route.websocket.WebSocketConnectionResponse
 import io.ktor.server.routing.Route
 import io.ktor.server.websocket.webSocket

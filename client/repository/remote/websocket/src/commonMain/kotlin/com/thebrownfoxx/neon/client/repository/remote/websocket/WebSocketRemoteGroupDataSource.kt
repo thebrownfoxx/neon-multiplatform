@@ -42,7 +42,7 @@ class WebSocketRemoteGroupDataSource(
         }
     }
 
-    override fun get(id: GroupId): Flow<Outcome<Group, GetError>> = cache.getAsFlow(id) {
+    override fun getAsFlow(id: GroupId): Flow<Outcome<Group, GetError>> = cache.getAsFlow(id) {
         dataSourceScope.launch { send(GetGroupRequest(id)) }
     }
 }

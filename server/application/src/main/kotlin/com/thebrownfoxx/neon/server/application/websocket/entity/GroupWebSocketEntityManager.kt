@@ -1,9 +1,8 @@
-package com.thebrownfoxx.neon.server.application.websocket.manager
+package com.thebrownfoxx.neon.server.application.websocket.entity
 
 import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.common.websocket.WebSocketScope
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup
@@ -16,7 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-class GroupWebSocketManager(
+class GroupWebSocketEntityManager(
     session: WebSocketSession,
     private val groupManager: GroupManager,
 ) : WebSocketScope(session) {

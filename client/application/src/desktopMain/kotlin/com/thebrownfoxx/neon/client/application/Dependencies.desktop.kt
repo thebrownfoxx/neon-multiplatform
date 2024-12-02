@@ -10,7 +10,7 @@ import java.io.File
 object DependencyProvider {
     val dependencies = run {
         val localAppData = System.getenv("LOCALAPPDATA")
-        val directory = File("$localAppData/Foxx/Neon")
+        val directory = File("$localAppData/Foxx/Neon").apply { mkdirs() }
         val database = Database.connect(
             url = "jdbc:sqlite:/${directory.path}/config.db",
             driver = "org.sqlite.JDBC",
