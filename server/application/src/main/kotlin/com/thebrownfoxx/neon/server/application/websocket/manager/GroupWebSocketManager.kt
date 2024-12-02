@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.Uuid
-import com.thebrownfoxx.neon.common.websocket.WebSocketManager
+import com.thebrownfoxx.neon.common.websocket.WebSocketScope
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
@@ -19,21 +19,25 @@ import java.util.concurrent.ConcurrentHashMap
 class GroupWebSocketManager(
     session: WebSocketSession,
     private val groupManager: GroupManager,
-) : WebSocketManager(session) {
+) : WebSocketScope(session) {
     private val getGroupJobs = ConcurrentHashMap<GroupId, Job>()
 
     init {
         subscribe<GetGroupRequest>(GetGroupRequest.Label) { request ->
             getGroup(request.id)
         }
+
+        coroutineScope.launch {
+            session.close.collect {
+                getGroupJobs.values.forEach { it.cancel() }
+            }
+        }
     }
 
     private fun getGroup(id: GroupId) {
         getGroupJobs[id]?.cancel()
-        getGroupJobs[id] = observerScope.launch {
-            val jobId = Uuid()
+        getGroupJobs[id] = coroutineScope.launch {
             groupManager.getGroup(id).collect { groupOutcome ->
-                println("Collected in $jobId")
                 groupOutcome.onSuccess { group ->
                     when (group) {
                         is ChatGroup -> send(GetGroupResponse.SuccessfulChatGroup(group))

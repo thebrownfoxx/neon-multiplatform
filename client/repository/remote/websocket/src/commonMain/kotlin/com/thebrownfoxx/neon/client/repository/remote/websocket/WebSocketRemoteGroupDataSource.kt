@@ -7,7 +7,7 @@ import com.thebrownfoxx.neon.common.outcome.Failure
 import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.outcome.Success
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.websocket.WebSocketManager
+import com.thebrownfoxx.neon.common.websocket.WebSocketScope
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
@@ -21,7 +21,7 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupResponse as Re
 
 class WebSocketRemoteGroupDataSource(
     session: WebSocketSession,
-) : RemoteGroupDataSource, WebSocketManager(session) {
+) : RemoteGroupDataSource, WebSocketScope(session) {
     private val dataSourceScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
     private val cache = Cache<GroupId, Outcome<Group, GetError>>(dataSourceScope)
 

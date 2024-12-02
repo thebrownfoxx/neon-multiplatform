@@ -14,7 +14,7 @@ class Cache<in K, V>(private val coroutineScope: CoroutineScope) {
             MutableSharedFlow<V>(replay = 1).apply {
                 coroutineScope.launch {
                     initialization()
-                    // TODO: Implement flow removal :D
+                    removeWhenUnsubscribed(key)
                 }
             }
         }
@@ -22,5 +22,15 @@ class Cache<in K, V>(private val coroutineScope: CoroutineScope) {
 
     fun emit(key: K, value: V) {
         flows[key]?.let { coroutineScope.launch { it.emit(value) } }
+    }
+
+    private suspend fun MutableSharedFlow<V>.removeWhenUnsubscribed(key: K) {
+        var subscribedOn = false
+        subscriptionCount.collect {
+            when {
+                subscribedOn && it == 0 -> flows.remove(key)
+                it > 0 -> subscribedOn = true
+            }
+        }
     }
 }

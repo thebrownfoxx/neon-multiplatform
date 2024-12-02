@@ -9,11 +9,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
-abstract class WebSocketManager(protected val session: WebSocketSession) {
-    protected val observerScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
+abstract class WebSocketScope(protected val session: WebSocketSession) {
+    protected val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     init {
-        observerScope.launch {
+        coroutineScope.launch {
             session.close.collect {
                 close()
             }
@@ -27,7 +27,7 @@ abstract class WebSocketManager(protected val session: WebSocketSession) {
     protected inline fun <reified T : WebSocketMessage> subscribe(
         label: WebSocketMessageLabel,
         crossinline action: (T) -> Unit,
-    ) = session.subscribe<T>(observerScope, label, action)
+    ) = session.subscribe<T>(coroutineScope, label, action)
 
-    private fun close() = observerScope.cancel()
+    private fun close() = coroutineScope.cancel()
 }

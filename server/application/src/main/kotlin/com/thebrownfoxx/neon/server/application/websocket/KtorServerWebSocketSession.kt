@@ -13,7 +13,6 @@ import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.onCompletion
 
 abstract class KtorServerWebSocketSession(
     val id: WebSocketSessionId = WebSocketSessionId(),
@@ -31,16 +30,20 @@ class MutableKtorServerWebSocketSession(
     id: WebSocketSessionId = WebSocketSessionId(),
     private val session: WebSocketServerSession,
 ) : KtorServerWebSocketSession(id, session) {
-    private val _close = MutableSharedFlow<Unit>()
+    private val _close = MutableSharedFlow<Unit>(replay = 1)
     override val close = _close.asSharedFlow()
 
     private val _incomingMessages = MutableSharedFlow<SerializedWebSocketMessage>()
     override val incomingMessages = _incomingMessages.asSharedFlow()
-        .onCompletion { _close.emit(Unit) }
 
     suspend fun emitFrame(frame: Frame) {
         _incomingMessages
             .emit(KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame))
+    }
+
+    override suspend fun close() {
+        _close.emit(Unit)
+        super.close()
     }
 }
 

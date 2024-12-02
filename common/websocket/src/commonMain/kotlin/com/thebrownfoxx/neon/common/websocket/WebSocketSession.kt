@@ -32,7 +32,6 @@ inline fun <reified T : WebSocketMessage> WebSocketSession.subscribe(
         incomingMessages
             .filter { it.getLabel() == label }
             .collect { serializedMessage ->
-                println("Collected ${serializedMessage.getLabel()} at subscribe")
                 action(serializedMessage.deserialize<T>())
             }
     }

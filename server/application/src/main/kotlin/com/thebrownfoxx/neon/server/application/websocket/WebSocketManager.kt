@@ -10,4 +10,9 @@ class WebSocketManager {
     fun addSession(session: KtorServerWebSocketSession) {
         sessions[session.id] = session
     }
+
+    suspend fun removeSession(id: WebSocketSessionId) {
+        sessions[id]?.close()
+        sessions.remove(id)
+    }
 }
