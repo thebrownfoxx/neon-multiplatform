@@ -8,7 +8,6 @@ import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.outcome.Success
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.common.websocket.model.RequestId
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupConnectionError
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupNotFound
@@ -46,6 +45,6 @@ class WebSocketRemoteGroupDataSource(
     }
 
     override fun getAsFlow(id: GroupId): Flow<Outcome<Group, GetError>> = cache.getAsFlow(id) {
-        dataSourceScope.launch { session.send(GetGroupRequest(RequestId(), id)) }
+        dataSourceScope.launch { session.send(GetGroupRequest(id)) }
     }
 }
