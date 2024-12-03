@@ -11,7 +11,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
             implementation(libs.exposed.core)
-            implementation(libs.exposed.jdbc)
             implementation(libs.exposed.kotlin.datetime)
             implementation(projects.common)
             implementation(projects.common.data)

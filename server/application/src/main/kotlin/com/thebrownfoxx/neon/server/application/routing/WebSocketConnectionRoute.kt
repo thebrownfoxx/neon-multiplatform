@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.AuthenticationType
 import com.thebrownfoxx.neon.server.application.plugin.authenticate
 import com.thebrownfoxx.neon.server.application.websocket.MutableKtorServerWebSocketSession
-import com.thebrownfoxx.neon.server.application.websocket.entity.WebSocketEntityManagers
+import com.thebrownfoxx.neon.server.application.websocket.message.WebSocketMessageManagers
 import com.thebrownfoxx.neon.server.route.websocket.WebSocketConnectionResponse
 import io.ktor.server.routing.Route
 import io.ktor.server.websocket.webSocket
@@ -17,9 +17,10 @@ fun Route.webSocketConnectionRoute() {
                 val session = MutableKtorServerWebSocketSession(session = this)
                 webSocketManager.addSession(session)
                 session.send(WebSocketConnectionResponse.ConnectionSuccessful())
-                WebSocketEntityManagers(
+                WebSocketMessageManagers(
                     session = session,
                     groupManager = groupManager,
+                    memberManager = memberManager,
                 )
                 incoming.consumeEach { session.emitFrame(it) }
                 webSocketManager.removeSession(session.id)
