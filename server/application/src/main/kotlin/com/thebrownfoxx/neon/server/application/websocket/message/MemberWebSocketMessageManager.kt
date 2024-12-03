@@ -31,15 +31,13 @@ class MemberWebSocketMessageManager(
 
     private fun getMember(id: MemberId) {
         getMemberJobManager[id] = {
-            with(session) {
-                memberManager.getMember(id).collect { memberOutcome ->
-                    memberOutcome.onSuccess { member ->
-                        send(GetMemberSuccessful(member))
-                    }.onFailure { error ->
-                        when (error) {
-                            GetMemberError.NotFound -> send(GetMemberNotFound(id))
-                            GetMemberError.ConnectionError -> send(GetMemberConnectionError(id))
-                        }
+            memberManager.getMember(id).collect { memberOutcome ->
+                memberOutcome.onSuccess { member ->
+                    session.send(GetMemberSuccessful(member))
+                }.onFailure { error ->
+                    when (error) {
+                        GetMemberError.NotFound -> session.send(GetMemberNotFound(id))
+                        GetMemberError.ConnectionError -> session.send(GetMemberConnectionError(id))
                     }
                 }
             }

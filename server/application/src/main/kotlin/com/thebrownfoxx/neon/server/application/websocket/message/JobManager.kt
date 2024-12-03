@@ -10,7 +10,6 @@ class JobManager<in K>(private val coroutineScope: CoroutineScope) {
     private val jobs = ConcurrentHashMap<K, Job>()
 
     operator fun set(key: K, action: suspend () -> Unit) {
-        mutableMapOf(1 to 2)[1] = 1
         jobs[key]?.cancel()
         jobs[key] = coroutineScope.launch {
             action()
@@ -31,6 +30,32 @@ fun <K> JobManager(
     coroutineScope.launch {
         cancelAll.collect {
             cancelAll()
+        }
+    }
+}
+
+class SingleJobManager(private val coroutineScope: CoroutineScope) {
+    private var job: Job? = null
+
+    fun set(action: suspend () -> Unit) {
+        job?.cancel()
+        job = coroutineScope.launch {
+            action()
+        }
+    }
+
+    fun cancel() {
+        job?.cancel()
+    }
+}
+
+fun SingleJobManager(
+    coroutineScope: CoroutineScope,
+    cancel: Flow<Unit>,
+) = SingleJobManager(coroutineScope).apply {
+    coroutineScope.launch {
+        cancel.collect {
+            cancel()
         }
     }
 }

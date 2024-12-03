@@ -1,31 +1,115 @@
 package com.thebrownfoxx.neon.server.application.websocket.message
 
+import com.thebrownfoxx.neon.common.outcome.onFailure
+import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsMemberNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageUnauthorized
 import com.thebrownfoxx.neon.server.service.messenger.Messenger
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationsError
+import com.thebrownfoxx.neon.server.service.messenger.model.GetMessageError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
 class MessageWebSocketMessageManager(
-    private val session: WebSocketSession,
+    private val session: KtorServerWebSocketSession,
     private val messenger: Messenger,
 ) {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
+    private val getConversationsJobManager = SingleJobManager(coroutineScope, session.close)
     private val getMessageJobManager = JobManager<MessageId>(coroutineScope, session.close)
     private val getConversationPreviewJobManager =
         JobManager<GroupId>(coroutineScope, session.close)
 
-    private fun getConversations(actorId: MemberId) {
-        coroutineScope.launch {
-//            messenger.oldGetConversations(actorId).onSuccess { conversations ->
-//
-//            }
+    init {
+        session.subscribe<GetConversationsRequest> {
+            getConversations()
+        }
+
+        session.subscribe<GetMessageRequest> { request ->
+            getMessage(request.id)
+        }
+
+        session.subscribe<GetConversationPreviewRequest> { request ->
+            getConversationPreview(request.groupId)
+        }
+    }
+
+    private fun getConversations() {
+        getConversationsJobManager.set {
+            messenger.getConversations(session.memberId).collect { conversationsOutcome ->
+                conversationsOutcome.onSuccess { conversations ->
+                    session.send(GetConversationsSuccessful(conversations))
+                }.onFailure { error ->
+                    when (error) {
+                        GetConversationsError.MemberNotFound ->
+                            session.send(GetConversationsMemberNotFound(session.memberId))
+
+                        GetConversationsError.ConnectionError ->
+                            session.send(GetConversationsConnectionError(session.memberId))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getMessage(id: MessageId) {
+        getMessageJobManager[id] = {
+            messenger.getMessage(session.memberId, id).collect { messageOutcome ->
+                messageOutcome.onSuccess { message ->
+                    session.send(GetMessageSuccessful(message))
+                }.onFailure { error ->
+                    when (error) {
+                        GetMessageError.Unauthorized ->
+                            session.send(GetMessageUnauthorized(id, session.memberId))
+
+                        GetMessageError.NotFound -> session.send(GetMessageNotFound(id))
+
+                        GetMessageError.ConnectionError ->
+                            session.send(GetMessageConnectionError(id))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getConversationPreview(groupId: GroupId) {
+        getConversationPreviewJobManager[groupId] = {
+            messenger.getConversationPreview(session.memberId, groupId).collect { previewOutcome ->
+                previewOutcome.onSuccess { preview ->
+                    session.send(GetConversationPreviewSuccessful(groupId, preview))
+                }.onFailure { error ->
+                    when (error) {
+                        GetConversationPreviewError.Unauthorized ->
+                            session
+                                .send(GetConversationPreviewUnauthorized(groupId, session.memberId))
+
+                        GetConversationPreviewError.GroupNotFound ->
+                            session.send(GetConversationPreviewGroupNotFound(groupId))
+
+                        GetConversationPreviewError.ConnectionError ->
+                            session.send(GetConversationPreviewConnectionError(groupId))
+                    }
+                }
+            }
         }
     }
 }

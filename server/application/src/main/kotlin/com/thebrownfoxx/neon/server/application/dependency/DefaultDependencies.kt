@@ -17,8 +17,10 @@ import com.thebrownfoxx.neon.server.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.server.service.default.DefaultGroupManager
 import com.thebrownfoxx.neon.server.service.default.DefaultJwtProcessor
 import com.thebrownfoxx.neon.server.service.default.DefaultMemberManager
+import com.thebrownfoxx.neon.server.service.default.DefaultMessenger
 import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
+import com.thebrownfoxx.neon.server.service.messenger.Messenger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,6 +75,13 @@ class DefaultDependencies : Dependencies {
         inviteCodeRepository,
         groupMemberRepository,
         hasher,
+    )
+
+    override val messenger = DefaultMessenger(
+        messageRepository,
+        memberRepository,
+        groupRepository,
+        groupMemberRepository,
     )
 
     init {

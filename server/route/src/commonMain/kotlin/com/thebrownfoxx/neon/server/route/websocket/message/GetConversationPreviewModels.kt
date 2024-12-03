@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.server.route.websocket.message
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
 import kotlinx.serialization.Serializable
 
@@ -15,7 +16,7 @@ data class GetConversationPreviewRequest(
 @Serializable
 data class GetConversationPreviewUnauthorized(
     val groupId: GroupId,
-    val actorId: MemberId,
+    val memberId: MemberId,
 ) : WebSocketMessage(
     kClass = GetConversationPreviewUnauthorized::class,
     description = "The member with the given id is not authorized to access the group",
@@ -39,6 +40,17 @@ data class GetConversationPreviewConnectionError(
 ) : WebSocketMessage(
     kClass = GetConversationPreviewConnectionError::class,
     description = "There was an error connecting to one of the components of the server",
+) {
+    override val requestId = null
+}
+
+@Serializable
+data class GetConversationPreviewSuccessful(
+    val groupId: GroupId,
+    val previewId: MessageId?,
+) : WebSocketMessage(
+    kClass = GetConversationPreviewSuccessful::class,
+    description = "The conversation preview was successfully retrieved",
 ) {
     override val requestId = null
 }
