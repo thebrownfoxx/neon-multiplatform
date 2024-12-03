@@ -10,14 +10,20 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupResponse
 import com.thebrownfoxx.neon.server.service.group.GroupManager
 import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import java.util.concurrent.ConcurrentHashMap
 
 class GroupWebSocketEntityManager(
     private val session: WebSocketSession,
     private val groupManager: GroupManager,
 ) {
+    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
+
     private val getGroupJobs = ConcurrentHashMap<GroupId, Job>()
 
     init {
@@ -25,7 +31,7 @@ class GroupWebSocketEntityManager(
             getGroup(request.id)
         }
 
-        session.sessionScope.launch {
+        coroutineScope.launch {
             session.close.collect {
                 getGroupJobs.values.forEach { it.cancel() }
             }
@@ -35,7 +41,7 @@ class GroupWebSocketEntityManager(
     private fun getGroup(id: GroupId) {
         getGroupJobs[id]?.cancel()
         with(session) {
-            getGroupJobs[id] = sessionScope.launch {
+            getGroupJobs[id] = coroutineScope.launch {
                 groupManager.getGroup(id).collect { groupOutcome ->
                     groupOutcome.onSuccess { group ->
                         when (group) {

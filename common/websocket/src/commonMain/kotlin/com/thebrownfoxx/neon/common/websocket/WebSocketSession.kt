@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 abstract class WebSocketSession {
-    abstract val sessionScope: CoroutineScope
+    protected abstract val sessionScope: CoroutineScope
     abstract val close: Flow<Unit>
     abstract val incomingMessages: Flow<SerializedWebSocketMessage>
     abstract suspend fun send(message: Any?, type: Type)
@@ -26,7 +26,7 @@ abstract class WebSocketSession {
     inline fun <reified T : WebSocketMessage> subscribe(
         crossinline action: (T) -> Unit,
     ): Job {
-        return sessionScope.launch {
+        return internalSessionScope.launch {
             incomingMessages
                 .filter { it.getLabel() == WebSocketMessageLabel(T::class) }
                 .collect { serializedMessage ->
@@ -34,4 +34,8 @@ abstract class WebSocketSession {
                 }
         }
     }
+
+    @PublishedApi
+    internal val internalSessionScope: CoroutineScope
+        get() = sessionScope
 }
