@@ -4,6 +4,7 @@ import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.model.RequestId
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupConnectionError
@@ -28,24 +29,24 @@ class GroupWebSocketMessageManager(
 
     init {
         session.subscribe<GetGroupRequest> { request ->
-            getGroup(request.id)
+            getGroup(request.requestId, request.id)
         }
     }
 
-    private fun getGroup(id: GroupId) {
+    private fun getGroup(requestId: RequestId, id: GroupId) {
         getGroupJobManager[id] = {
             with(session) {
                 groupManager.getGroup(id).collect { groupOutcome ->
                     groupOutcome.onSuccess { group ->
                         when (group) {
-                            is ChatGroup -> send(GetGroupSuccessfulChatGroup(group))
-                            is Community -> send(GetGroupSuccessfulCommunity(group))
+                            is ChatGroup -> send(GetGroupSuccessfulChatGroup(requestId, group))
+                            is Community -> send(GetGroupSuccessfulCommunity(requestId, group))
                         }
                     }.onFailure { error ->
                         when (error) {
-                            is GetGroupError.NotFound -> send(GetGroupNotFound(id))
+                            is GetGroupError.NotFound -> send(GetGroupNotFound(requestId, id))
                             GetGroupError.ConnectionError ->
-                                send(GetGroupConnectionError(id))
+                                send(GetGroupConnectionError(requestId, id))
                         }
                     }
                 }

@@ -8,15 +8,19 @@ import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.outcome.Success
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.model.RequestId
 import com.thebrownfoxx.neon.server.model.Group
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulChatGroup
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulCommunity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupResponse as Response
 
 class WebSocketRemoteGroupDataSource(
     private val session: WebSocketSession,
@@ -26,22 +30,22 @@ class WebSocketRemoteGroupDataSource(
 
     init {
         with(cache) {
-            session.subscribe<Response.NotFound> { response ->
+            session.subscribe<GetGroupNotFound> { response ->
                 emit(response.id, Failure(GetError.NotFound))
             }
-            session.subscribe<Response.ConnectionError> { response ->
+            session.subscribe<GetGroupConnectionError> { response ->
                 emit(response.id, Failure(GetError.ConnectionError))
             }
-            session.subscribe<Response.SuccessfulChatGroup> { response ->
+            session.subscribe<GetGroupSuccessfulChatGroup> { response ->
                 emit(response.chatGroup.id, Success(response.chatGroup))
             }
-            session.subscribe<Response.SuccessfulCommunity> { response ->
+            session.subscribe<GetGroupSuccessfulCommunity> { response ->
                 emit(response.community.id, Success(response.community))
             }
         }
     }
 
     override fun getAsFlow(id: GroupId): Flow<Outcome<Group, GetError>> = cache.getAsFlow(id) {
-        dataSourceScope.launch { session.send(GetGroupRequest(id)) }
+        dataSourceScope.launch { session.send(GetGroupRequest(RequestId(), id)) }
     }
 }

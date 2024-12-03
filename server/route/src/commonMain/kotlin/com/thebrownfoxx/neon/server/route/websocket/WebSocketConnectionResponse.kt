@@ -10,6 +10,8 @@ object WebSocketConnectionResponse {
         label = Label,
         description = "Connection successful",
     ) {
+        override val requestId = null
+
         companion object {
             val Label = WebSocketMessageLabel("ConnectionSuccessful")
         }

@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.common.websocket
 
+import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
@@ -30,7 +31,9 @@ abstract class WebSocketSession {
             incomingMessages
                 .filter { it.getLabel() == WebSocketMessageLabel(T::class) }
                 .collect { serializedMessage ->
-                    action(serializedMessage.deserialize<T>())
+                    serializedMessage.deserialize<T>().onSuccess {
+                        action(it)
+                    }
                 }
         }
     }

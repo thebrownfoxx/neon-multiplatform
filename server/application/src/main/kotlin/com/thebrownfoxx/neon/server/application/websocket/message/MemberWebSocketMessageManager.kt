@@ -4,6 +4,7 @@ import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.model.RequestId
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberConnectionError
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberRequest
@@ -25,20 +26,20 @@ class MemberWebSocketMessageManager(
 
     init {
         session.subscribe<GetMemberRequest> { request ->
-            getMember(request.id)
+            getMember(request.requestId, request.id)
         }
     }
 
-    private fun getMember(id: MemberId) {
+    private fun getMember(requestId: RequestId, id: MemberId) {
         getMemberJobManager[id] = {
             with(session) {
                 memberManager.getMember(id).collect { memberOutcome ->
                     memberOutcome.onSuccess { member ->
-                        send(GetMemberSuccessful(member))
+                        send(GetMemberSuccessful(requestId, member))
                     }.onFailure { error ->
                         when (error) {
-                            is GetMemberError.NotFound -> send(GetMemberNotFound(id))
-                            GetMemberError.ConnectionError -> send(GetMemberConnectionError(id))
+                            is GetMemberError.NotFound -> send(GetMemberNotFound(requestId, id))
+                            GetMemberError.ConnectionError -> send(GetMemberConnectionError(requestId, id))
                         }
                     }
                 }
