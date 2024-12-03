@@ -55,16 +55,16 @@ class DefaultMemberManager(
     ): Outcome<MemberId, RegisterMemberError> {
         val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode).getOrElse { error ->
             return when (error) {
-                GetError.NotFound -> RegisterMemberError.InvalidInviteCode(inviteCode)
+                GetError.NotFound -> RegisterMemberError.InvalidInviteCode
                 GetError.ConnectionError -> RegisterMemberError.ConnectionError
             }.asFailure()
         }
 
         if (username.length > usernameMaxLength)
-            return Failure(RegisterMemberError.UsernameTooLong(username, usernameMaxLength))
+            return Failure(RegisterMemberError.UsernameTooLong(usernameMaxLength))
 
         if (!username.all { it.isLetterOrDigit() })
-            return Failure(RegisterMemberError.UsernameNotAlphanumeric(username))
+            return Failure(RegisterMemberError.UsernameNotAlphanumeric)
 
         if (password.length < passwordMinLength)
             return Failure(RegisterMemberError.PasswordTooShort(passwordMinLength))
@@ -81,7 +81,7 @@ class DefaultMemberManager(
                         error("Cannot add member with duplicate id")
 
                     RepositoryAddMemberError.DuplicateUsername ->
-                        RegisterMemberError.UsernameTaken(username)
+                        RegisterMemberError.UsernameTaken
 
                     RepositoryAddMemberError.ConnectionError -> RegisterMemberError.ConnectionError
                 }.asFailure()

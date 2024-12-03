@@ -37,7 +37,7 @@ class MemberWebSocketMessageManager(
                         send(GetMemberSuccessful(member))
                     }.onFailure { error ->
                         when (error) {
-                            is GetMemberError.NotFound -> send(GetMemberNotFound(id))
+                            GetMemberError.NotFound -> send(GetMemberNotFound(id))
                             GetMemberError.ConnectionError -> send(GetMemberConnectionError(id))
                         }
                     }

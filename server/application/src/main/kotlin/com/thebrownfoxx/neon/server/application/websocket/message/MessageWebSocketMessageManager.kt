@@ -1,6 +1,5 @@
 package com.thebrownfoxx.neon.server.application.websocket.message
 
-import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -24,9 +23,9 @@ class MessageWebSocketMessageManager(
 
     private fun getConversations(actorId: MemberId) {
         coroutineScope.launch {
-            messenger.getConversations(actorId).onSuccess { conversations ->
-
-            }
+//            messenger.oldGetConversations(actorId).onSuccess { conversations ->
+//
+//            }
         }
     }
 }

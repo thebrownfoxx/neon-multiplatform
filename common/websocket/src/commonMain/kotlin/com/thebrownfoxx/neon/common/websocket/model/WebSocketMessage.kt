@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 
 @Serializable
 abstract class WebSocketMessage(
-    val label: WebSocketMessageLabel,
+    @Suppress("unused") val label: WebSocketMessageLabel,
     @Suppress("unused") val description: String? = null,
 ) {
     abstract val requestId: RequestId?

@@ -1,7 +1,6 @@
 package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.data.AddError
-import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.neon.common.data.transaction.transaction
@@ -11,7 +10,6 @@ import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.outcome.Success
 import com.thebrownfoxx.neon.common.outcome.UnitOutcome
 import com.thebrownfoxx.neon.common.outcome.asFailure
-import com.thebrownfoxx.neon.common.outcome.asSuccess
 import com.thebrownfoxx.neon.common.outcome.getOrElse
 import com.thebrownfoxx.neon.common.outcome.mapError
 import com.thebrownfoxx.neon.common.outcome.onFailure
@@ -27,7 +25,6 @@ import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.neon.server.repository.MemberRepository
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.neon.server.service.messenger.Messenger
-import com.thebrownfoxx.neon.server.service.messenger.model.Conversations
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessageError
@@ -38,9 +35,9 @@ import com.thebrownfoxx.neon.server.service.messenger.model.SendMessageError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.Clock
-import kotlin.math.min
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultMessenger(
@@ -51,122 +48,19 @@ class DefaultMessenger(
 ) : Messenger {
     private val maxNudgedCount = 2
 
-    @Suppress("DEPRECATION")
-    @Deprecated("Use getConversations(MemberId) instead")
     override suspend fun getConversations(
         actorId: MemberId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Conversations, GetConversationsError> {
+    ): Flow<Outcome<Set<GroupId>, GetConversationsError>> {
         memberRepository.get(actorId).onFailure { error ->
             return when (error) {
-                GetError.NotFound -> GetConversationsError.MemberNotFound(actorId)
+                GetError.NotFound -> GetConversationsError.MemberNotFound
                 GetError.ConnectionError -> GetConversationsError.ConnectionError
-            }.asFailure()
+            }.asFailure().flow()
         }
 
-        val nudgedConversations = getNudgedConversations(
-            actorId = actorId,
-            count = count,
-            offset = offset,
-        ).getOrElse { return Failure(GetConversationsError.ConnectionError) }
-
-        val unreadConversations = getUnreadConversations(
-            actorId = actorId,
-            count = count - nudgedConversations.size,
-            offset = offset - maxNudgedCount,
-        ).getOrElse { return Failure(GetConversationsError.ConnectionError) }
-
-        val unreadCount = messageRepository.getConversationCount(memberId = actorId, read = false)
-            .getOrElse { return Failure(GetConversationsError.ConnectionError) }
-
-        val readConversations = getReadConversations(
-            actorId = actorId,
-            count = count - nudgedConversations.size - unreadConversations.size,
-            offset = offset - maxNudgedCount - unreadCount,
-        ).getOrElse { return Failure(GetConversationsError.ConnectionError) }
-
-        return Conversations(
-            nudgedGroupIds = nudgedConversations,
-            unreadGroupIds = unreadConversations,
-            readGroupIds = readConversations,
-        ).asSuccess()
-    }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Use getConversations(MemberId) instead")
-    private suspend fun getNudgedConversations(
-        actorId: MemberId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<GroupId>, ConnectionError> {
-        val nudgedCount = min(maxNudgedCount - offset, count)
-        return messageRepository.getConversations(
-            memberId = actorId,
-            count = nudgedCount,
-            offset = offset,
-            read = false,
-            descending = true,
-        )
-    }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Use getConversations(MemberId) instead")
-    private suspend fun getUnreadConversations(
-        actorId: MemberId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<GroupId>, ConnectionError> {
-        return messageRepository.getConversations(
-            memberId = actorId,
-            count = count,
-            offset = offset,
-            read = false,
-        )
-    }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Use getConversations(MemberId) instead")
-    private suspend fun getReadConversations(
-        actorId: MemberId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<GroupId>, ConnectionError> {
-        return messageRepository.getConversations(
-            memberId = actorId,
-            count = count,
-            offset = offset,
-            read = true,
-        )
-    }
-
-    override suspend fun getConversations(
-        actorId: MemberId,
-    ): Outcome<Conversations, GetConversationsError> {
-        memberRepository.get(actorId).onFailure { error ->
-            return when (error) {
-                GetError.NotFound -> GetConversationsError.MemberNotFound(actorId)
-                GetError.ConnectionError -> GetConversationsError.ConnectionError
-            }.asFailure()
+        return messageRepository.getConversationsAsFlow(actorId).map { messageOutcome ->
+            messageOutcome.mapError { GetConversationsError.ConnectionError }
         }
-
-        val conversations = messageRepository.getConversations(actorId).getOrElse {
-            return Failure(GetConversationsError.ConnectionError)
-        }
-
-        val nudgedConversations = when {
-            conversations.unreadGroupIds.size > 10 ->
-                conversations.unreadGroupIds.take(maxNudgedCount)
-            else -> emptyList()
-        }.toSet()
-
-        return Success(
-            Conversations(
-                nudgedGroupIds = nudgedConversations,
-                unreadGroupIds = conversations.unreadGroupIds,
-                readGroupIds = conversations.readGroupIds,
-            )
-        )
     }
 
     override fun getMessage(
@@ -176,7 +70,7 @@ class DefaultMessenger(
         return messageRepository.getAsFlow(id).flatMapLatest { messageOutcome ->
             val message = messageOutcome.getOrElse { error ->
                 return@flatMapLatest when (error) {
-                    GetError.NotFound -> GetMessageError.NotFound(id)
+                    GetError.NotFound -> GetMessageError.NotFound
                     GetError.ConnectionError -> GetMessageError.ConnectionError
                 }.asFailure().flow()
             }
@@ -188,7 +82,7 @@ class DefaultMessenger(
                     }
 
                     if (actorId !in groupMemberId)
-                        return@mapLatest Failure(GetMessageError.Unauthorized(actorId))
+                        return@mapLatest Failure(GetMessageError.Unauthorized)
 
                     Success(message)
                 }
@@ -202,7 +96,7 @@ class DefaultMessenger(
         return groupRepository.getAsFlow(groupId).flatMapLatest { group ->
             group.onFailure { error ->
                 return@flatMapLatest when (error) {
-                    GetError.NotFound -> GetConversationPreviewError.GroupNotFound(groupId)
+                    GetError.NotFound -> GetConversationPreviewError.GroupNotFound
                     GetError.ConnectionError -> GetConversationPreviewError.ConnectionError
                 }.asFailure().flow()
             }
@@ -225,35 +119,11 @@ class DefaultMessenger(
                 }
 
                 if (actorId !in groupMemberId)
-                    return@mapLatest Failure(GetConversationPreviewError.Unauthorized(actorId))
+                    return@mapLatest Failure(GetConversationPreviewError.Unauthorized)
 
                 Success(previewId)
             }
         }
-    }
-
-    @Deprecated("Use getMessages(MemberId, GroupId) instead")
-    override suspend fun getMessages(
-        actorId: MemberId,
-        groupId: GroupId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<MessageId>, GetMessagesError> {
-        groupRepository.get(groupId).onFailure { error ->
-            return when (error) {
-                GetError.NotFound -> GetMessagesError.GroupNotFound(groupId)
-                GetError.ConnectionError -> GetMessagesError.ConnectionError
-            }.asFailure()
-        }
-
-        val groupMemberIds = groupMemberRepository.getMembers(groupId).getOrElse {
-            return Failure(GetMessagesError.ConnectionError)
-        }
-
-        if (actorId !in groupMemberIds) return Failure(GetMessagesError.Unauthorized(actorId))
-
-        return messageRepository.getMessages(groupId, count, offset)
-            .mapError { GetMessagesError.ConnectionError }
     }
 
     override suspend fun getMessages(

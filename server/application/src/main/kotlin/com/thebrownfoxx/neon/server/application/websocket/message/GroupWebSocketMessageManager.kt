@@ -43,7 +43,7 @@ class GroupWebSocketMessageManager(
                         }
                     }.onFailure { error ->
                         when (error) {
-                            is GetGroupError.NotFound -> send(GetGroupNotFound(id))
+                            GetGroupError.NotFound -> send(GetGroupNotFound(id))
                             GetGroupError.ConnectionError ->
                                 send(GetGroupConnectionError(id))
                         }

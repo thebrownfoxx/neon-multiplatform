@@ -25,24 +25,9 @@ interface MessageRepository {
 
     suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
 
-    @Deprecated("Use getConversations(MemberId) instead")
-    suspend fun getConversations(
+    suspend fun getConversationsAsFlow(
         memberId: MemberId,
-        count: Int,
-        offset: Int,
-        read: Boolean? = null,
-        descending: Boolean = false,
-    ): Outcome<Set<GroupId>, ConnectionError>
-
-    suspend fun getConversations(
-        memberId: MemberId,
-    ): Outcome<CategorizedConversations, ConnectionError>
-
-    @Deprecated("Use getConversations instead")
-    suspend fun getConversationCount(
-        memberId: MemberId,
-        read: Boolean? = null,
-    ): Outcome<Int, ConnectionError>
+    ): Flow<Outcome<Set<GroupId>, ConnectionError>>
 
     suspend fun getMessages(
         groupId: GroupId,

@@ -42,10 +42,10 @@ class DefaultGroupManager(
     private val maxCommunityNameLength = 16
 
     override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
-        return groupRepository.getAsFlow(id).map { group ->
-            group.mapError { error ->
+        return groupRepository.getAsFlow(id).map { groupOutcome ->
+            groupOutcome.mapError { error ->
                 when (error) {
-                    GetError.NotFound -> GetGroupError.NotFound(id)
+                    GetError.NotFound -> GetGroupError.NotFound
                     GetError.ConnectionError -> GetGroupError.ConnectionError
                 }
             }
@@ -63,10 +63,10 @@ class DefaultGroupManager(
             }.asFailure()
         }
 
-        if (!isActorGod) return Failure(CreateCommunityError.Unauthorized(actorId))
+        if (!isActorGod) return Failure(CreateCommunityError.Unauthorized)
 
         if (name.length > maxCommunityNameLength)
-            return Failure(CreateCommunityError.NameTooLong(name, maxCommunityNameLength))
+            return Failure(CreateCommunityError.NameTooLong(maxCommunityNameLength))
 
         val community = Community(
             name = name,
@@ -102,7 +102,7 @@ class DefaultGroupManager(
             }.asFailure()
         }
 
-        if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized(actorId))
+        if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized)
 
         val inviteCodeExists = inviteCodeRepository.getGroup(inviteCode).fold(
             onSuccess = { true },
@@ -114,21 +114,21 @@ class DefaultGroupManager(
             }
         )
 
-        if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode(inviteCode))
+        if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode)
 
         val group = groupRepository.get(groupId).getOrElse { error ->
             return when (error) {
-                GetError.NotFound -> SetInviteCodeError.GroupNotFound(groupId)
+                GetError.NotFound -> SetInviteCodeError.GroupNotFound
                 GetError.ConnectionError -> SetInviteCodeError.ConnectionError
             }.asFailure()
         }
 
-        if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity(groupId))
+        if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
 
         return inviteCodeRepository.set(groupId, inviteCode).result.mapError { error ->
             when (error) {
                 RepositorySetInviteCodeError.DuplicateInviteCode ->
-                    SetInviteCodeError.DuplicateInviteCode(inviteCode)
+                    SetInviteCodeError.DuplicateInviteCode
 
                 RepositorySetInviteCodeError.ConnectionError -> SetInviteCodeError.ConnectionError
             }
@@ -153,18 +153,18 @@ class DefaultGroupManager(
             }.asFailure()
         }
 
-        if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized(actorId))
+        if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized)
 
         groupRepository.get(groupId).onFailure { error ->
             return when (error) {
-                GetError.NotFound -> AddGroupMemberError.GroupNotFound(groupId)
+                GetError.NotFound -> AddGroupMemberError.GroupNotFound
                 GetError.ConnectionError -> AddGroupMemberError.ConnectionError
             }.asFailure()
         }
 
         memberRepository.get(memberId).onFailure { error ->
             return when (error) {
-                GetError.NotFound -> AddGroupMemberError.MemberNotFound(memberId)
+                GetError.NotFound -> AddGroupMemberError.MemberNotFound
                 GetError.ConnectionError -> AddGroupMemberError.ConnectionError
             }.asFailure()
         }
@@ -173,13 +173,13 @@ class DefaultGroupManager(
             return Failure(AddGroupMemberError.ConnectionError)
         }
 
-        if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember(memberId))
+        if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
 
         return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
             onSuccess = {},
             onFailure = { error ->
                 when (error) {
-                    AddError.Duplicate -> AddGroupMemberError.AlreadyAMember(memberId)
+                    AddError.Duplicate -> AddGroupMemberError.AlreadyAMember
                     AddError.ConnectionError -> AddGroupMemberError.ConnectionError
                 }
             },
