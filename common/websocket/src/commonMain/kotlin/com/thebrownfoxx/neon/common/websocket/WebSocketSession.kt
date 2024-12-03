@@ -12,27 +12,26 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
-interface WebSocketSession {
-    val close: Flow<Unit>
-    val incomingMessages: Flow<SerializedWebSocketMessage>
-    suspend fun send(message: Any?, type: Type)
-    suspend fun close()
-}
+abstract class WebSocketSession {
+    abstract val sessionScope: CoroutineScope
+    abstract val close: Flow<Unit>
+    abstract val incomingMessages: Flow<SerializedWebSocketMessage>
+    abstract suspend fun send(message: Any?, type: Type)
+    abstract suspend fun close()
 
-suspend inline fun <reified T : WebSocketMessage> WebSocketSession.send(message: T) {
-    send(message, typeOf<T>())
-}
+    suspend inline fun <reified T : WebSocketMessage> send(message: T) {
+        send(message, typeOf<T>())
+    }
 
-inline fun <reified T : WebSocketMessage> WebSocketSession.subscribe(
-    scope: CoroutineScope,
-    label: WebSocketMessageLabel,
-    crossinline action: (T) -> Unit,
-): Job {
-    return scope.launch {
-        incomingMessages
-            .filter { it.getLabel() == label }
-            .collect { serializedMessage ->
-                action(serializedMessage.deserialize<T>())
-            }
+    inline fun <reified T : WebSocketMessage> subscribe(
+        crossinline action: (T) -> Unit,
+    ): Job {
+        return sessionScope.launch {
+            incomingMessages
+                .filter { it.getLabel() == WebSocketMessageLabel(T::class) }
+                .collect { serializedMessage ->
+                    action(serializedMessage.deserialize<T>())
+                }
+        }
     }
 }

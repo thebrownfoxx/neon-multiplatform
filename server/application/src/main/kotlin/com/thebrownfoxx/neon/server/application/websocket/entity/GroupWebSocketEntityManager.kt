@@ -3,7 +3,6 @@ package com.thebrownfoxx.neon.server.application.websocket.entity
 import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.websocket.WebSocketScope
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
@@ -16,17 +15,17 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 class GroupWebSocketEntityManager(
-    session: WebSocketSession,
+    private val session: WebSocketSession,
     private val groupManager: GroupManager,
-) : WebSocketScope(session) {
+) {
     private val getGroupJobs = ConcurrentHashMap<GroupId, Job>()
 
     init {
-        subscribe<GetGroupRequest>(GetGroupRequest.Label) { request ->
+        session.subscribe<GetGroupRequest> { request ->
             getGroup(request.id)
         }
 
-        coroutineScope.launch {
+        session.sessionScope.launch {
             session.close.collect {
                 getGroupJobs.values.forEach { it.cancel() }
             }
@@ -35,17 +34,20 @@ class GroupWebSocketEntityManager(
 
     private fun getGroup(id: GroupId) {
         getGroupJobs[id]?.cancel()
-        getGroupJobs[id] = coroutineScope.launch {
-            groupManager.getGroup(id).collect { groupOutcome ->
-                groupOutcome.onSuccess { group ->
-                    when (group) {
-                        is ChatGroup -> send(GetGroupResponse.SuccessfulChatGroup(group))
-                        is Community -> send(GetGroupResponse.SuccessfulCommunity(group))
-                    }
-                }.onFailure { error ->
-                    when (error) {
-                        is GetGroupError.NotFound -> send(GetGroupResponse.NotFound(id))
-                        GetGroupError.ConnectionError -> send(GetGroupResponse.ConnectionError(id))
+        with(session) {
+            getGroupJobs[id] = sessionScope.launch {
+                groupManager.getGroup(id).collect { groupOutcome ->
+                    groupOutcome.onSuccess { group ->
+                        when (group) {
+                            is ChatGroup -> send(GetGroupResponse.SuccessfulChatGroup(group))
+                            is Community -> send(GetGroupResponse.SuccessfulCommunity(group))
+                        }
+                    }.onFailure { error ->
+                        when (error) {
+                            is GetGroupError.NotFound -> send(GetGroupResponse.NotFound(id))
+                            GetGroupError.ConnectionError ->
+                                send(GetGroupResponse.ConnectionError(id))
+                        }
                     }
                 }
             }
