@@ -7,13 +7,16 @@ import com.thebrownfoxx.neon.client.repository.local.LocalGroupDataSource
 import com.thebrownfoxx.neon.common.data.ConnectionError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
-import com.thebrownfoxx.neon.common.data.exposed.dbQuery
+import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
+import com.thebrownfoxx.neon.common.outcome.Failure
 import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.outcome.UnitOutcome
 import com.thebrownfoxx.neon.common.outcome.map
+import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -32,7 +35,7 @@ class ExposedLocalGroupDataSource(
     override fun getAsFlow(id: GroupId) = reactiveCache.getAsFlow(id)
 
     override suspend fun upsert(group: LocalGroup): UnitOutcome<ConnectionError> {
-        dbQuery {
+        dataTransaction {
             LocalGroupTable.upsert {
                 it[id] = group.id.toJavaUuid()
                 if (group is LocalCommunity) {
@@ -41,19 +44,19 @@ class ExposedLocalGroupDataSource(
                     it[isGod] = group.isGod
                 }
             }
-        }
+        }.onFailure { return Failure(ConnectionError) }
         reactiveCache.updateCache(group.id)
         return unitSuccess()
     }
 
     private suspend fun get(id: GroupId): Outcome<LocalGroup, GetError> {
-        return dbQuery {
+        return dataTransaction {
             LocalGroupTable
                 .selectAll()
                 .where(LocalGroupTable.id eq id.toJavaUuid())
                 .firstOrNotFound()
                 .map { it.toLocalGroup() }
-        }
+        }.mapGetTransaction()
     }
 
     private fun ResultRow.toLocalGroup(): LocalGroup {
@@ -75,9 +78,9 @@ class ExposedLocalGroupDataSource(
 
 private object LocalGroupTable : Table() {
     val id = uuid("id")
-    val name = varchar(name = "name", length = 64).nullable()
-    val avatarUrl = varchar(name = "avatar_url", length = 2048).nullable()
-    val isGod = bool(name = "is_god").nullable()
+    val name = varchar("name", length = 64).nullable()
+    val avatarUrl = varchar("avatar_url", length = 2048).nullable()
+    val isGod = bool("is_god").nullable()
 
     override val primaryKey: PrimaryKey = PrimaryKey(id)
 }

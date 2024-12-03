@@ -20,7 +20,6 @@ import com.thebrownfoxx.neon.server.service.default.DefaultMemberManager
 import com.thebrownfoxx.neon.server.service.default.DefaultMessenger
 import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
 import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
-import com.thebrownfoxx.neon.server.service.messenger.Messenger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
