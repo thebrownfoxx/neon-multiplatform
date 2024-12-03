@@ -5,6 +5,7 @@ import com.thebrownfoxx.neon.server.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.server.service.group.GroupManager
 import com.thebrownfoxx.neon.server.service.jwt.JwtProcessor
 import com.thebrownfoxx.neon.server.service.member.MemberManager
+import com.thebrownfoxx.neon.server.service.messenger.Messenger
 
 interface Dependencies {
     val webSocketManager: WebSocketManager
@@ -12,4 +13,5 @@ interface Dependencies {
     val authenticator: Authenticator
     val groupManager: GroupManager
     val memberManager: MemberManager
+    val messenger: Messenger
 }

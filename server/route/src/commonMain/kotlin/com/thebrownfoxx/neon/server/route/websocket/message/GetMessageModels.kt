@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.server.route.websocket.message
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
+import com.thebrownfoxx.neon.server.model.Message
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -36,6 +37,14 @@ data class GetMessageNotFound(val id: MessageId) : WebSocketMessage(
 data class GetMessageConnectionError(val id: MessageId) : WebSocketMessage(
     kClass = GetMessageConnectionError::class,
     description = "There was an error connecting to one of the components of the server",
+) {
+    override val requestId = null
+}
+
+@Serializable
+data class GetMessageSuccessful(val message: Message) : WebSocketMessage(
+    kClass = GetMessageSuccessful::class,
+    description = "The message was successfully retrieved",
 ) {
     override val requestId = null
 }

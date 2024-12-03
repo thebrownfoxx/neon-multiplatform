@@ -34,19 +34,17 @@ class GroupWebSocketMessageManager(
 
     private fun getGroup(id: GroupId) {
         getGroupJobManager[id] = {
-            with(session) {
-                groupManager.getGroup(id).collect { groupOutcome ->
-                    groupOutcome.onSuccess { group ->
-                        when (group) {
-                            is ChatGroup -> send(GetGroupSuccessfulChatGroup(group))
-                            is Community -> send(GetGroupSuccessfulCommunity(group))
-                        }
-                    }.onFailure { error ->
-                        when (error) {
-                            GetGroupError.NotFound -> send(GetGroupNotFound(id))
-                            GetGroupError.ConnectionError ->
-                                send(GetGroupConnectionError(id))
-                        }
+            groupManager.getGroup(id).collect { groupOutcome ->
+                groupOutcome.onSuccess { group ->
+                    when (group) {
+                        is ChatGroup -> session.send(GetGroupSuccessfulChatGroup(group))
+                        is Community -> session.send(GetGroupSuccessfulCommunity(group))
+                    }
+                }.onFailure { error ->
+                    when (error) {
+                        GetGroupError.NotFound -> session.send(GetGroupNotFound(id))
+                        GetGroupError.ConnectionError ->
+                            session.send(GetGroupConnectionError(id))
                     }
                 }
             }

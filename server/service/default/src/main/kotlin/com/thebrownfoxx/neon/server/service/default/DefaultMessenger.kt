@@ -46,8 +46,6 @@ class DefaultMessenger(
     private val groupRepository: GroupRepository,
     private val groupMemberRepository: GroupMemberRepository,
 ) : Messenger {
-    private val maxNudgedCount = 2
-
     override suspend fun getConversations(
         actorId: MemberId,
     ): Flow<Outcome<Set<GroupId>, GetConversationsError>> {

@@ -115,6 +115,7 @@ class ExposedMessageRepository(
         memberId: MemberId,
     ): Outcome<Set<GroupId>, ConnectionError> {
         return dataTransaction {
+            val groupId = MessageTable.groupId.alias("group_id")
             val maxTimestamp = MessageTable.timestamp.max().alias("max_timestamp")
 
             val conversations = MessageTable
@@ -124,15 +125,17 @@ class ExposedMessageRepository(
                     onColumn = MessageTable.groupId,
                     otherColumn = GroupMemberTable.groupId,
                 )
-                .select(MessageTable.groupId, maxTimestamp)
+                .select(groupId, maxTimestamp)
                 .groupBy(MessageTable.groupId)
 
             val inConversation = GroupMemberTable.memberId eq memberId.toJavaUuid()
 
             val messages = conversations
                 .where(inConversation)
-                .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
+                .map { GroupId(it[groupId].toCommonUuid()) }
                 .toSet()
+
+            println(messages)
 
             messages
         }.mapError { ConnectionError }

@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.server.application.websocket
 
 import com.thebrownfoxx.neon.common.type.id.Id
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorSerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 abstract class KtorServerWebSocketSession(
     val id: WebSocketSessionId = WebSocketSessionId(),
+    val memberId: MemberId,
     private val session: WebSocketServerSession,
 ) : KtorWebSocketSession(session) {
     private val _close = MutableSharedFlow<Unit>()
@@ -28,8 +30,9 @@ abstract class KtorServerWebSocketSession(
 
 class MutableKtorServerWebSocketSession(
     id: WebSocketSessionId = WebSocketSessionId(),
+    memberId: MemberId,
     private val session: WebSocketServerSession,
-) : KtorServerWebSocketSession(id, session) {
+) : KtorServerWebSocketSession(id, memberId, session) {
     private val _close = MutableSharedFlow<Unit>(replay = 1)
     override val close = _close.asSharedFlow()
 
