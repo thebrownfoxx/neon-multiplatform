@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 
 class KtorClientWebSocketSession(
     private val session: DefaultClientWebSocketSession,
@@ -23,7 +24,11 @@ class KtorClientWebSocketSession(
 
     override val incomingMessages = session.incoming.consumeAsFlow()
         .map { KtorSerializedWebSocketMessage(session.converter!!, it) }
-        .onCompletion { _close.tryEmit(Unit) }
+        .onCompletion {
+            sessionScope.launch {
+                _close.emit(Unit)
+            }
+        }
         .shareIn(scope = sessionScope, started = SharingStarted.Eagerly)
 
     override suspend fun send(message: Any?, type: Type) {

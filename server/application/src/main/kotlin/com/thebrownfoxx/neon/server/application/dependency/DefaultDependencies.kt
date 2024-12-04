@@ -182,3 +182,199 @@ private fun generateInitialServiceData() = serviceData {
         lando.said("be right there 🤤", Instant.fromEpochSeconds(10))
     }
 }
+
+private fun generateExtensiveF1ServiceData() = serviceData {
+    lateinit var max: MemberId
+    lateinit var checo: MemberId
+    lateinit var lewis: MemberId
+    lateinit var george: MemberId
+    lateinit var charles: MemberId
+    lateinit var carlos: MemberId
+    lateinit var lando: MemberId
+    lateinit var oscar: MemberId
+    lateinit var pierre: MemberId
+    lateinit var esteban: MemberId
+    lateinit var christian: MemberId
+    lateinit var toto: MemberId
+    lateinit var mattia: MemberId
+
+    community(
+        name = "Formula 1 Drivers Global",
+        avatarUrl = Url("https://example.com/f1global.jpg"),
+        inviteCode = "f1world",
+        isGod = true,
+    ) {
+        max = member(
+            username = "max_verstappen",
+            avatarUrl = Url("https://example.com/max.jpg"),
+            password = "world_champion",
+        )
+
+        checo = member(
+            username = "checo_perez",
+            avatarUrl = Url("https://example.com/checo.jpg"),
+            password = "number_two_driver",
+        )
+
+        lewis = member(
+            username = "lewis_hamilton",
+            avatarUrl = Url("https://example.com/lewis.jpg"),
+            password = "seven_time_champ",
+        )
+
+        george = member(
+            username = "george_russell",
+            avatarUrl = Url("https://example.com/george.jpg"),
+            password = "rising_star",
+        )
+
+        charles = member(
+            username = "charles_leclerc",
+            avatarUrl = Url("https://example.com/charles.jpg"),
+            password = "monaco_prince",
+        )
+
+        carlos = member(
+            username = "carlos_sainz",
+            avatarUrl = Url("https://example.com/carlos.jpg"),
+            password = "el_matador",
+        )
+
+        lando = member(
+            username = "lando_norris",
+            avatarUrl = Url("https://example.com/lando.jpg"),
+            password = "twitch_streamer",
+        )
+
+        oscar = member(
+            username = "oscar_piastri",
+            avatarUrl = Url("https://example.com/oscar.jpg"),
+            password = "rookie_sensation",
+        )
+
+        pierre = member(
+            username = "pierre_gasly",
+            avatarUrl = Url("https://example.com/pierre.jpg"),
+            password = "french_flair",
+        )
+
+        esteban = member(
+            username = "esteban_ocon",
+            avatarUrl = Url("https://example.com/esteban.jpg"),
+            password = "home_hero",
+        )
+
+        christian = member(
+            username = "christian_horner",
+            avatarUrl = Url("https://example.com/horner.jpg"),
+            password = "rb_boss",
+        )
+
+        toto = member(
+            username = "toto_wolff",
+            avatarUrl = Url("https://example.com/toto.jpg"),
+            password = "mercedes_mastermind",
+        )
+
+        mattia = member(
+            username = "mattia_binotto",
+            avatarUrl = Url("https://example.com/mattia.jpg"),
+            password = "ferrari_strategist",
+        )
+    }.apply {
+        conversation {
+            // Random messages with earlier timestamps
+            repeat(500) { i ->
+                val randomMembers = listOf(max, checo, lewis, george, charles, carlos, lando, oscar, pierre, esteban)
+                val randomSender = randomMembers.random()
+                randomSender.said("Random global chat message ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+            }
+
+            // Specific messages with later timestamps
+            max.said("Another weekend, another win 🏆", Instant.fromEpochSeconds(10000))
+            lewis.said("The championship is far from over", Instant.fromEpochSeconds(10001))
+            charles.said("We're coming for you both! 💪", Instant.fromEpochSeconds(10002))
+        }
+    }
+
+    community(
+        name = "Red Bull Racing",
+        avatarUrl = Url("https://example.com/redbull.jpg"),
+        inviteCode = "rb_racing",
+    ) {
+        member(max)
+        member(checo)
+        member(christian)
+    }.apply {
+        conversation {
+            // Random messages with earlier timestamps
+            repeat(300) { i ->
+                val randomMembers = listOf(max, checo, christian)
+                val randomSender = randomMembers.random()
+                randomSender.said("Red Bull internal chat ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+            }
+
+            // Specific messages with later timestamps
+            max.said("Feeling unstoppable this season", Instant.fromEpochSeconds(20000))
+            checo.said("Teamwork makes the dream work", Instant.fromEpochSeconds(20001))
+            christian.said("Proud of our performance", Instant.fromEpochSeconds(20002))
+        }
+    }
+
+    community(
+        name = "Mercedes AMG Petronas",
+        avatarUrl = Url("https://example.com/mercedes.jpg"),
+        inviteCode = "silver_arrows",
+    ) {
+        member(lewis)
+        member(george)
+        member(toto)
+    }.apply {
+        conversation {
+            // Random messages with earlier timestamps
+            repeat(300) { i ->
+                val randomMembers = listOf(lewis, george, toto)
+                val randomSender = randomMembers.random()
+                randomSender.said("Mercedes team chat ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+            }
+
+            // Specific messages with later timestamps
+            lewis.said("We're not giving up", Instant.fromEpochSeconds(30000))
+            george.said("Learning and improving", Instant.fromEpochSeconds(30001))
+            toto.said("Strategy is key", Instant.fromEpochSeconds(30002))
+        }
+    }
+
+    community(
+        name = "Scuderia Ferrari",
+        avatarUrl = Url("https://example.com/ferrari.jpg"),
+        inviteCode = "cavallino_rampante",
+    ) {
+        member(charles)
+        member(carlos)
+        member(mattia)
+    }.apply {
+        conversation {
+            // Random messages with earlier timestamps
+            repeat(300) { i ->
+                val randomMembers = listOf(charles, carlos, mattia)
+                val randomSender = randomMembers.random()
+                randomSender.said("Ferrari internal chat ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+            }
+
+            // Specific messages with later timestamps
+            charles.said("Forza Ferrari! 🇮🇹", Instant.fromEpochSeconds(40000))
+            carlos.said("Working together for victory", Instant.fromEpochSeconds(40001))
+            mattia.said("Our time is coming", Instant.fromEpochSeconds(40002))
+        }
+    }
+
+    conversation {
+        // Random messages with earlier timestamps
+        repeat(200) { i ->
+            val randomMembers = listOf(max, checo, lewis, george, charles, carlos, lando, oscar, pierre, esteban)
+            val randomSender = randomMembers.random()
+            randomSender.said("Cross-team banter ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+        }
+    }
+}

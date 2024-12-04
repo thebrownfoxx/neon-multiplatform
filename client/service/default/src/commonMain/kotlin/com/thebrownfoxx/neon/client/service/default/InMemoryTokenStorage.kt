@@ -22,7 +22,7 @@ class InMemoryTokenStorage : TokenStorage {
         return unitSuccess()
     }
 
-    override suspend fun delete(): UnitOutcome<SetTokenError> {
+    override suspend fun clear(): UnitOutcome<SetTokenError> {
         this.token = null
         return unitSuccess()
     }

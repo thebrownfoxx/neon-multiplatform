@@ -25,7 +25,7 @@ fun Route.login() {
                         LoginResponse.InvalidCredentials(),
                     )
 
-                    LoginError.ConnectionError -> call.respond(
+                    LoginError.InternalError -> call.respond(
                         HttpStatusCode.InternalServerError,
                         LoginResponse.ConnectionError(),
                     )

@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.local.exposed
 
-import com.thebrownfoxx.neon.client.model.LocalConversations
+import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.repository.local.LocalMessageDataSource
@@ -22,15 +22,17 @@ import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
@@ -41,13 +43,9 @@ class ExposedLocalMessageDataSource(
     database: Database,
 ) : LocalMessageDataSource, ExposedDataSource(database, LocalMessageTable) {
     private val reactiveConversationsCache = SingleReactiveCache(::getConversations)
-    private val reactiveConversationPreviewCache = ReactiveCache(::getConversationPreview)
     private val reactiveMessageCache = ReactiveCache(::get)
 
-    override val conversations = reactiveConversationsCache.getAsFlow()
-
-    override fun getConversationPreviewAsFlow(groupId: GroupId) =
-        reactiveConversationPreviewCache.getAsFlow(groupId)
+    override val conversationPreviews = reactiveConversationsCache.getAsFlow()
 
     override fun getMessageAsFlow(id: MessageId) =
         reactiveMessageCache.getAsFlow(id)
@@ -64,7 +62,6 @@ class ExposedLocalMessageDataSource(
             }
         }.onFailure { return Failure(ConnectionError) }
         reactiveConversationsCache.updateCache()
-        reactiveConversationPreviewCache.updateCache(message.groupId)
         reactiveMessageCache.updateCache(message.id)
         return unitSuccess()
     }
@@ -78,45 +75,53 @@ class ExposedLocalMessageDataSource(
                 this[LocalMessageTable.content] = message.content
                 this[LocalMessageTable.timestamp] = message.timestamp
                 this[LocalMessageTable.delivery] = message.delivery.name
-
-                dataSourceScope.launch {
-                    reactiveConversationPreviewCache.updateCache(message.groupId)
-                    reactiveMessageCache.updateCache(message.id)
-                }
             }
         }.onFailure { return Failure(ConnectionError) }
+        for (message in messages) {
+            reactiveMessageCache.updateCache(message.id)
+        }
         reactiveConversationsCache.updateCache()
         return unitSuccess()
     }
 
-    private suspend fun getConversations(): Outcome<LocalConversations, ConnectionError> {
+    private suspend fun getConversations(): Outcome<LocalConversationPreviews, ConnectionError> {
         return dataTransaction {
             val groupId = LocalMessageTable.groupId.alias("group_id")
+            val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
 
             val conversations = LocalMessageTable
-                .select(groupId)
+                .select(groupId, maxTimestamp)
                 .groupBy(LocalMessageTable.groupId)
+                .alias("conversations")
+
+            val conversationPreviews = LocalMessageTable
+                .join(
+                    conversations,
+                    JoinType.INNER,
+                ) {
+                    (LocalMessageTable.groupId eq conversations[groupId]) and
+                            (LocalMessageTable.timestamp eq conversations[maxTimestamp])
+                }.selectAll()
 
             val sent = LocalMessageTable.senderId eq memberId.toJavaUuid()
             val conversationRead = LocalMessageTable.delivery eq LocalDelivery.Read.name or sent
 
-            val unreadConversations = conversations
+            val unreadPreviews = conversationPreviews
                 .where(not(conversationRead))
-                .map { GroupId(it[groupId].toCommonUuid()) }
+                .map { it.toLocalMessage() }
 
-            val readConversations = conversations
-                .where(conversationRead)
-                .map { GroupId(it[groupId].toCommonUuid()) }
+            val readPreviews = conversationPreviews.where(conversationRead)
+                .map { it.toLocalMessage() }
 
-            val nudgedConversations = when {
-                unreadConversations.size > 10 -> unreadConversations.takeLast(2).toSet()
-                else -> emptySet()
+            val nudgedPreviews = when {
+                unreadPreviews.size > 10 -> unreadPreviews.takeLast(2)
+                else -> emptyList()
             }
 
-            LocalConversations(
-                nudged = nudgedConversations,
-                unread = unreadConversations.toSet(),
-                read = readConversations.toSet(),
+            LocalConversationPreviews(
+                nudgedPreviews = nudgedPreviews.toSet(),
+                unreadPreviews = unreadPreviews.toSet(),
+                readPreviews = readPreviews.toSet(),
             )
         }.mapError { ConnectionError }
     }

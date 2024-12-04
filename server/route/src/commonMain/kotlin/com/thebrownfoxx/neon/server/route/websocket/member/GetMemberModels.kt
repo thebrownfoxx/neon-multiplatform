@@ -23,11 +23,11 @@ data class GetMemberNotFound(
 }
 
 @Serializable
-data class GetMemberConnectionError(
+data class GetMemberInternalError(
     val id: MemberId,
 ) : WebSocketMessage(
-    kClass = GetMemberConnectionError::class,
-    description = "There was an error connecting to one of the components of the server",
+    kClass = GetMemberInternalError::class,
+    description = "An error occurred while retrieving the member",
 ) {
     override val requestId = null
 }

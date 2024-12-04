@@ -7,5 +7,5 @@ sealed interface MarkConversationAsReadError {
     data class Unauthorized(val memberId: MemberId) : MarkConversationAsReadError
     data object AlreadyRead : MarkConversationAsReadError
     data class GroupNotFound(val groupId: GroupId) : MarkConversationAsReadError
-    data object ConnectionError : MarkConversationAsReadError
+    data object InternalError : MarkConversationAsReadError
 }

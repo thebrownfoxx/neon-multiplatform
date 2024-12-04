@@ -6,5 +6,5 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 sealed interface SendMessageError {
     data class Unauthorized(val memberId: MemberId) : SendMessageError
     data class GroupNotFound(val groupId: GroupId) : SendMessageError
-    data object ConnectionError : SendMessageError
+    data object InternalError : SendMessageError
 }

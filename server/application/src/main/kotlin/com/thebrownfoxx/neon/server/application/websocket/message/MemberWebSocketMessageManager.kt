@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberInternalError
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberRequest
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberSuccessful
@@ -37,7 +37,7 @@ class MemberWebSocketMessageManager(
                 }.onFailure { error ->
                     when (error) {
                         GetMemberError.NotFound -> session.send(GetMemberNotFound(id))
-                        GetMemberError.ConnectionError -> session.send(GetMemberConnectionError(id))
+                        GetMemberError.InternalError -> session.send(GetMemberInternalError(id))
                     }
                 }
             }

@@ -5,5 +5,5 @@ enum class SetInviteCodeError {
     GroupNotFound,
     GroupNotCommunity,
     DuplicateInviteCode,
-    ConnectionError,
+    InternalError,
 }

@@ -59,10 +59,10 @@ class DefaultMessenger(
             memberOutcome.onFailure { error ->
                 return@combine when (error) {
                     GetError.NotFound -> GetConversationsError.MemberNotFound
-                    GetError.ConnectionError -> GetConversationsError.ConnectionError
+                    GetError.ConnectionError -> GetConversationsError.InternalError
                 }.asFailure()
             }
-            conversationsOutcome.mapError { GetConversationsError.ConnectionError }
+            conversationsOutcome.mapError { GetConversationsError.InternalError }
         }
     }
 
@@ -75,7 +75,7 @@ class DefaultMessenger(
             group.onFailure { error ->
                 return@flatMapLatest when (error) {
                     GetError.NotFound -> GetConversationPreviewError.GroupNotFound
-                    GetError.ConnectionError -> GetConversationPreviewError.ConnectionError
+                    GetError.ConnectionError -> GetConversationPreviewError.InternalError
                 }.asFailure().flow()
             }
             getConversationPreviewFromRepository(groupId, actorId)
@@ -92,10 +92,10 @@ class DefaultMessenger(
             memberOutcome.onFailure { error ->
                 return@combine when (error) {
                     GetError.NotFound -> GetConversationPreviewsError.MemberNotFound
-                    GetError.ConnectionError -> GetConversationPreviewsError.ConnectionError
+                    GetError.ConnectionError -> GetConversationPreviewsError.InternalError
                 }.asFailure()
             }
-            conversationsOutcome.mapError { GetConversationPreviewsError.ConnectionError }
+            conversationsOutcome.mapError { GetConversationPreviewsError.InternalError }
         }
     }
 
@@ -107,14 +107,14 @@ class DefaultMessenger(
             val message = messageOutcome.getOrElse { error ->
                 return@flatMapLatest when (error) {
                     GetError.NotFound -> GetMessageError.NotFound
-                    GetError.ConnectionError -> GetMessageError.ConnectionError
+                    GetError.ConnectionError -> GetMessageError.InternalError
                 }.asFailure().flow()
             }
 
             groupMemberRepository.getMembersAsFlow(message.groupId)
                 .mapLatest { groupMemberIdsOutcome ->
                     val groupMemberId = groupMemberIdsOutcome.getOrElse {
-                        return@mapLatest Failure(GetMessageError.ConnectionError)
+                        return@mapLatest Failure(GetMessageError.InternalError)
                     }
 
                     if (actorId !in groupMemberId)
@@ -131,12 +131,12 @@ class DefaultMessenger(
     ): Flow<Outcome<MessageId?, GetConversationPreviewError>> {
         return messageRepository.getConversationPreviewAsFlow(groupId).flatMapLatest { messageOutcome ->
             val previewId = messageOutcome.getOrElse {
-                return@flatMapLatest Failure(GetConversationPreviewError.ConnectionError).flow()
+                return@flatMapLatest Failure(GetConversationPreviewError.InternalError).flow()
             }
 
             groupMemberRepository.getMembersAsFlow(groupId).mapLatest { groupMemberIdsOutcome ->
                 val groupMemberId = groupMemberIdsOutcome.getOrElse {
-                    return@mapLatest Failure(GetConversationPreviewError.ConnectionError)
+                    return@mapLatest Failure(GetConversationPreviewError.InternalError)
                 }
 
                 if (actorId !in groupMemberId)
@@ -161,7 +161,7 @@ class DefaultMessenger(
             memberRepository.get(memberId).onFailure { error ->
                 return when (error) {
                     GetError.NotFound -> NewConversationError.MemberNotFound(memberId)
-                    GetError.ConnectionError -> NewConversationError.ConnectionError
+                    GetError.ConnectionError -> NewConversationError.InternalError
                 }.asFailure()
             }
         }
@@ -172,7 +172,7 @@ class DefaultMessenger(
             groupRepository.add(chatGroup).register().onFailure { error ->
                 return@transaction when (error) {
                     AddError.Duplicate -> error("What are the chances?")
-                    AddError.ConnectionError -> NewConversationError.ConnectionError
+                    AddError.ConnectionError -> NewConversationError.InternalError
                 }.asFailure()
             }
 
@@ -183,7 +183,7 @@ class DefaultMessenger(
                     isAdmin = false,
                 ).register().onFailure { error ->
                     return@transaction when (error) {
-                        AddError.ConnectionError -> NewConversationError.ConnectionError
+                        AddError.ConnectionError -> NewConversationError.InternalError
                         AddError.Duplicate -> error("Can't be?")
                     }.asFailure()
                 }
@@ -201,12 +201,12 @@ class DefaultMessenger(
         groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> SendMessageError.GroupNotFound(groupId)
-                GetError.ConnectionError -> SendMessageError.ConnectionError
+                GetError.ConnectionError -> SendMessageError.InternalError
             }.asFailure()
         }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return Failure(SendMessageError.ConnectionError) }
+            .getOrElse { return Failure(SendMessageError.InternalError) }
 
         if (actorId !in groupMemberIds) return Failure(SendMessageError.Unauthorized(actorId))
 
@@ -221,7 +221,7 @@ class DefaultMessenger(
         messageRepository.add(message).result.onFailure { error ->
             return when (error) {
                 AddError.Duplicate -> error("What are the chances?")
-                AddError.ConnectionError -> SendMessageError.ConnectionError
+                AddError.ConnectionError -> SendMessageError.InternalError
             }.asFailure()
         }
 
@@ -235,26 +235,26 @@ class DefaultMessenger(
         groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> MarkConversationAsReadError.GroupNotFound(groupId)
-                GetError.ConnectionError -> MarkConversationAsReadError.ConnectionError
+                GetError.ConnectionError -> MarkConversationAsReadError.InternalError
             }.asFailure()
         }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return Failure(MarkConversationAsReadError.ConnectionError) }
+            .getOrElse { return Failure(MarkConversationAsReadError.InternalError) }
 
         if (actorId !in groupMemberIds)
             return Failure(MarkConversationAsReadError.Unauthorized(actorId))
 
         val unreadMessageIds =
             messageRepository.getUnreadMessages(groupId)
-                .getOrElse { return Failure(MarkConversationAsReadError.ConnectionError) }
+                .getOrElse { return Failure(MarkConversationAsReadError.InternalError) }
 
         val unreadMessages = unreadMessageIds.map {
             messageRepository.get(it).getOrElse { error ->
                 when (error) {
                     GetError.NotFound -> null
                     GetError.ConnectionError ->
-                        return Failure(MarkConversationAsReadError.ConnectionError)
+                        return Failure(MarkConversationAsReadError.InternalError)
                 }
             }
         }.filterNotNull()
@@ -268,7 +268,7 @@ class DefaultMessenger(
                         when (error) {
                             UpdateError.NotFound -> {}
                             UpdateError.ConnectionError ->
-                                return@transaction Failure(MarkConversationAsReadError.ConnectionError)
+                                return@transaction Failure(MarkConversationAsReadError.InternalError)
                         }
                     }
             }

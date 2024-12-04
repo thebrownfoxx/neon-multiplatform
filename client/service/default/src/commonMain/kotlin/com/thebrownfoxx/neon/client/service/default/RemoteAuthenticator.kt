@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
 import com.thebrownfoxx.neon.client.service.authenticator.model.LoginError
+import com.thebrownfoxx.neon.client.service.authenticator.model.LogoutError
 import com.thebrownfoxx.neon.client.service.default.extension.bodyOrNull
 import com.thebrownfoxx.neon.client.service.default.extension.enumValueOfOrNull
 import com.thebrownfoxx.neon.client.service.jwt.TokenStorage
@@ -23,13 +24,25 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.resources.Resource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class RemoteAuthenticator(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
 ) : Authenticator {
-    override val loggedInMember = MutableStateFlow<MemberId?>(null)
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+
+    private val _loggedInMember = MutableStateFlow<MemberId?>(null)
+    override val loggedInMember = _loggedInMember.asStateFlow()
+
+    override val loggedIn = loggedInMember.map { it != null }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
     override suspend fun login(username: String, password: String): UnitOutcome<LoginError> {
         val response = runFailing {
@@ -47,7 +60,7 @@ class RemoteAuthenticator(
             null -> Failure(LoginError.UnknownError)
             LoginResponse.Status.Successful -> {
                 val successfulBody = response.body<LoginResponse.Successful>()
-                loggedInMember.value = successfulBody.memberId
+                _loggedInMember.value = successfulBody.memberId
                 tokenStorage.set(successfulBody.token).onFailure { error ->
                     return when (error) {
                         SetTokenError.ConnectionError -> Failure(LoginError.ConnectionError)
@@ -56,6 +69,16 @@ class RemoteAuthenticator(
                 unitSuccess()
             }
         }
+    }
+
+    override suspend fun logout(): UnitOutcome<LogoutError> {
+        _loggedInMember.value = null
+        tokenStorage.clear().onFailure { error ->
+            when (error) {
+                SetTokenError.ConnectionError -> LogoutError.ConnectionError
+            }
+        }
+        return unitSuccess()
     }
 }
 

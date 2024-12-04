@@ -42,7 +42,7 @@ class DefaultMemberManager(
             memberOutcome.mapError { error ->
                 when (error) {
                     GetError.NotFound -> GetMemberError.NotFound
-                    GetError.ConnectionError -> GetMemberError.ConnectionError
+                    GetError.ConnectionError -> GetMemberError.InternalError
                 }
             }
         }
@@ -56,7 +56,7 @@ class DefaultMemberManager(
         val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode).getOrElse { error ->
             return when (error) {
                 GetError.NotFound -> RegisterMemberError.InvalidInviteCode
-                GetError.ConnectionError -> RegisterMemberError.ConnectionError
+                GetError.ConnectionError -> RegisterMemberError.InternalError
             }.asFailure()
         }
 
@@ -83,7 +83,7 @@ class DefaultMemberManager(
                     RepositoryAddMemberError.DuplicateUsername ->
                         RegisterMemberError.UsernameTaken
 
-                    RepositoryAddMemberError.ConnectionError -> RegisterMemberError.ConnectionError
+                    RepositoryAddMemberError.ConnectionError -> RegisterMemberError.InternalError
                 }.asFailure()
             }
 
@@ -92,12 +92,12 @@ class DefaultMemberManager(
                     when (error) {
                         AddError.Duplicate -> {}
                         AddError.ConnectionError ->
-                            return@transaction Failure(RegisterMemberError.ConnectionError)
+                            return@transaction Failure(RegisterMemberError.InternalError)
                     }
                 }
 
             passwordRepository.setHash(member.id, hasher.hash(password)).register()
-                .onFailure { return@transaction Failure(RegisterMemberError.ConnectionError) }
+                .onFailure { return@transaction Failure(RegisterMemberError.InternalError) }
 
             Success(member.id)
         }

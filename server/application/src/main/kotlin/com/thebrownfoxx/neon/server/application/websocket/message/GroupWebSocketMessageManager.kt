@@ -6,7 +6,7 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
-import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupInternalError
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulChatGroup
@@ -43,8 +43,8 @@ class GroupWebSocketMessageManager(
                 }.onFailure { error ->
                     when (error) {
                         GetGroupError.NotFound -> session.send(GetGroupNotFound(id))
-                        GetGroupError.ConnectionError ->
-                            session.send(GetGroupConnectionError(id))
+                        GetGroupError.InternalError ->
+                            session.send(GetGroupInternalError(id))
                     }
                 }
             }

@@ -4,5 +4,5 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 
 sealed interface NewConversationError {
     data class MemberNotFound(val memberId: MemberId) : NewConversationError
-    data object ConnectionError : NewConversationError
+    data object InternalError : NewConversationError
 }

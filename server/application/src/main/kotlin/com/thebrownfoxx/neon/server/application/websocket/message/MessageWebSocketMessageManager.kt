@@ -5,18 +5,18 @@ import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewConnectionError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewInternalError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsInternalError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsSuccessful
-import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageConnectionError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageInternalError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -68,8 +68,8 @@ class MessageWebSocketMessageManager(
                         GetConversationsError.MemberNotFound ->
                             session.send(GetConversationsMemberNotFound(session.memberId))
 
-                        GetConversationsError.ConnectionError ->
-                            session.send(GetConversationsConnectionError(session.memberId))
+                        GetConversationsError.InternalError ->
+                            session.send(GetConversationsInternalError(session.memberId))
                     }
                 }
             }
@@ -90,8 +90,8 @@ class MessageWebSocketMessageManager(
                         GetConversationPreviewError.GroupNotFound ->
                             session.send(GetConversationPreviewGroupNotFound(groupId))
 
-                        GetConversationPreviewError.ConnectionError ->
-                            session.send(GetConversationPreviewConnectionError(groupId))
+                        GetConversationPreviewError.InternalError ->
+                            session.send(GetConversationPreviewInternalError(groupId))
                     }
                 }
             }
@@ -108,8 +108,8 @@ class MessageWebSocketMessageManager(
                         GetConversationPreviewsError.MemberNotFound ->
                             session.send(GetConversationsMemberNotFound(session.memberId))
 
-                        GetConversationPreviewsError.ConnectionError ->
-                            session.send(GetConversationsConnectionError(session.memberId))
+                        GetConversationPreviewsError.InternalError ->
+                            session.send(GetConversationsInternalError(session.memberId))
                     }
                 }
             }
@@ -128,8 +128,8 @@ class MessageWebSocketMessageManager(
 
                         GetMessageError.NotFound -> session.send(GetMessageNotFound(id))
 
-                        GetMessageError.ConnectionError ->
-                            session.send(GetMessageConnectionError(id))
+                        GetMessageError.InternalError ->
+                            session.send(GetMessageInternalError(id))
                     }
                 }
             }

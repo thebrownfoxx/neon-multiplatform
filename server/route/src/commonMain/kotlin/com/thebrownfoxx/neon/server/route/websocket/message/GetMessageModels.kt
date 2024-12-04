@@ -34,9 +34,9 @@ data class GetMessageNotFound(val id: MessageId) : WebSocketMessage(
 }
 
 @Serializable
-data class GetMessageConnectionError(val id: MessageId) : WebSocketMessage(
-    kClass = GetMessageConnectionError::class,
-    description = "There was an error connecting to one of the components of the server",
+data class GetMessageInternalError(val id: MessageId) : WebSocketMessage(
+    kClass = GetMessageInternalError::class,
+    description = "An error occurred while retrieving the message",
 ) {
     override val requestId = null
 }

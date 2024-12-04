@@ -46,7 +46,7 @@ class DefaultGroupManager(
             groupOutcome.mapError { error ->
                 when (error) {
                     GetError.NotFound -> GetGroupError.NotFound
-                    GetError.ConnectionError -> GetGroupError.ConnectionError
+                    GetError.ConnectionError -> GetGroupError.InternalError
                 }
             }
         }
@@ -59,7 +59,7 @@ class DefaultGroupManager(
     ): Outcome<GroupId, CreateCommunityError> {
         val isActorGod = permissionChecker.isGod(actorId).getOrElse { error ->
             return when (error) {
-                IsGodError.ConnectionError -> CreateCommunityError.ConnectionError
+                IsGodError.ConnectionError -> CreateCommunityError.InternalError
             }.asFailure()
         }
 
@@ -79,7 +79,7 @@ class DefaultGroupManager(
             onFailure = { error ->
                 when (error) {
                     AddError.Duplicate -> error("Cannot add community with duplicate id")
-                    AddError.ConnectionError -> CreateCommunityError.ConnectionError
+                    AddError.ConnectionError -> CreateCommunityError.InternalError
                 }
             },
         )
@@ -92,13 +92,13 @@ class DefaultGroupManager(
     ): UnitOutcome<SetInviteCodeError> {
         val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
             return when (error) {
-                IsGodError.ConnectionError -> SetInviteCodeError.ConnectionError
+                IsGodError.ConnectionError -> SetInviteCodeError.InternalError
             }.asFailure()
         }
 
         val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
             return when (error) {
-                IsGroupAdminError.ConnectionError -> SetInviteCodeError.ConnectionError
+                IsGroupAdminError.ConnectionError -> SetInviteCodeError.InternalError
             }.asFailure()
         }
 
@@ -109,7 +109,7 @@ class DefaultGroupManager(
             onFailure = { error ->
                 when (error) {
                     GetError.NotFound -> false
-                    GetError.ConnectionError -> return Failure(SetInviteCodeError.ConnectionError)
+                    GetError.ConnectionError -> return Failure(SetInviteCodeError.InternalError)
                 }
             }
         )
@@ -119,7 +119,7 @@ class DefaultGroupManager(
         val group = groupRepository.get(groupId).getOrElse { error ->
             return when (error) {
                 GetError.NotFound -> SetInviteCodeError.GroupNotFound
-                GetError.ConnectionError -> SetInviteCodeError.ConnectionError
+                GetError.ConnectionError -> SetInviteCodeError.InternalError
             }.asFailure()
         }
 
@@ -130,7 +130,7 @@ class DefaultGroupManager(
                 RepositorySetInviteCodeError.DuplicateInviteCode ->
                     SetInviteCodeError.DuplicateInviteCode
 
-                RepositorySetInviteCodeError.ConnectionError -> SetInviteCodeError.ConnectionError
+                RepositorySetInviteCodeError.ConnectionError -> SetInviteCodeError.InternalError
             }
         }
     }
@@ -143,13 +143,13 @@ class DefaultGroupManager(
     ): UnitOutcome<AddGroupMemberError> {
         val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
             return when (error) {
-                IsGodError.ConnectionError -> AddGroupMemberError.ConnectionError
+                IsGodError.ConnectionError -> AddGroupMemberError.InternalError
             }.asFailure()
         }
 
         val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
             return when (error) {
-                IsGroupAdminError.ConnectionError -> AddGroupMemberError.ConnectionError
+                IsGroupAdminError.ConnectionError -> AddGroupMemberError.InternalError
             }.asFailure()
         }
 
@@ -158,19 +158,19 @@ class DefaultGroupManager(
         groupRepository.get(groupId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> AddGroupMemberError.GroupNotFound
-                GetError.ConnectionError -> AddGroupMemberError.ConnectionError
+                GetError.ConnectionError -> AddGroupMemberError.InternalError
             }.asFailure()
         }
 
         memberRepository.get(memberId).onFailure { error ->
             return when (error) {
                 GetError.NotFound -> AddGroupMemberError.MemberNotFound
-                GetError.ConnectionError -> AddGroupMemberError.ConnectionError
+                GetError.ConnectionError -> AddGroupMemberError.InternalError
             }.asFailure()
         }
 
         val groupMembers = groupMemberRepository.getMembers(groupId).getOrElse {
-            return Failure(AddGroupMemberError.ConnectionError)
+            return Failure(AddGroupMemberError.InternalError)
         }
 
         if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
@@ -180,7 +180,7 @@ class DefaultGroupManager(
             onFailure = { error ->
                 when (error) {
                     AddError.Duplicate -> AddGroupMemberError.AlreadyAMember
-                    AddError.ConnectionError -> AddGroupMemberError.ConnectionError
+                    AddError.ConnectionError -> AddGroupMemberError.InternalError
                 }
             },
         )

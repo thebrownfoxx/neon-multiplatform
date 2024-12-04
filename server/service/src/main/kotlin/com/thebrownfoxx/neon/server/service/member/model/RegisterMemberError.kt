@@ -6,5 +6,5 @@ sealed interface RegisterMemberError {
     data object UsernameNotAlphanumeric : RegisterMemberError
     data object UsernameTaken : RegisterMemberError
     data class PasswordTooShort(val minLength: Int) : RegisterMemberError
-    data object ConnectionError: RegisterMemberError
+    data object InternalError: RegisterMemberError
 }

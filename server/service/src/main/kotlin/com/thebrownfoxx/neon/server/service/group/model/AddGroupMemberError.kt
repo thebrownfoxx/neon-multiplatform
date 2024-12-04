@@ -5,5 +5,5 @@ enum class AddGroupMemberError {
     AlreadyAMember,
     GroupNotFound,
     MemberNotFound,
-    ConnectionError,
+    InternalError,
 }

@@ -24,11 +24,11 @@ data class GetGroupNotFound(
 }
 
 @Serializable
-data class GetGroupConnectionError(
+data class GetGroupInternalError(
     val id: GroupId,
 ) : WebSocketMessage(
-    kClass = GetGroupConnectionError::class,
-    description = "There was an error connecting to one of the components of the server",
+    kClass = GetGroupInternalError::class,
+    description = "An error occurred while retrieving the group",
 ) {
     override val requestId = null
 }

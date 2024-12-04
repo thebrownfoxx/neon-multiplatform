@@ -20,12 +20,13 @@ class DefaultDependencies(
 ) : Dependencies {
     override val tokenStorage = InMemoryTokenStorage()
 
-    override val authenticator = RemoteAuthenticator(
-        httpClient = httpClient,
-        tokenStorage = tokenStorage,
-    )
+    override val authenticator = RemoteAuthenticator(httpClient, tokenStorage)
 
-    private val webSocketProvider = KtorClientWebSocketProvider(httpClient, tokenStorage)
+    private val webSocketProvider = KtorClientWebSocketProvider(
+        httpClient,
+        tokenStorage,
+        authenticator,
+    )
 
     override suspend fun getGroupManager(): Outcome<GroupManager, GetGroupRepositoryError> {
         val localDataSource = ExposedLocalGroupDataSource(database)

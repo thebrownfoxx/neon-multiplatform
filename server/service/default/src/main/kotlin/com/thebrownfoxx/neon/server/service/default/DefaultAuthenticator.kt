@@ -25,7 +25,7 @@ class DefaultAuthenticator(
             is Failure -> when (memberOutcome.error) {
                 GetError.NotFound -> Success(false)
                 GetError.ConnectionError ->
-                    Failure(AuthenticationError.ConnectionError)
+                    Failure(AuthenticationError.InternalError)
             }
         }
     }
@@ -34,14 +34,14 @@ class DefaultAuthenticator(
         val memberId = memberRepository.getId(username).getOrElse { error ->
             return when (error) {
                 GetError.NotFound -> LoginError.InvalidCredentials
-                GetError.ConnectionError -> LoginError.ConnectionError
+                GetError.ConnectionError -> LoginError.InternalError
             }.asFailure()
         }
 
         val passwordHash = passwordRepository.getHash(memberId).getOrElse { error ->
             return when (error) {
                 GetError.NotFound -> LoginError.InvalidCredentials
-                GetError.ConnectionError -> LoginError.ConnectionError
+                GetError.ConnectionError -> LoginError.InternalError
             }.asFailure()
         }
 
