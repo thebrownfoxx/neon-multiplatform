@@ -13,21 +13,27 @@ import com.thebrownfoxx.neon.server.model.Message
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>>
+    @Deprecated("Use getConversationPreviewsAsFlow instead")
+    fun getConversationsAsFlow(
+        memberId: MemberId,
+    ): Flow<Outcome<Set<GroupId>, ConnectionError>>
 
+    @Deprecated("Use getConversationPreviewsAsFlow instead")
     fun getConversationPreviewAsFlow(
         id: GroupId,
     ): Flow<Outcome<MessageId?, ConnectionError>>
+
+    fun getConversationPreviewsAsFlow(
+        memberId: MemberId,
+    ): Flow<Outcome<List<Message>, ConnectionError>>
+
+    fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>>
 
     suspend fun get(id: MessageId): Outcome<Message, GetError>
 
     suspend fun add(message: Message): ReversibleUnitOutcome<AddError>
 
     suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
-
-    suspend fun getConversationsAsFlow(
-        memberId: MemberId,
-    ): Flow<Outcome<Set<GroupId>, ConnectionError>>
 
     suspend fun getMessages(
         groupId: GroupId,

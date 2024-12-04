@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.common.data.exposed
 
-import com.thebrownfoxx.neon.common.data.Gettable
 import com.thebrownfoxx.neon.common.data.ReactiveCache
+import com.thebrownfoxx.neon.common.data.SingleReactiveCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,6 +23,9 @@ abstract class ExposedDataSource(
         }
     }
 
-    protected fun <K, V> ReactiveCache(gettable: Gettable<K, V>) =
-        ReactiveCache(dataSourceScope, gettable)
+    protected fun <K, V> ReactiveCache(get: suspend (K) -> V) =
+        ReactiveCache(dataSourceScope, get)
+
+    protected fun <V> SingleReactiveCache(get: suspend () -> V) =
+        SingleReactiveCache(dataSourceScope, get)
 }

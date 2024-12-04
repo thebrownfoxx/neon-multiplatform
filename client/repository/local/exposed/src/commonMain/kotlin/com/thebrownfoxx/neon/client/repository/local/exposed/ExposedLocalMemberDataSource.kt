@@ -61,7 +61,7 @@ class ExposedLocalMemberDataSource(
     )
 }
 
-private object LocalMemberTable : Table("member") {
+private object LocalMemberTable : Table("local_member") {
     val id = uuid("id")
     val username = varchar("username", 16).uniqueIndex()
     val avatarUrl = varchar("avatar_url", 2048).nullable()

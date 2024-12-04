@@ -26,6 +26,7 @@ import com.thebrownfoxx.neon.server.repository.MemberRepository
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.neon.server.service.messenger.Messenger
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessageError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessagesError
@@ -34,8 +35,8 @@ import com.thebrownfoxx.neon.server.service.messenger.model.NewConversationError
 import com.thebrownfoxx.neon.server.service.messenger.model.SendMessageError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.Clock
 
@@ -46,18 +47,55 @@ class DefaultMessenger(
     private val groupRepository: GroupRepository,
     private val groupMemberRepository: GroupMemberRepository,
 ) : Messenger {
-    override suspend fun getConversations(
+    @Suppress("DEPRECATION")
+    @Deprecated("Use getConversationPreviews instead")
+    override fun getConversations(
         actorId: MemberId,
     ): Flow<Outcome<Set<GroupId>, GetConversationsError>> {
-        memberRepository.get(actorId).onFailure { error ->
-            return when (error) {
-                GetError.NotFound -> GetConversationsError.MemberNotFound
-                GetError.ConnectionError -> GetConversationsError.ConnectionError
-            }.asFailure().flow()
+        return combine(
+            memberRepository.getAsFlow(actorId),
+            messageRepository.getConversationsAsFlow(actorId),
+        ) { memberOutcome, conversationsOutcome ->
+            memberOutcome.onFailure { error ->
+                return@combine when (error) {
+                    GetError.NotFound -> GetConversationsError.MemberNotFound
+                    GetError.ConnectionError -> GetConversationsError.ConnectionError
+                }.asFailure()
+            }
+            conversationsOutcome.mapError { GetConversationsError.ConnectionError }
         }
+    }
 
-        return messageRepository.getConversationsAsFlow(actorId).map { messageOutcome ->
-            messageOutcome.mapError { GetConversationsError.ConnectionError }
+    @Deprecated("Use getConversationPreviews instead")
+    override fun getConversationPreview(
+        actorId: MemberId,
+        groupId: GroupId,
+    ): Flow<Outcome<MessageId?, GetConversationPreviewError>> {
+        return groupRepository.getAsFlow(groupId).flatMapLatest { group ->
+            group.onFailure { error ->
+                return@flatMapLatest when (error) {
+                    GetError.NotFound -> GetConversationPreviewError.GroupNotFound
+                    GetError.ConnectionError -> GetConversationPreviewError.ConnectionError
+                }.asFailure().flow()
+            }
+            getConversationPreviewFromRepository(groupId, actorId)
+        }
+    }
+
+    override fun getConversationPreviews(
+        actorId: MemberId,
+    ): Flow<Outcome<List<Message>, GetConversationPreviewsError>> {
+        return combine(
+            memberRepository.getAsFlow(actorId),
+            messageRepository.getConversationPreviewsAsFlow(actorId),
+        ) { memberOutcome, conversationsOutcome ->
+            memberOutcome.onFailure { error ->
+                return@combine when (error) {
+                    GetError.NotFound -> GetConversationPreviewsError.MemberNotFound
+                    GetError.ConnectionError -> GetConversationPreviewsError.ConnectionError
+                }.asFailure()
+            }
+            conversationsOutcome.mapError { GetConversationPreviewsError.ConnectionError }
         }
     }
 
@@ -84,21 +122,6 @@ class DefaultMessenger(
 
                     Success(message)
                 }
-        }
-    }
-
-    override fun getConversationPreview(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): Flow<Outcome<MessageId?, GetConversationPreviewError>> {
-        return groupRepository.getAsFlow(groupId).flatMapLatest { group ->
-            group.onFailure { error ->
-                return@flatMapLatest when (error) {
-                    GetError.NotFound -> GetConversationPreviewError.GroupNotFound
-                    GetError.ConnectionError -> GetConversationPreviewError.ConnectionError
-                }.asFailure().flow()
-            }
-            getConversationPreviewFromRepository(groupId, actorId)
         }
     }
 

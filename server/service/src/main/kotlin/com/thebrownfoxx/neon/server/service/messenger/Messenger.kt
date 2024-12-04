@@ -7,6 +7,7 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessageError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessagesError
@@ -16,20 +17,27 @@ import com.thebrownfoxx.neon.server.service.messenger.model.SendMessageError
 import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
-    suspend fun getConversations(
+    @Deprecated("Use getConversationPreviews instead")
+    fun getConversations(
         actorId: MemberId,
     ): Flow<Outcome<Set<GroupId>, GetConversationsError>>
+
+    @Deprecated("Use getConversationPreviews instead")
+    fun getConversationPreview(
+        actorId: MemberId,
+        groupId: GroupId,
+    ): Flow<Outcome<MessageId?, GetConversationPreviewError>>
+
+    fun getConversationPreviews(
+        actorId: MemberId,
+    ): Flow<Outcome<List<Message>, GetConversationPreviewsError>>
 
     fun getMessage(
         actorId: MemberId,
         id: MessageId,
     ): Flow<Outcome<Message, GetMessageError>>
 
-    fun getConversationPreview(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): Flow<Outcome<MessageId?, GetConversationPreviewError>>
-
+    // TODO: This should return a flow
     suspend fun getMessages(
         actorId: MemberId,
         groupId: GroupId,

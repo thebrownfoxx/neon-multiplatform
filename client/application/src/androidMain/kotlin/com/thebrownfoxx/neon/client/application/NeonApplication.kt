@@ -17,7 +17,7 @@ class NeonApplication : Application() {
 
     private fun createDependencies(): Dependencies {
         val database = Database.connect(
-            url = "jdbc:sqlite:/${filesDir.path}/config.db",
+            url = "jdbc:sqlite:/${filesDir.path}/neon.db",
             driver = "org.sqlite.JDBC",
         )
         return DefaultDependencies(HttpClient(), database)

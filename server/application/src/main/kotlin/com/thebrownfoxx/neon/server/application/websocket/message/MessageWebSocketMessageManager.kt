@@ -10,6 +10,8 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPrevi
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsConnectionError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsRequest
@@ -21,6 +23,7 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageUnauthorized
 import com.thebrownfoxx.neon.server.service.messenger.Messenger
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewError
+import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationPreviewsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetConversationsError
 import com.thebrownfoxx.neon.server.service.messenger.model.GetMessageError
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +39,7 @@ class MessageWebSocketMessageManager(
 
     private val getConversationsJobManager = SingleJobManager(coroutineScope, session.close)
     private val getMessageJobManager = JobManager<MessageId>(coroutineScope, session.close)
+    private val getConversationPreviewsJobManager = SingleJobManager(coroutineScope, session.close)
     private val getConversationPreviewJobManager =
         JobManager<GroupId>(coroutineScope, session.close)
 
@@ -43,13 +47,14 @@ class MessageWebSocketMessageManager(
         session.subscribe<GetConversationsRequest> {
             getConversations()
         }
-
-        session.subscribe<GetMessageRequest> { request ->
-            getMessage(request.id)
-        }
-
         session.subscribe<GetConversationPreviewRequest> { request ->
             getConversationPreview(request.groupId)
+        }
+        session.subscribe<GetConversationPreviewsRequest> {
+            getConversationPreviews()
+        }
+        session.subscribe<GetMessageRequest> { request ->
+            getMessage(request.id)
         }
     }
 
@@ -65,26 +70,6 @@ class MessageWebSocketMessageManager(
 
                         GetConversationsError.ConnectionError ->
                             session.send(GetConversationsConnectionError(session.memberId))
-                    }
-                }
-            }
-        }
-    }
-
-    private fun getMessage(id: MessageId) {
-        getMessageJobManager[id] = {
-            messenger.getMessage(session.memberId, id).collect { messageOutcome ->
-                messageOutcome.onSuccess { message ->
-                    session.send(GetMessageSuccessful(message))
-                }.onFailure { error ->
-                    when (error) {
-                        GetMessageError.Unauthorized ->
-                            session.send(GetMessageUnauthorized(id, session.memberId))
-
-                        GetMessageError.NotFound -> session.send(GetMessageNotFound(id))
-
-                        GetMessageError.ConnectionError ->
-                            session.send(GetMessageConnectionError(id))
                     }
                 }
             }
@@ -107,6 +92,44 @@ class MessageWebSocketMessageManager(
 
                         GetConversationPreviewError.ConnectionError ->
                             session.send(GetConversationPreviewConnectionError(groupId))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getConversationPreviews() {
+        getConversationPreviewsJobManager.set {
+            messenger.getConversationPreviews(session.memberId).collect { conversationsOutcome ->
+                conversationsOutcome.onSuccess { conversations ->
+                    session.send(GetConversationPreviewsSuccessful(conversations))
+                }.onFailure { error ->
+                    when (error) {
+                        GetConversationPreviewsError.MemberNotFound ->
+                            session.send(GetConversationsMemberNotFound(session.memberId))
+
+                        GetConversationPreviewsError.ConnectionError ->
+                            session.send(GetConversationsConnectionError(session.memberId))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getMessage(id: MessageId) {
+        getMessageJobManager[id] = {
+            messenger.getMessage(session.memberId, id).collect { messageOutcome ->
+                messageOutcome.onSuccess { message ->
+                    session.send(GetMessageSuccessful(message))
+                }.onFailure { error ->
+                    when (error) {
+                        GetMessageError.Unauthorized ->
+                            session.send(GetMessageUnauthorized(id, session.memberId))
+
+                        GetMessageError.NotFound -> session.send(GetMessageNotFound(id))
+
+                        GetMessageError.ConnectionError ->
+                            session.send(GetMessageConnectionError(id))
                     }
                 }
             }

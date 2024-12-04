@@ -16,7 +16,6 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
-import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -26,20 +25,15 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class InMemoryMessageRepository(
-    private val groupMemberRepository: GroupMemberRepository,
-) : MessageRepository {
+class InMemoryMessageRepository : MessageRepository {
     private val messages = MutableStateFlow<Map<MessageId, Message>>(emptyMap())
 
-    override fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>> {
-        return messages.mapLatest { messages ->
-            when (val message = messages[id]) {
-                null -> Failure(GetError.NotFound)
-                else -> Success(message)
-            }
-        }
+    @Deprecated("Use getConversationPreviewsAsFlow instead")
+    override fun getConversationsAsFlow(memberId: MemberId): Flow<Outcome<Set<GroupId>, ConnectionError>> {
+        TODO("Not yet implemented")
     }
 
+    @Deprecated("Use getConversationPreviewsAsFlow instead")
     override fun getConversationPreviewAsFlow(
         id: GroupId,
     ): Flow<Outcome<MessageId?, ConnectionError>> {
@@ -49,6 +43,19 @@ class InMemoryMessageRepository(
                 .maxByOrNull { it.timestamp }
 
             Success(message?.id)
+        }
+    }
+
+    override fun getConversationPreviewsAsFlow(memberId: MemberId): Flow<Outcome<List<Message>, ConnectionError>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>> {
+        return messages.mapLatest { messages ->
+            when (val message = messages[id]) {
+                null -> Failure(GetError.NotFound)
+                else -> Success(message)
+            }
         }
     }
 
@@ -71,10 +78,6 @@ class InMemoryMessageRepository(
             return Failure(UpdateError.NotFound).asReversible()
         this.messages.update { it + (message.id to message) }
         return unitSuccess().asReversible { this.messages.update { it - message.id } }
-    }
-
-    override suspend fun getConversationsAsFlow(memberId: MemberId): Flow<Outcome<Set<GroupId>, ConnectionError>> {
-        TODO("Not yet implemented")
     }
 
     override suspend fun getMessages(

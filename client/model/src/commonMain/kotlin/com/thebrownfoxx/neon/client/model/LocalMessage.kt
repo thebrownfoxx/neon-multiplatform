@@ -16,10 +16,10 @@ data class LocalMessage(
     val delivery: LocalDelivery,
 )
 
-sealed interface LocalDelivery {
-    data object Sending: LocalDelivery
-    data object Sent : LocalDelivery
-    data object Delivered : LocalDelivery
-    data object Read : LocalDelivery
-    data object Failed : LocalDelivery
+enum class LocalDelivery {
+    Sending,
+    Sent,
+    Delivered,
+    Read,
+    Failed,
 }

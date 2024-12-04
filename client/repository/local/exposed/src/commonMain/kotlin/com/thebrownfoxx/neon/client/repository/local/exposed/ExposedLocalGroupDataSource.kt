@@ -76,7 +76,7 @@ class ExposedLocalGroupDataSource(
     }
 }
 
-private object LocalGroupTable : Table() {
+private object LocalGroupTable : Table("local_group") {
     val id = uuid("id")
     val name = varchar("name", length = 64).nullable()
     val avatarUrl = varchar("avatar_url", length = 2048).nullable()

@@ -12,7 +12,7 @@ object DependencyProvider {
         val localAppData = System.getenv("LOCALAPPDATA")
         val directory = File("$localAppData/Foxx/Neon").apply { mkdirs() }
         val database = Database.connect(
-            url = "jdbc:sqlite:/${directory.path}/config.db",
+            url = "jdbc:sqlite:/${directory.path}/neon.db",
             driver = "org.sqlite.JDBC",
         )
         DefaultDependencies(HttpClient(), database)

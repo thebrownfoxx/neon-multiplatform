@@ -34,6 +34,7 @@ import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 import org.jetbrains.exposed.sql.max
@@ -44,13 +45,22 @@ class ExposedMessageRepository(
     database: Database,
 ) : MessageRepository, ExposedDataSource(database, MessageTable) {
     private val reactiveConversationsCache = ReactiveCache(::getConversations)
-    private val reactiveMessageCache = ReactiveCache(::get)
     private val reactiveConversationPreviewCache = ReactiveCache(::getConversationPreview)
+    private val reactiveConversationPreviewsCache = ReactiveCache(::getConversationPreviews)
+    private val reactiveMessageCache = ReactiveCache(::get)
 
-    override fun getAsFlow(id: MessageId) = reactiveMessageCache.getAsFlow(id)
+    @Deprecated("Use getConversationPreviewsAsFlow instead")
+    override fun getConversationsAsFlow(memberId: MemberId) =
+        reactiveConversationsCache.getAsFlow(memberId)
 
+    @Deprecated("Use getConversationPreviewsAsFlow instead")
     override fun getConversationPreviewAsFlow(id: GroupId) =
         reactiveConversationPreviewCache.getAsFlow(id)
+
+    override fun getConversationPreviewsAsFlow(memberId: MemberId) =
+        reactiveConversationPreviewsCache.getAsFlow(memberId)
+
+    override fun getAsFlow(id: MessageId) = reactiveMessageCache.getAsFlow(id)
 
     override suspend fun get(id: MessageId): Outcome<Message, GetError> {
         return dataTransaction {
@@ -108,8 +118,17 @@ class ExposedMessageRepository(
             }
     }
 
-    override suspend fun getConversationsAsFlow(memberId: MemberId) =
-        reactiveConversationsCache.getAsFlow(memberId)
+    override suspend fun getMessages(
+        groupId: GroupId,
+        count: Int,
+        offset: Int,
+    ): Outcome<Set<MessageId>, ConnectionError> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, ConnectionError> {
+        TODO("Not yet implemented")
+    }
 
     private suspend fun getConversations(
         memberId: MemberId,
@@ -130,27 +149,11 @@ class ExposedMessageRepository(
 
             val inConversation = GroupMemberTable.memberId eq memberId.toJavaUuid()
 
-            val messages = conversations
+            conversations
                 .where(inConversation)
                 .map { GroupId(it[groupId].toCommonUuid()) }
                 .toSet()
-
-            println(messages)
-
-            messages
         }.mapError { ConnectionError }
-    }
-
-    override suspend fun getMessages(
-        groupId: GroupId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<MessageId>, ConnectionError> {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, ConnectionError> {
-        TODO("Not yet implemented")
     }
 
     private suspend fun getConversationPreview(id: GroupId): Outcome<MessageId?, ConnectionError> {
@@ -161,6 +164,37 @@ class ExposedMessageRepository(
                 .orderBy(MessageTable.timestamp to SortOrder.DESC)
                 .firstOrNull()
                 ?.let { MessageId(it[MessageTable.id].toCommonUuid()) }
+        }.mapError { ConnectionError }
+    }
+
+    private suspend fun getConversationPreviews(
+        memberId: MemberId,
+    ): Outcome<List<Message>, ConnectionError> {
+        return dataTransaction {
+            val groupId = MessageTable.groupId.alias("group_id")
+            val maxTimestamp = MessageTable.timestamp.max().alias("max_timestamp")
+
+            val conversations = MessageTable
+                .join(
+                    GroupMemberTable,
+                    JoinType.INNER,
+                    onColumn = MessageTable.groupId,
+                    otherColumn = GroupMemberTable.groupId,
+                )
+                .select(groupId, maxTimestamp)
+                .groupBy(MessageTable.groupId)
+                .where(GroupMemberTable.memberId eq memberId.toJavaUuid())
+                .alias("conversations")
+
+            MessageTable
+                .join(
+                    conversations,
+                    JoinType.INNER,
+                ) {
+                    (MessageTable.groupId eq conversations[groupId]) and
+                            (MessageTable.timestamp eq conversations[maxTimestamp])
+                }.selectAll()
+                .map { it.toMessage() }
         }.mapError { ConnectionError }
     }
 
