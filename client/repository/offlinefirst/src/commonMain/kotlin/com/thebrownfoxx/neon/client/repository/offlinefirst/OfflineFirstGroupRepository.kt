@@ -2,8 +2,9 @@ package com.thebrownfoxx.neon.client.repository.offlinefirst
 
 import com.thebrownfoxx.neon.client.converter.toLocalGroup
 import com.thebrownfoxx.neon.client.model.LocalGroup
-import com.thebrownfoxx.neon.client.repository.group.GroupRepository
+import com.thebrownfoxx.neon.client.repository.GroupRepository
 import com.thebrownfoxx.neon.client.repository.local.LocalGroupDataSource
+import com.thebrownfoxx.neon.client.repository.remote.GetGroupError
 import com.thebrownfoxx.neon.client.repository.remote.RemoteGroupDataSource
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.outcome.Failure
@@ -46,10 +47,13 @@ class OfflineFirstGroupRepository(
         coroutineScope.launch {
             remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
                 val remoteGroup = remoteGroupOutcome.getOrElse { error ->
-                    sharedFlow.emit(Failure(error))
+                    val mappedError = when (error) {
+                        GetGroupError.NotFound -> GetError.NotFound
+                        GetGroupError.ServerError -> GetError.ConnectionError // TODO: Fix errors T-T
+                    }
+                    sharedFlow.emit(Failure(mappedError))
                     return@collect
                 }
-
                 localDataSource.upsert(remoteGroup.toLocalGroup())
             }
         }

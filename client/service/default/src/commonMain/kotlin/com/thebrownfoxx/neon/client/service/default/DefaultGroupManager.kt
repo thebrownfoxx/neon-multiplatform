@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.client.model.LocalGroup
-import com.thebrownfoxx.neon.client.repository.group.GroupRepository
+import com.thebrownfoxx.neon.client.repository.GroupRepository
 import com.thebrownfoxx.neon.client.service.group.GroupManager
 import com.thebrownfoxx.neon.client.service.group.model.GetGroupError
 import com.thebrownfoxx.neon.common.data.GetError

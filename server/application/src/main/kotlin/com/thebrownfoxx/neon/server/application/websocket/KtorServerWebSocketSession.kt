@@ -12,8 +12,10 @@ import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.converter
 import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.Frame
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.withContext
 
 abstract class KtorServerWebSocketSession(
     val id: WebSocketSessionId = WebSocketSessionId(),
@@ -24,7 +26,9 @@ abstract class KtorServerWebSocketSession(
     override val close = _close.asSharedFlow()
 
     override suspend fun send(message: Any?, type: Type) {
-        session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
+        withContext(Dispatchers.IO) {
+            session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
+        }
     }
 }
 

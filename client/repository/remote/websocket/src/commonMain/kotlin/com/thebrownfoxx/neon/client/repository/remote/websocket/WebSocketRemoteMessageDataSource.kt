@@ -16,6 +16,7 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPrevi
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageInternalError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageUnauthorized
@@ -37,7 +38,7 @@ class WebSocketRemoteMessageDataSource(
 
     init {
         session.subscribe<GetConversationPreviewsMemberNotFound> {
-            conversationsCache.emit(Failure(GetConversationPreviewsError.Invalid))
+            println("ERROR: Member must be logged out")
         }
         session.subscribe<GetConversationPreviewsInternalError> {
             conversationsCache.emit(Failure(GetConversationPreviewsError.ServerError))
@@ -47,7 +48,10 @@ class WebSocketRemoteMessageDataSource(
         }
 
         session.subscribe<GetMessageUnauthorized> { response ->
-            messageCache.emit(response.id, Failure(GetMessageError.Invalid))
+            println("ERROR: Member lost access to $response")
+        }
+        session.subscribe<GetMessageNotFound> { response ->
+            messageCache.emit(response.id, Failure(GetMessageError.NotFound))
         }
         session.subscribe<GetMessageInternalError> { response ->
             messageCache.emit(response.id, Failure(GetMessageError.ServerError))

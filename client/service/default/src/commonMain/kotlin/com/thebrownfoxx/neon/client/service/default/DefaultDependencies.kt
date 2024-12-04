@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.client.repository.local.exposed.ExposedLocalGroupDa
 import com.thebrownfoxx.neon.client.repository.offlinefirst.OfflineFirstGroupRepository
 import com.thebrownfoxx.neon.client.repository.remote.websocket.WebSocketRemoteGroupDataSource
 import com.thebrownfoxx.neon.client.service.dependencies.Dependencies
-import com.thebrownfoxx.neon.client.service.dependencies.model.GetGroupRepositoryError
+import com.thebrownfoxx.neon.client.service.dependencies.model.GetGroupManagerError
 import com.thebrownfoxx.neon.client.service.group.GroupManager
 import com.thebrownfoxx.neon.client.websocket.model.ConnectWebSocketError
 import com.thebrownfoxx.neon.common.outcome.Outcome
@@ -28,13 +28,13 @@ class DefaultDependencies(
         authenticator,
     )
 
-    override suspend fun getGroupManager(): Outcome<GroupManager, GetGroupRepositoryError> {
+    override suspend fun getGroupManager(): Outcome<GroupManager, GetGroupManagerError> {
         val localDataSource = ExposedLocalGroupDataSource(database)
 
         val webSocketSession = webSocketProvider.getSession().getOrElse { error ->
             return when (error) {
-                ConnectWebSocketError.Unauthorized -> GetGroupRepositoryError.Unauthorized
-                ConnectWebSocketError.ConnectionError -> GetGroupRepositoryError.ConnectionError
+                ConnectWebSocketError.Unauthorized -> GetGroupManagerError.Unauthorized
+                ConnectWebSocketError.ConnectionError -> GetGroupManagerError.ConnectionError
             }.asFailure()
         }
 

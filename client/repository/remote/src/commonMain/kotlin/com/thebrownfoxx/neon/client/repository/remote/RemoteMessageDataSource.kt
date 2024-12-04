@@ -11,12 +11,10 @@ interface RemoteMessageDataSource {
 }
 
 enum class GetConversationPreviewsError {
-    Invalid,
     ServerError,
 }
 
 enum class GetMessageError {
-    Invalid,
     NotFound,
     ServerError,
 }

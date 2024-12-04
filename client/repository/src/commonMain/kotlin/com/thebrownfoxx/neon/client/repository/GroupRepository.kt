@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.repository.group
+package com.thebrownfoxx.neon.client.repository
 
 import com.thebrownfoxx.neon.client.model.LocalGroup
 import com.thebrownfoxx.neon.common.data.GetError
