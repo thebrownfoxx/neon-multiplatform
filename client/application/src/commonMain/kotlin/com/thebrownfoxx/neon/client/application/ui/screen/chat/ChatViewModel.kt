@@ -6,10 +6,10 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsDummy
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
-import com.thebrownfoxx.neon.client.service.dependencies.model.GetGroupManagerError
-import com.thebrownfoxx.neon.client.service.group.GroupManager
-import com.thebrownfoxx.neon.common.outcome.Outcome
+import com.thebrownfoxx.neon.client.service.Dependencies.GetGroupManagerError
+import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.common.type.Loaded
+import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

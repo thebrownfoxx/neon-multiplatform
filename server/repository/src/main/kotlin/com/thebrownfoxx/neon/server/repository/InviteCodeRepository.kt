@@ -2,8 +2,8 @@ package com.thebrownfoxx.neon.server.repository
 
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
-import com.thebrownfoxx.neon.common.outcome.Outcome
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface InviteCodeRepository {
@@ -12,12 +12,13 @@ interface InviteCodeRepository {
     suspend fun set(
         groupId: GroupId,
         inviteCode: String,
-    ): ReversibleUnitOutcome<RepositorySetInviteCodeError>
+    ): ReversibleUnitOutcome<SetInviteCodeError>
+
+    enum class SetInviteCodeError {
+        DuplicateInviteCode,
+        ConnectionError,
+        UnexpectedError,
+    }
 }
 
 typealias InviteCode = String
-
-enum class RepositorySetInviteCodeError {
-    DuplicateInviteCode,
-    ConnectionError,
-}

@@ -9,15 +9,18 @@ import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.fold
-import com.thebrownfoxx.neon.common.outcome.map
-import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.server.repository.InviteCode
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.RepositorySetInviteCodeError
+import com.thebrownfoxx.neon.server.repository.InviteCodeRepository.SetInviteCodeError
+import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.UnitSuccess
+import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.map
+import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.transform
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -34,52 +37,64 @@ class ExposedInviteCodeRepository(
     override fun getAsFlow(groupId: GroupId) = reactiveCache.getAsFlow(groupId)
 
     override suspend fun getGroup(inviteCode: String): Outcome<GroupId, GetError> {
-        return dataTransaction {
-            InviteCodeTable
-                .selectAll()
-                .where(InviteCodeTable.inviteCode eq inviteCode)
-                .firstOrNotFound()
-                .map { GroupId(it[InviteCodeTable.groupId].toCommonUuid()) }
-        }.mapGetTransaction()
+        memberBlockContext("getGroup") {
+            return dataTransaction {
+                InviteCodeTable
+                    .selectAll()
+                    .where(InviteCodeTable.inviteCode eq inviteCode)
+                    .firstOrNotFound(context)
+                    .map { GroupId(it[InviteCodeTable.groupId].toCommonUuid()) }
+            }.mapGetTransaction(context)
+        }
     }
 
     override suspend fun set(
         groupId: GroupId,
         inviteCode: String,
-    ): ReversibleUnitOutcome<RepositorySetInviteCodeError> {
-        val exists = getGroup(inviteCode).fold(
-            onSuccess = { true },
-            onFailure = { error ->
-                when (error) {
-                    GetError.NotFound -> false
-                    GetError.ConnectionError ->
-                        return Failure(RepositorySetInviteCodeError.ConnectionError).asReversible()
+    ): ReversibleUnitOutcome<SetInviteCodeError> {
+        memberBlockContext("set") {
+            val exists = inviteCodeExists(inviteCode).getOrElse { return this.asReversible() }
+            if (exists) return Failure(SetInviteCodeError.DuplicateInviteCode).asReversible()
+
+            val id = UUID.randomUUID()
+            dataTransaction {
+                InviteCodeTable.upsert {
+                    it[this.id] = id
+                    it[this.groupId] = groupId.toJavaUuid()
+                    it[this.inviteCode] = inviteCode
                 }
             }
-        )
-        if (exists) return Failure(RepositorySetInviteCodeError.DuplicateInviteCode).asReversible()
-
-        val id = UUID.randomUUID()
-        dataTransaction {
-            InviteCodeTable.upsert {
-                it[this.id] = id
-                it[this.groupId] = groupId.toJavaUuid()
-                it[this.inviteCode] = inviteCode
+            return UnitSuccess.asReversible(finalize = { reactiveCache.update(groupId) }) {
+                dataTransaction { InviteCodeTable.deleteWhere { InviteCodeTable.id eq id } }
             }
-        }
-        return unitSuccess().asReversible {
-            dataTransaction { InviteCodeTable.deleteWhere { InviteCodeTable.id eq id } }
         }
     }
 
     private suspend fun get(groupId: GroupId): Outcome<InviteCode, GetError> {
-        return dataTransaction {
-            InviteCodeTable
-                .selectAll()
-                .where(InviteCodeTable.groupId eq groupId.toJavaUuid())
-                .firstOrNotFound()
-                .map { it[InviteCodeTable.inviteCode] }
-        }.mapGetTransaction()
+        memberBlockContext("get") {
+            return dataTransaction {
+                InviteCodeTable
+                    .selectAll()
+                    .where(InviteCodeTable.groupId eq groupId.toJavaUuid())
+                    .firstOrNotFound(context)
+                    .map { it[InviteCodeTable.inviteCode] }
+            }.mapGetTransaction(context)
+        }
+    }
+
+    private suspend fun BlockContextScope.inviteCodeExists(
+        inviteCode: String,
+    ): Outcome<Boolean, SetInviteCodeError> {
+        return getGroup(inviteCode).transform(
+            onSuccess = { Success(true) },
+            onFailure = {
+                when (error) {
+                    GetError.NotFound -> Success(true)
+                    GetError.ConnectionError -> mapError(SetInviteCodeError.ConnectionError)
+                    GetError.UnexpectedError -> mapError(SetInviteCodeError.UnexpectedError)
+                }
+            }
+        )
     }
 }
 

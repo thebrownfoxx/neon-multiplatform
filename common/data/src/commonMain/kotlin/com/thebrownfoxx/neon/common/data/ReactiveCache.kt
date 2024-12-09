@@ -12,7 +12,7 @@ class ReactiveCache<in K, out V>(
         emit(get(key))
     }
 
-    suspend fun updateCache(key: K) {
+    suspend fun update(key: K) {
         cache.emit(key, get(key))
     }
 }
@@ -27,7 +27,7 @@ class SingleReactiveCache<out V>(
         emit(get())
     }
 
-    suspend fun updateCache() {
+    suspend fun update() {
         cache.emit(get())
     }
 }

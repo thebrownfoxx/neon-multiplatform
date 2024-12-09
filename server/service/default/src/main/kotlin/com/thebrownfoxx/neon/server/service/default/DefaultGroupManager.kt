@@ -2,15 +2,6 @@ package com.thebrownfoxx.neon.server.service.default
 
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.UnitOutcome
-import com.thebrownfoxx.neon.common.outcome.asFailure
-import com.thebrownfoxx.neon.common.outcome.fold
-import com.thebrownfoxx.neon.common.outcome.getOrElse
-import com.thebrownfoxx.neon.common.outcome.map
-import com.thebrownfoxx.neon.common.outcome.mapError
-import com.thebrownfoxx.neon.common.outcome.onFailure
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.model.Community
@@ -19,15 +10,20 @@ import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.MemberRepository
-import com.thebrownfoxx.neon.server.repository.RepositorySetInviteCodeError
-import com.thebrownfoxx.neon.server.service.group.GroupManager
-import com.thebrownfoxx.neon.server.service.group.model.AddGroupMemberError
-import com.thebrownfoxx.neon.server.service.group.model.CreateCommunityError
-import com.thebrownfoxx.neon.server.service.group.model.GetGroupError
-import com.thebrownfoxx.neon.server.service.group.model.SetInviteCodeError
-import com.thebrownfoxx.neon.server.service.permission.PermissionChecker
-import com.thebrownfoxx.neon.server.service.permission.model.IsGodError
-import com.thebrownfoxx.neon.server.service.permission.model.IsGroupAdminError
+import com.thebrownfoxx.neon.server.service.GroupManager
+import com.thebrownfoxx.neon.server.service.GroupManager.AddGroupMemberError
+import com.thebrownfoxx.neon.server.service.GroupManager.CreateCommunityError
+import com.thebrownfoxx.neon.server.service.GroupManager.GetGroupError
+import com.thebrownfoxx.neon.server.service.GroupManager.SetInviteCodeError
+import com.thebrownfoxx.neon.server.service.PermissionChecker
+import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.transform
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -42,12 +38,9 @@ class DefaultGroupManager(
     private val maxCommunityNameLength = 16
 
     override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
-        return groupRepository.getAsFlow(id).map { groupOutcome ->
-            groupOutcome.mapError { error ->
-                when (error) {
-                    GetError.NotFound -> GetGroupError.NotFound
-                    GetError.ConnectionError -> GetGroupError.InternalError
-                }
+        memberBlockContext("getGroup") {
+            return groupRepository.getAsFlow(id).map { groupOutcome ->
+                groupOutcome.mapError { it.toGetGroupError() }
             }
         }
     }
@@ -57,32 +50,26 @@ class DefaultGroupManager(
         name: String,
         isGod: Boolean,
     ): Outcome<GroupId, CreateCommunityError> {
-        val isActorGod = permissionChecker.isGod(actorId).getOrElse { error ->
-            return when (error) {
-                IsGodError.ConnectionError -> CreateCommunityError.InternalError
-            }.asFailure()
+        memberBlockContext("createCommunity") {
+            val isActorGod = permissionChecker.isGod(actorId)
+                .getOrElse { return mapError(CreateCommunityError.UnexpectedError) }
+
+            if (!isActorGod) return Failure(CreateCommunityError.Unauthorized)
+
+            if (name.length > maxCommunityNameLength)
+                return Failure(CreateCommunityError.NameTooLong(maxCommunityNameLength))
+
+            val community = Community(
+                name = name,
+                avatarUrl = null,
+                isGod = isGod,
+            )
+
+            return groupRepository.add(community).result.map(
+                onSuccess = { community.id },
+                onFailure = { CreateCommunityError.UnexpectedError },
+            )
         }
-
-        if (!isActorGod) return Failure(CreateCommunityError.Unauthorized)
-
-        if (name.length > maxCommunityNameLength)
-            return Failure(CreateCommunityError.NameTooLong(maxCommunityNameLength))
-
-        val community = Community(
-            name = name,
-            avatarUrl = null,
-            isGod = isGod,
-        )
-
-        return groupRepository.add(community).result.map(
-            onSuccess = { community.id },
-            onFailure = { error ->
-                when (error) {
-                    AddError.Duplicate -> error("Cannot add community with duplicate id")
-                    AddError.ConnectionError -> CreateCommunityError.InternalError
-                }
-            },
-        )
     }
 
     override suspend fun setInviteCode(
@@ -90,48 +77,25 @@ class DefaultGroupManager(
         groupId: GroupId,
         inviteCode: String,
     ): UnitOutcome<SetInviteCodeError> {
-        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
-            return when (error) {
-                IsGodError.ConnectionError -> SetInviteCodeError.InternalError
-            }.asFailure()
-        }
+        memberBlockContext("setInviteCode") {
+            val isGod = permissionChecker.isGod(actorId)
+                .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
 
-        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
-            return when (error) {
-                IsGroupAdminError.ConnectionError -> SetInviteCodeError.InternalError
-            }.asFailure()
-        }
+            val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
+                .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
 
-        if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized)
+            if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized)
 
-        val inviteCodeExists = inviteCodeRepository.getGroup(inviteCode).fold(
-            onSuccess = { true },
-            onFailure = { error ->
-                when (error) {
-                    GetError.NotFound -> false
-                    GetError.ConnectionError -> return Failure(SetInviteCodeError.InternalError)
-                }
-            }
-        )
+            val inviteCodeExists = inviteCodeExists(inviteCode).getOrElse { return this }
+            if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode)
 
-        if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode)
+            val group = groupRepository.get(groupId)
+                .getOrElse { return mapError(error.getGroupErrorToSetInviteCodeError()) }
 
-        val group = groupRepository.get(groupId).getOrElse { error ->
-            return when (error) {
-                GetError.NotFound -> SetInviteCodeError.GroupNotFound
-                GetError.ConnectionError -> SetInviteCodeError.InternalError
-            }.asFailure()
-        }
+            if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
 
-        if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
-
-        return inviteCodeRepository.set(groupId, inviteCode).result.mapError { error ->
-            when (error) {
-                RepositorySetInviteCodeError.DuplicateInviteCode ->
-                    SetInviteCodeError.DuplicateInviteCode
-
-                RepositorySetInviteCodeError.ConnectionError -> SetInviteCodeError.InternalError
-            }
+            return inviteCodeRepository.set(groupId, inviteCode).result
+                .mapError { it.toSetInviteCodeError() }
         }
     }
 
@@ -141,48 +105,80 @@ class DefaultGroupManager(
         memberId: MemberId,
         isAdmin: Boolean,
     ): UnitOutcome<AddGroupMemberError> {
-        val isGod = permissionChecker.isGod(actorId).getOrElse { error ->
-            return when (error) {
-                IsGodError.ConnectionError -> AddGroupMemberError.InternalError
-            }.asFailure()
+        memberBlockContext("addMember") {
+            val isGod = permissionChecker.isGod(actorId)
+                .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+
+            val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
+                .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+
+            if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized)
+
+            groupRepository.get(groupId)
+                .onFailure { return mapError(error.getGroupErrorToAddGroupMemberError()) }
+
+            memberRepository.get(memberId)
+                .onFailure { return mapError(error.getMemberErrorToAddGroupMemberError()) }
+
+            val groupMembers = groupMemberRepository.getMembers(groupId)
+                .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+
+            if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
+
+            return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
+                onSuccess = {},
+                onFailure = { it.toAddGroupMemberError() },
+            )
         }
+    }
 
-        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId).getOrElse { error ->
-            return when (error) {
-                IsGroupAdminError.ConnectionError -> AddGroupMemberError.InternalError
-            }.asFailure()
-        }
-
-        if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized)
-
-        groupRepository.get(groupId).onFailure { error ->
-            return when (error) {
-                GetError.NotFound -> AddGroupMemberError.GroupNotFound
-                GetError.ConnectionError -> AddGroupMemberError.InternalError
-            }.asFailure()
-        }
-
-        memberRepository.get(memberId).onFailure { error ->
-            return when (error) {
-                GetError.NotFound -> AddGroupMemberError.MemberNotFound
-                GetError.ConnectionError -> AddGroupMemberError.InternalError
-            }.asFailure()
-        }
-
-        val groupMembers = groupMemberRepository.getMembers(groupId).getOrElse {
-            return Failure(AddGroupMemberError.InternalError)
-        }
-
-        if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
-
-        return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
-            onSuccess = {},
-            onFailure = { error ->
+    private suspend fun BlockContextScope.inviteCodeExists(
+        inviteCode: String,
+    ): Outcome<Boolean, SetInviteCodeError> {
+        return inviteCodeRepository.getGroup(inviteCode).transform(
+            onSuccess = { Success(true) },
+            onFailure = {
                 when (error) {
-                    AddError.Duplicate -> AddGroupMemberError.AlreadyAMember
-                    AddError.ConnectionError -> AddGroupMemberError.InternalError
+                    GetError.NotFound -> Success(false)
+                    GetError.ConnectionError, GetError.UnexpectedError ->
+                        mapError(SetInviteCodeError.UnexpectedError)
                 }
-            },
+            }
         )
+    }
+
+    private fun GetError.toGetGroupError() = when (this) {
+        GetError.NotFound -> GetGroupError.NotFound
+        GetError.ConnectionError, GetError.UnexpectedError -> GetGroupError.UnexpectedError
+    }
+
+    private fun GetError.getGroupErrorToSetInviteCodeError() = when (this) {
+        GetError.NotFound -> SetInviteCodeError.GroupNotFound
+        GetError.ConnectionError, GetError.UnexpectedError -> SetInviteCodeError.UnexpectedError
+    }
+
+    private fun InviteCodeRepository.SetInviteCodeError.toSetInviteCodeError() = when (this) {
+        InviteCodeRepository.SetInviteCodeError.DuplicateInviteCode ->
+            SetInviteCodeError.DuplicateInviteCode
+
+        InviteCodeRepository.SetInviteCodeError.ConnectionError,
+        InviteCodeRepository.SetInviteCodeError.UnexpectedError,
+            -> SetInviteCodeError.UnexpectedError
+    }
+
+    private fun GetError.getGroupErrorToAddGroupMemberError() = when (this) {
+        GetError.NotFound -> AddGroupMemberError.GroupNotFound
+        GetError.ConnectionError, GetError.UnexpectedError -> AddGroupMemberError.UnexpectedError
+    }
+
+    private fun GetError.getMemberErrorToAddGroupMemberError() = when (this) {
+        GetError.NotFound -> AddGroupMemberError.MemberNotFound
+        GetError.ConnectionError, GetError.UnexpectedError -> AddGroupMemberError.UnexpectedError
+    }
+
+    private fun AddError.toAddGroupMemberError() = when (this) {
+        AddError.Duplicate -> AddGroupMemberError.AlreadyAMember
+        AddError.ConnectionError, AddError.UnexpectedError ->
+            AddGroupMemberError.UnexpectedError
     }
 }

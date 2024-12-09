@@ -1,9 +1,11 @@
 package com.thebrownfoxx.neon.client.websocket
 
+import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorSerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
 import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.websocket.model.Type
+import com.thebrownfoxx.outcome.memberBlockContext
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.converter
 import io.ktor.client.plugins.websocket.sendSerialized
@@ -20,7 +22,8 @@ import kotlinx.coroutines.withContext
 
 class KtorClientWebSocketSession(
     private val session: DefaultClientWebSocketSession,
-) : KtorWebSocketSession(session) {
+    logger: Logger,
+) : KtorWebSocketSession(session, logger) {
     private val _close = MutableSharedFlow<Unit>()
     override val close = _close.asSharedFlow()
 
@@ -33,9 +36,11 @@ class KtorClientWebSocketSession(
         }
         .shareIn(scope = sessionScope, started = SharingStarted.Eagerly)
 
-    override suspend fun send(message: Any?, type: Type) {
-        withContext(Dispatchers.IO) {
-            session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
-        }
+    override suspend fun send(message: Any?, type: Type) = memberBlockContext("send") {
+        runFailing {
+            withContext(Dispatchers.IO) {
+                session.sendSerialized(message, type.toKtorTypeInfo())
+            }
+        }.mapError { SendError }
     }
 }

@@ -6,6 +6,7 @@ kotlinx-serialization = "1.7.3"
 kotlinx-datetime = "0.6.1"
 
 # Common
+outcome = "0.0.9"
 kotlincrypto-hash = "0.5.3"
 kotlincrypto-random = "0.3.2"
 
@@ -42,6 +43,7 @@ kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 # Common
+outcome = { module = "com.thebrownfoxx:outcome", version.ref = "outcome" }
 kotlincrypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "kotlincrypto-hash" }
 kotlincrypto-random = { module = "org.kotlincrypto:secure-random", version.ref = "kotlincrypto-random" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }

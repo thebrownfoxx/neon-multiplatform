@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.service.test
 
 //import com.thebrownfoxx.neon.common.model.Community
-//import com.thebrownfoxx.neon.server.service.group.GroupManager
+//import com.thebrownfoxx.neon.server.service.GroupManager
 //import kotlinx.coroutines.test.runTest
 //import kotlin.test.BeforeTest
 //

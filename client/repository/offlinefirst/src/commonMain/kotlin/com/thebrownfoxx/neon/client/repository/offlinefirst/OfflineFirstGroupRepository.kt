@@ -4,14 +4,13 @@ import com.thebrownfoxx.neon.client.converter.toLocalGroup
 import com.thebrownfoxx.neon.client.model.LocalGroup
 import com.thebrownfoxx.neon.client.repository.GroupRepository
 import com.thebrownfoxx.neon.client.repository.local.LocalGroupDataSource
-import com.thebrownfoxx.neon.client.repository.remote.GetGroupError
 import com.thebrownfoxx.neon.client.repository.remote.RemoteGroupDataSource
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.Success
-import com.thebrownfoxx.neon.common.outcome.getOrElse
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.memberBlockContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,36 +27,36 @@ class OfflineFirstGroupRepository(
     private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 
     override fun get(id: GroupId): Flow<Outcome<LocalGroup, GetError>> {
-        val sharedFlow = MutableSharedFlow<Outcome<LocalGroup, GetError>>(replay = 1)
+        memberBlockContext("get") {
+            val sharedFlow = MutableSharedFlow<Outcome<LocalGroup, GetError>>(replay = 1)
 
-        coroutineScope.launch {
-            localDataSource.getAsFlow(id).collect { localGroupOutcome ->
-                val localGroup = localGroupOutcome.getOrElse { error ->
-                    when (error) {
-                        GetError.NotFound -> {}
-                        GetError.ConnectionError ->
-                            sharedFlow.emit(Failure(GetError.ConnectionError))
+            // TODO: Fix this. RemoteDataSource must continuously retry.
+            //  And this is also a lot of repeated code.
+            coroutineScope.launch {
+                localDataSource.getAsFlow(id).collect { localGroupOutcome ->
+                    val localGroup = localGroupOutcome.getOrElse {
+                        when (error) {
+                            GetError.NotFound -> {}
+                            GetError.ConnectionError, GetError.UnexpectedError ->
+                                sharedFlow.emit(mapError(error))
+                        }
+                        return@collect
                     }
-                    return@collect
+                    sharedFlow.emit(Success(localGroup))
                 }
-                sharedFlow.emit(Success(localGroup))
             }
-        }
 
-        coroutineScope.launch {
-            remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
-                val remoteGroup = remoteGroupOutcome.getOrElse { error ->
-                    val mappedError = when (error) {
-                        GetGroupError.NotFound -> GetError.NotFound
-                        GetGroupError.ServerError -> GetError.ConnectionError // TODO: Fix errors T-T
+            coroutineScope.launch {
+                remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
+                    val remoteGroup = remoteGroupOutcome.getOrElse {
+                        sharedFlow.emit(mapError(error))
+                        return@collect
                     }
-                    sharedFlow.emit(Failure(mappedError))
-                    return@collect
+                    localDataSource.upsert(remoteGroup.toLocalGroup())
                 }
-                localDataSource.upsert(remoteGroup.toLocalGroup())
             }
-        }
 
-        return sharedFlow.asSharedFlow()
+            return sharedFlow.asSharedFlow()
+        }
     }
 }

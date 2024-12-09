@@ -18,9 +18,9 @@
 //import com.thebrownfoxx.neon.server.repository.memory.InMemoryMemberRepository
 //import com.thebrownfoxx.neon.server.repository.memory.InMemoryMessageRepository
 //import com.thebrownfoxx.neon.server.repository.memory.InMemoryPasswordRepository
-//import com.thebrownfoxx.neon.server.service.group.GroupManager
-//import com.thebrownfoxx.neon.server.service.member.MemberManager
-//import com.thebrownfoxx.neon.server.service.messenger.Messenger
+//import com.thebrownfoxx.neon.server.service.GroupManager
+//import com.thebrownfoxx.neon.server.service.MemberManager
+//import com.thebrownfoxx.neon.server.service.Messenger
 //import kotlinx.coroutines.flow.first
 //import kotlinx.coroutines.test.runTest
 //import kotlinx.datetime.Instant

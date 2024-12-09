@@ -3,13 +3,13 @@ package com.thebrownfoxx.neon.server.repository.inmemory
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.Success
-import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
-import com.thebrownfoxx.neon.server.repository.RepositorySetInviteCodeError
+import com.thebrownfoxx.neon.server.repository.InviteCodeRepository.SetInviteCodeError
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.UnitSuccess
+import com.thebrownfoxx.outcome.memberBlockContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,10 +23,12 @@ class InMemoryInviteCodeRepository : InviteCodeRepository {
     private val inviteCodes = MutableStateFlow<Map<GroupId, InviteCode>>(emptyMap())
 
     override fun getAsFlow(groupId: GroupId): Flow<Outcome<String, GetError>> {
-        return inviteCodes.mapLatest { inviteCodes ->
-            when (val inviteCode = inviteCodes[groupId]) {
-                null -> Failure(GetError.NotFound)
-                else -> Success(inviteCode)
+        memberBlockContext("getAsFlow") {
+            return inviteCodes.mapLatest { inviteCodes ->
+                when (val inviteCode = inviteCodes[groupId]) {
+                    null -> Failure(GetError.NotFound)
+                    else -> Success(inviteCode)
+                }
             }
         }
     }
@@ -34,25 +36,29 @@ class InMemoryInviteCodeRepository : InviteCodeRepository {
     override suspend fun getGroup(
         inviteCode: String,
     ): Outcome<GroupId, GetError> {
-        val group = inviteCodes.value
-            .filter { (_, groupInviteCode) -> groupInviteCode == inviteCode }
-            .map { it.key }
-            .firstOrNull()
+        memberBlockContext("getGroup") {
+            val group = inviteCodes.value
+                .filter { (_, groupInviteCode) -> groupInviteCode == inviteCode }
+                .map { it.key }
+                .firstOrNull()
 
-        return when (group) {
-            null -> Failure(GetError.NotFound)
-            else -> Success(group)
+            return when (group) {
+                null -> Failure(GetError.NotFound)
+                else -> Success(group)
+            }
         }
     }
 
     override suspend fun set(
         groupId: GroupId,
         inviteCode: String,
-    ): ReversibleUnitOutcome<RepositorySetInviteCodeError> {
-        if (inviteCode in inviteCodes.value.values)
-            return Failure(RepositorySetInviteCodeError.DuplicateInviteCode).asReversible()
+    ): ReversibleUnitOutcome<SetInviteCodeError> {
+        memberBlockContext("set") {
+            if (inviteCode in inviteCodes.value.values)
+                return Failure(SetInviteCodeError.DuplicateInviteCode).asReversible()
 
-        inviteCodes.update { it + (groupId to inviteCode) }
-        return unitSuccess().asReversible { inviteCodes.update { it - groupId } }
+            inviteCodes.update { it + (groupId to inviteCode) }
+            return UnitSuccess.asReversible { inviteCodes.update { it - groupId } }
+        }
     }
 }

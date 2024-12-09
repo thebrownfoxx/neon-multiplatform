@@ -4,22 +4,22 @@ import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalGroup
 import com.thebrownfoxx.neon.client.repository.local.LocalGroupDataSource
-import com.thebrownfoxx.neon.common.data.ConnectionError
+import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
+import com.thebrownfoxx.neon.common.data.exposed.mapUnitOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.UnitOutcome
-import com.thebrownfoxx.neon.common.outcome.map
-import com.thebrownfoxx.neon.common.outcome.onFailure
-import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.map
+import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -34,29 +34,33 @@ class ExposedLocalGroupDataSource(
 
     override fun getAsFlow(id: GroupId) = reactiveCache.getAsFlow(id)
 
-    override suspend fun upsert(group: LocalGroup): UnitOutcome<ConnectionError> {
-        dataTransaction {
-            LocalGroupTable.upsert {
-                it[id] = group.id.toJavaUuid()
-                if (group is LocalCommunity) {
-                    it[name] = group.name
-                    it[avatarUrl] = group.avatarUrl?.value
-                    it[isGod] = group.isGod
+    override suspend fun upsert(group: LocalGroup): UnitOutcome<DataOperationError> {
+        memberBlockContext("upsert") {
+            return dataTransaction {
+                LocalGroupTable.upsert {
+                    it[id] = group.id.toJavaUuid()
+                    if (group is LocalCommunity) {
+                        it[name] = group.name
+                        it[avatarUrl] = group.avatarUrl?.value
+                        it[isGod] = group.isGod
+                    }
                 }
             }
-        }.onFailure { return Failure(ConnectionError) }
-        reactiveCache.updateCache(group.id)
-        return unitSuccess()
+                .mapUnitOperationTransaction(context)
+                .onSuccess { reactiveCache.update(group.id) }
+        }
     }
 
     private suspend fun get(id: GroupId): Outcome<LocalGroup, GetError> {
-        return dataTransaction {
-            LocalGroupTable
-                .selectAll()
-                .where(LocalGroupTable.id eq id.toJavaUuid())
-                .firstOrNotFound()
-                .map { it.toLocalGroup() }
-        }.mapGetTransaction()
+        memberBlockContext("get") {
+            return dataTransaction {
+                LocalGroupTable
+                    .selectAll()
+                    .where(LocalGroupTable.id eq id.toJavaUuid())
+                    .firstOrNotFound(context)
+                    .map { it.toLocalGroup() }
+            }.mapGetTransaction(context)
+        }
     }
 
     private fun ResultRow.toLocalGroup(): LocalGroup {

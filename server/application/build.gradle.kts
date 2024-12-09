@@ -20,6 +20,7 @@ tasks.withType<Tar> {
 }
 
 dependencies {
+    implementation(libs.outcome)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)

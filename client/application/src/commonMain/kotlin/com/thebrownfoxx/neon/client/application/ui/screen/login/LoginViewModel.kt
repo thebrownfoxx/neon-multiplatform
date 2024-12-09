@@ -6,10 +6,10 @@ import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScree
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.LoginState
 import com.thebrownfoxx.neon.client.application.ui.screen.login.state.MissingCredential
-import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
-import com.thebrownfoxx.neon.client.service.authenticator.model.LoginError
-import com.thebrownfoxx.neon.common.outcome.onFailure
-import com.thebrownfoxx.neon.common.outcome.onSuccess
+import com.thebrownfoxx.neon.client.service.Authenticator
+import com.thebrownfoxx.neon.client.service.Authenticator.LoginError
+import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.onSuccess
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,7 +58,7 @@ class LoginViewModel(private val authenticator: Authenticator) : ViewModel() {
                 password = _state.value.password,
             )
 
-            outcome.onFailure { error ->
+            outcome.onFailure {
                 when (error) {
                     LoginError.InvalidCredentials ->
                         _state.update { it.copy(loginState = LoginState.CredentialsIncorrect) }

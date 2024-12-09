@@ -35,10 +35,10 @@ data class GetConversationPreviewGroupNotFound(
 }
 
 @Serializable
-data class GetConversationPreviewInternalError(
+data class GetConversationPreviewUnexpectedError(
     val groupId: GroupId,
 ) : WebSocketMessage(
-    kClass = GetConversationPreviewInternalError::class,
+    kClass = GetConversationPreviewUnexpectedError::class,
     description = "An error occurred while retrieving the conversation preview",
 ) {
     override val requestId = null

@@ -1,29 +1,31 @@
 package com.thebrownfoxx.neon.client.service.default
 
-import com.thebrownfoxx.neon.client.service.jwt.TokenStorage
-import com.thebrownfoxx.neon.client.service.jwt.model.GetTokenError
-import com.thebrownfoxx.neon.client.service.jwt.model.SetTokenError
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.Success
-import com.thebrownfoxx.neon.common.outcome.UnitOutcome
-import com.thebrownfoxx.neon.common.outcome.unitSuccess
+import com.thebrownfoxx.neon.client.service.TokenStorage
+import com.thebrownfoxx.neon.client.service.TokenStorage.GetTokenError
+import com.thebrownfoxx.neon.client.service.TokenStorage.SetTokenUnexpectedError
 import com.thebrownfoxx.neon.common.type.Jwt
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.UnitSuccess
+import com.thebrownfoxx.outcome.memberBlockContext
 
 class InMemoryTokenStorage : TokenStorage {
     private var token: Jwt? = null
 
     override suspend fun get(): Outcome<Jwt, GetTokenError> {
-        return token?.let { Success(it) } ?: Failure(GetTokenError.NoTokenSaved)
+        memberBlockContext("get") {
+            return token?.let { Success(it) } ?: Failure(GetTokenError.NoTokenSaved)
+        }
     }
 
-    override suspend fun set(token: Jwt): UnitOutcome<SetTokenError> {
+    override suspend fun set(token: Jwt): UnitOutcome<SetTokenUnexpectedError> {
         this.token = token
-        return unitSuccess()
+        return UnitSuccess
     }
 
-    override suspend fun clear(): UnitOutcome<SetTokenError> {
+    override suspend fun clear(): UnitOutcome<SetTokenUnexpectedError> {
         this.token = null
-        return unitSuccess()
+        return UnitSuccess
     }
 }

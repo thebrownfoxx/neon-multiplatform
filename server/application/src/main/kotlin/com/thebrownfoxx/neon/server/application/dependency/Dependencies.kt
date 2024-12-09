@@ -1,11 +1,12 @@
 package com.thebrownfoxx.neon.server.application.dependency
 
+import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.server.application.websocket.WebSocketManager
-import com.thebrownfoxx.neon.server.service.authenticator.Authenticator
-import com.thebrownfoxx.neon.server.service.group.GroupManager
-import com.thebrownfoxx.neon.server.service.jwt.JwtProcessor
-import com.thebrownfoxx.neon.server.service.member.MemberManager
-import com.thebrownfoxx.neon.server.service.messenger.Messenger
+import com.thebrownfoxx.neon.server.service.Authenticator
+import com.thebrownfoxx.neon.server.service.GroupManager
+import com.thebrownfoxx.neon.server.service.JwtProcessor
+import com.thebrownfoxx.neon.server.service.MemberManager
+import com.thebrownfoxx.neon.server.service.Messenger
 
 interface Dependencies {
     val webSocketManager: WebSocketManager
@@ -14,4 +15,5 @@ interface Dependencies {
     val groupManager: GroupManager
     val memberManager: MemberManager
     val messenger: Messenger
+    val logger: Logger
 }

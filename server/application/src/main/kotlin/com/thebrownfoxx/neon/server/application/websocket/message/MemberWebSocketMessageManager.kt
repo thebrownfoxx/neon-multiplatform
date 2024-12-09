@@ -1,15 +1,15 @@
 package com.thebrownfoxx.neon.server.application.websocket.message
 
-import com.thebrownfoxx.neon.common.outcome.onFailure
-import com.thebrownfoxx.neon.common.outcome.onSuccess
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberInternalError
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberRequest
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberSuccessful
-import com.thebrownfoxx.neon.server.service.member.MemberManager
-import com.thebrownfoxx.neon.server.service.member.model.GetMemberError
+import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberUnexpectedError
+import com.thebrownfoxx.neon.server.service.MemberManager
+import com.thebrownfoxx.neon.server.service.MemberManager.GetMemberError
+import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,10 +34,10 @@ class MemberWebSocketMessageManager(
             memberManager.getMember(id).collect { memberOutcome ->
                 memberOutcome.onSuccess { member ->
                     session.send(GetMemberSuccessful(member))
-                }.onFailure { error ->
+                }.onFailure {
                     when (error) {
                         GetMemberError.NotFound -> session.send(GetMemberNotFound(id))
-                        GetMemberError.InternalError -> session.send(GetMemberInternalError(id))
+                        GetMemberError.UnexpectedError -> session.send(GetMemberUnexpectedError(id))
                     }
                 }
             }

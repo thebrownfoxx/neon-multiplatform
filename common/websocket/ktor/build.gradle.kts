@@ -8,6 +8,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.outcome)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.ktor.websockets)
             implementation(libs.ktor.serialization)

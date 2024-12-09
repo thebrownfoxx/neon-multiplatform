@@ -1,17 +1,16 @@
 package com.thebrownfoxx.neon.client.service.default
 
-import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
-import com.thebrownfoxx.neon.client.service.jwt.TokenStorage
+import com.thebrownfoxx.neon.client.service.Authenticator
+import com.thebrownfoxx.neon.client.service.TokenStorage
 import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketProvider
 import com.thebrownfoxx.neon.client.websocket.model.ConnectWebSocketError
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.Success
-import com.thebrownfoxx.neon.common.outcome.getOrElse
-import com.thebrownfoxx.neon.common.outcome.mapError
-import com.thebrownfoxx.neon.common.outcome.onSuccess
-import com.thebrownfoxx.neon.common.outcome.runFailing
+import com.thebrownfoxx.neon.common.Logger
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.onSuccess
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSocketException
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -26,37 +25,42 @@ class KtorClientWebSocketProvider(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
     private val authenticator: Authenticator,
+    private val logger: Logger,
 ) : WebSocketProvider {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     private var session: Outcome<KtorClientWebSocketSession, ConnectWebSocketError> =
-        Failure(ConnectWebSocketError.Unauthorized)
+        memberBlockContext("session") {
+            Failure(ConnectWebSocketError.Unauthorized)
+        }
 
     override suspend fun getSession(): Outcome<KtorClientWebSocketSession, ConnectWebSocketError> {
-        val session = session
+        memberBlockContext("getSession") {
+            val session = session
 
-        if (session is Success) return session
+            if (session is Success) return session
 
-        val token = tokenStorage.get()
-            .getOrElse { return Failure(ConnectWebSocketError.Unauthorized) }
+            val token = tokenStorage.get()
+                .getOrElse { return Failure(ConnectWebSocketError.Unauthorized) }
 
-        return runFailing {
-            val actualSession = httpClient.webSocketSession(
-                host = "127.0.0.1",
-                port = 8080,
-                path = "/connect",
-            ) {
-                bearerAuth(token.value)
+            return runFailing {
+                val actualSession = httpClient.webSocketSession(
+                    host = "127.0.0.1",
+                    port = 8080,
+                    path = "/connect",
+                ) {
+                    bearerAuth(token.value)
+                }
+                KtorClientWebSocketSession(actualSession, logger)
+            }.mapError { error ->
+                when (error) {
+                    is WebSocketException -> ConnectWebSocketError.Unauthorized
+                    else -> ConnectWebSocketError.ConnectionError
+                }
+            }.also {
+                this@KtorClientWebSocketProvider.session = it
+                disconnectOnLogout()
             }
-            KtorClientWebSocketSession(actualSession)
-        }.mapError { error ->
-            when (error) {
-                is WebSocketException -> ConnectWebSocketError.Unauthorized
-                else -> ConnectWebSocketError.ConnectionError
-            }
-        }.also {
-            this.session = it
-            disconnectOnLogout()
         }
     }
 
@@ -68,7 +72,7 @@ class KtorClientWebSocketProvider(
         }
     }
 
-    private suspend fun disconnect() {
+    private suspend fun disconnect() = memberBlockContext("disconnect") {
         session.onSuccess { it.close() }
         session = Failure(ConnectWebSocketError.Unauthorized)
     }

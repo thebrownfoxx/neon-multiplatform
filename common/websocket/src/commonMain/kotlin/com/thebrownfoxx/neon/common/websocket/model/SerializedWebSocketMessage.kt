@@ -1,18 +1,20 @@
 package com.thebrownfoxx.neon.common.websocket.model
 
-import com.thebrownfoxx.neon.common.outcome.Outcome
-import com.thebrownfoxx.neon.common.outcome.flatMapError
-import com.thebrownfoxx.neon.common.outcome.map
-import com.thebrownfoxx.neon.common.outcome.runFailing
+import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.blockContext
+import com.thebrownfoxx.outcome.map
 
 interface SerializedWebSocketMessage {
-    suspend fun getLabel(): WebSocketMessageLabel
-    suspend fun deserialize(type: Type): Outcome<Any?, SerializationError>
+    val serializedValue: Outcome<String, DeserializationError>
+    suspend fun getLabel(): Outcome<WebSocketMessageLabel, DeserializationError>
+    suspend fun getRequestId(): Outcome<RequestId?, DeserializationError>
+    suspend fun deserialize(type: Type): Outcome<Any?, DeserializationError>
+
+    data object DeserializationError
 }
 
 suspend inline fun <reified T : WebSocketMessage> SerializedWebSocketMessage.deserialize() =
-    runFailing {
-        deserialize(typeOf<T>()).map { it as T }
-    }.flatMapError { SerializationError }
-
-data object SerializationError
+    blockContext("SerializedWebSocketMessage::deserialize") {
+        runFailing { deserialize(typeOf<T>()).map { it as T } }
+            .flatMapError { SerializedWebSocketMessage.DeserializationError }
+    }

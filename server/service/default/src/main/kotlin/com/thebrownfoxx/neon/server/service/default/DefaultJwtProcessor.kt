@@ -4,10 +4,10 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.Payload
 import com.thebrownfoxx.neon.common.type.Jwt
-import com.thebrownfoxx.neon.server.service.jwt.JwtProcessor
-import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaim
-import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaimKey
-import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
+import com.thebrownfoxx.neon.server.service.JwtClaim
+import com.thebrownfoxx.neon.server.service.JwtClaimKey
+import com.thebrownfoxx.neon.server.service.JwtConfig
+import com.thebrownfoxx.neon.server.service.JwtProcessor
 import java.util.Date
 
 class DefaultJwtProcessor(override val config: JwtConfig) : JwtProcessor {

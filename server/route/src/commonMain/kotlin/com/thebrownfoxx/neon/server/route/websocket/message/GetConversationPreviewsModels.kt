@@ -22,8 +22,8 @@ data class GetConversationPreviewsMemberNotFound(val memberId: MemberId) : WebSo
 }
 
 @Serializable
-data class GetConversationPreviewsInternalError(val memberId: MemberId) : WebSocketMessage(
-    kClass = GetConversationPreviewsInternalError::class,
+data class GetConversationPreviewsUnexpectedError(val memberId: MemberId) : WebSocketMessage(
+    kClass = GetConversationPreviewsUnexpectedError::class,
     description = "An error occurred while retrieving the conversation previews",
 ) {
     override val requestId = null

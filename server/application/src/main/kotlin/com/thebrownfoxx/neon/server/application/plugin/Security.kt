@@ -2,12 +2,12 @@ package com.thebrownfoxx.neon.server.application.plugin
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.thebrownfoxx.neon.common.outcome.getOrElse
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
-import com.thebrownfoxx.neon.server.service.jwt.model.JwtClaimKey
-import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
+import com.thebrownfoxx.neon.server.service.JwtClaimKey
+import com.thebrownfoxx.neon.server.service.JwtConfig
+import com.thebrownfoxx.outcome.getOrElse
 import io.ktor.server.application.Application
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.UserIdPrincipal

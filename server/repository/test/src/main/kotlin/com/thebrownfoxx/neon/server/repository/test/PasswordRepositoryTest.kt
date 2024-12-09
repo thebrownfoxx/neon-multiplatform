@@ -61,7 +61,7 @@
 //            val password = "charles leclerc"
 //
 //            val setResult = passwordRepository.setHash(memberId, hash(password))
-//            setResult mustBe unitSuccess()
+//            setResult mustBe UnitSuccess
 //
 //            val actualHashResult = passwordRepository.getHash(memberId)
 //            (actualHashResult is Success &&

@@ -70,7 +70,7 @@
 //        val memberId = MemberId()
 //
 //        val addOutcome = groupMemberRepository.addMember(groupXId, memberId)
-//        addOutcome mustBe unitSuccess()
+//        addOutcome mustBe UnitSuccess
 //
 //        val actualMembers = groupMemberRepository.getMembersAsFlow(groupXId).first()
 //

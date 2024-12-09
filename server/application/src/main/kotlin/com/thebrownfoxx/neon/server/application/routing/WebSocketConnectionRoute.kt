@@ -22,7 +22,11 @@ fun Route.webSocketConnectionRoute() {
                 val jwt = call.principal<JWTPrincipal>()!!.payload
                 val memberIdValue = jwtProcessor.getClaim(jwt, MemberIdClaim)!!.value
                 val memberId = MemberId(Uuid(memberIdValue))
-                val session = MutableKtorServerWebSocketSession(session = this, memberId = memberId)
+                val session = MutableKtorServerWebSocketSession(
+                    session = this,
+                    memberId = memberId,
+                    logger = logger,
+                )
                 webSocketManager.addSession(session)
                 session.send(WebSocketConnectionResponse.ConnectionSuccessful())
                 WebSocketMessageManagers(

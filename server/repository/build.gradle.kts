@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    implementation(libs.outcome)
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)

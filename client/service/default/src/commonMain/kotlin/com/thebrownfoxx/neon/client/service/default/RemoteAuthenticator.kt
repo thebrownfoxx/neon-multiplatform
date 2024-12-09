@@ -1,22 +1,20 @@
 package com.thebrownfoxx.neon.client.service.default
 
-import com.thebrownfoxx.neon.client.service.authenticator.Authenticator
-import com.thebrownfoxx.neon.client.service.authenticator.model.LoginError
-import com.thebrownfoxx.neon.client.service.authenticator.model.LogoutError
+import com.thebrownfoxx.neon.client.service.Authenticator
+import com.thebrownfoxx.neon.client.service.Authenticator.LoginError
+import com.thebrownfoxx.neon.client.service.Authenticator.LogoutError
+import com.thebrownfoxx.neon.client.service.TokenStorage
 import com.thebrownfoxx.neon.client.service.default.extension.bodyOrNull
 import com.thebrownfoxx.neon.client.service.default.extension.enumValueOfOrNull
-import com.thebrownfoxx.neon.client.service.jwt.TokenStorage
-import com.thebrownfoxx.neon.client.service.jwt.model.SetTokenError
-import com.thebrownfoxx.neon.common.outcome.Failure
-import com.thebrownfoxx.neon.common.outcome.UnitOutcome
-import com.thebrownfoxx.neon.common.outcome.getOrElse
-import com.thebrownfoxx.neon.common.outcome.onFailure
-import com.thebrownfoxx.neon.common.outcome.runFailing
-import com.thebrownfoxx.neon.common.outcome.unitSuccess
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.Response
 import com.thebrownfoxx.neon.server.route.authentication.LoginBody
 import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
+import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.UnitSuccess
+import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.onFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.post
@@ -45,40 +43,41 @@ class RemoteAuthenticator(
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
     override suspend fun login(username: String, password: String): UnitOutcome<LoginError> {
-        val response = runFailing {
-            httpClient.post(Login()) {
-                contentType(ContentType.Application.Json)
-                setBody(LoginBody(username, password))
-            }
-        }.getOrElse { return Failure(LoginError.ConnectionError) }
-
-        val body = response.bodyOrNull<Response>()
-
-        return when (enumValueOfOrNull<LoginResponse.Status>(body?.status)) {
-            LoginResponse.Status.InvalidCredentials -> Failure(LoginError.InvalidCredentials)
-            LoginResponse.Status.InternalConnectionError -> Failure(LoginError.UnknownError)
-            null -> Failure(LoginError.UnknownError)
-            LoginResponse.Status.Successful -> {
-                val successfulBody = response.body<LoginResponse.Successful>()
-                _loggedInMember.value = successfulBody.memberId
-                tokenStorage.set(successfulBody.token).onFailure { error ->
-                    return when (error) {
-                        SetTokenError.ConnectionError -> Failure(LoginError.ConnectionError)
-                    }
+        memberBlockContext("login") {
+            val response = runFailing {
+                httpClient.post(Login()) {
+                    contentType(ContentType.Application.Json)
+                    setBody(LoginBody(username, password))
                 }
-                unitSuccess()
+            }.getOrElse { return Failure(LoginError.ConnectionError) }
+
+            val body = response.bodyOrNull<Response>()
+
+            return when (enumValueOfOrNull<LoginResponse.Status>(body?.status)) {
+                LoginResponse.Status.InvalidCredentials -> Failure(
+                    LoginError.InvalidCredentials
+                )
+                LoginResponse.Status.InternalConnectionError -> Failure(
+                    LoginError.UnknownError
+                )
+                null -> Failure(LoginError.UnknownError)
+                LoginResponse.Status.Successful -> {
+                    val successfulBody = response.body<LoginResponse.Successful>()
+                    _loggedInMember.value = successfulBody.memberId
+                    tokenStorage.set(successfulBody.token)
+                        .onFailure { mapError(LoginError.ConnectionError) }
+                    UnitSuccess
+                }
             }
         }
     }
 
     override suspend fun logout(): UnitOutcome<LogoutError> {
-        _loggedInMember.value = null
-        tokenStorage.clear().onFailure { error ->
-            when (error) {
-                SetTokenError.ConnectionError -> LogoutError.ConnectionError
-            }
+        memberBlockContext("logout") {
+            _loggedInMember.value = null
+            tokenStorage.clear().onFailure { mapError(LogoutError.UnknownError) }
+            return UnitSuccess
         }
-        return unitSuccess()
     }
 }
 

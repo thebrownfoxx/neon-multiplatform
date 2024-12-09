@@ -67,7 +67,7 @@
 //        val inviteCode = "f4"
 //
 //        val setOutcome = inviteCodeRepository.set(groupId, inviteCode)
-//        setOutcome mustBe unitSuccess()
+//        setOutcome mustBe UnitSuccess
 //
 //        val actualInviteCode = inviteCodeRepository.get(groupId)
 //        actualInviteCode mustBe Success(inviteCode)

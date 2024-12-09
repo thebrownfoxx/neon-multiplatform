@@ -1,9 +1,7 @@
-package com.thebrownfoxx.neon.client.service.authenticator
+package com.thebrownfoxx.neon.client.service
 
-import com.thebrownfoxx.neon.client.service.authenticator.model.LoginError
-import com.thebrownfoxx.neon.client.service.authenticator.model.LogoutError
-import com.thebrownfoxx.neon.common.outcome.UnitOutcome
 import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.flow.StateFlow
 
 interface Authenticator {
@@ -11,4 +9,15 @@ interface Authenticator {
     val loggedInMember: StateFlow<MemberId?>
     suspend fun login(username: String, password: String): UnitOutcome<LoginError>
     suspend fun logout(): UnitOutcome<LogoutError>
+
+    enum class LoginError {
+        InvalidCredentials,
+        ConnectionError,
+        UnknownError,
+    }
+
+    enum class LogoutError {
+        ConnectionError,
+        UnknownError,
+    }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.thebrownfoxx.neon.client.application.dependencies
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.ChatScreen
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.ChatViewModel
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneEventHandler
@@ -18,7 +19,7 @@ import kotlinx.serialization.Serializable
 data object ChatRoute
 
 fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
-    val viewModel = viewModel { ChatViewModel() }
+    val viewModel = viewModel { ChatViewModel(dependencies::getGroupManager) }
     with(viewModel) {
         val chatPreviews by chatPreviews.collectAsStateWithLifecycle()
         val conversation by conversation.collectAsStateWithLifecycle()

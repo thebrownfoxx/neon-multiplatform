@@ -8,6 +8,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.outcome)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
             implementation(libs.exposed.core)

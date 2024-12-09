@@ -2,8 +2,8 @@ package com.thebrownfoxx.neon.client.application
 
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.thebrownfoxx.neon.client.application.http.HttpClient
+import com.thebrownfoxx.neon.client.service.Dependencies
 import com.thebrownfoxx.neon.client.service.default.DefaultDependencies
-import com.thebrownfoxx.neon.client.service.dependencies.Dependencies
 import org.jetbrains.exposed.sql.Database
 import java.io.File
 

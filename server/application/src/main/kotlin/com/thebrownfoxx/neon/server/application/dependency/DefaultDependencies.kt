@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.server.application.dependency
 
+import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -13,13 +14,13 @@ import com.thebrownfoxx.neon.server.repository.exposed.ExposedInviteCodeReposito
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedMemberRepository
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedMessageRepository
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedPasswordRepository
+import com.thebrownfoxx.neon.server.service.JwtConfig
 import com.thebrownfoxx.neon.server.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.server.service.default.DefaultGroupManager
 import com.thebrownfoxx.neon.server.service.default.DefaultJwtProcessor
 import com.thebrownfoxx.neon.server.service.default.DefaultMemberManager
 import com.thebrownfoxx.neon.server.service.default.DefaultMessenger
 import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
-import com.thebrownfoxx.neon.server.service.jwt.model.JwtConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,6 +83,8 @@ class DefaultDependencies : Dependencies {
         groupRepository,
         groupMemberRepository,
     )
+
+    override val logger = PrintLogger
 
     init {
         CoroutineScope(Dispatchers.IO).launch {

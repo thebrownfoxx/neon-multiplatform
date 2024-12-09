@@ -13,4 +13,10 @@ class TransactionContext {
             reversible.reverse()
         }
     }
+
+    suspend fun finalizeAll() {
+        for (reversible in reversibles) {
+            reversible.finalize()
+        }
+    }
 }
