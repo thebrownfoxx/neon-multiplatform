@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsDummy
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsDummy
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading

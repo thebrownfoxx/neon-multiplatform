@@ -21,7 +21,6 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
 import com.thebrownfoxx.outcome.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -52,119 +51,109 @@ class ExposedLocalMessageDataSource(
         reactiveMessageCache.getAsFlow(id)
 
     override suspend fun upsert(message: LocalMessage): UnitOutcome<DataOperationError> {
-        memberBlockContext("upsert") {
-            return dataTransaction {
-                LocalMessageTable.upsert {
-                    it[id] = message.id.toJavaUuid()
-                    it[groupId] = message.groupId.toJavaUuid()
-                    it[senderId] = message.senderId.toJavaUuid()
-                    it[content] = message.content
-                    it[timestamp] = message.timestamp
-                    it[delivery] = message.delivery.name
-                }
+        return dataTransaction {
+            LocalMessageTable.upsert {
+                it[id] = message.id.toJavaUuid()
+                it[groupId] = message.groupId.toJavaUuid()
+                it[senderId] = message.senderId.toJavaUuid()
+                it[content] = message.content
+                it[timestamp] = message.timestamp
+                it[delivery] = message.delivery.name
             }
-                .mapUnitOperationTransaction(context)
-                .onSuccess {
-                    reactiveConversationsCache.update()
-                    reactiveMessageCache.update(message.id)
-                }
         }
+            .mapUnitOperationTransaction()
+            .onSuccess {
+                reactiveConversationsCache.update()
+                reactiveMessageCache.update(message.id)
+            }
     }
 
     override suspend fun batchUpsert(
         messages: List<LocalMessage>,
     ): UnitOutcome<DataOperationError> {
-        memberBlockContext("batchUpsert") {
-            return dataTransaction {
-                LocalMessageTable.batchUpsert(messages) { message ->
-                    this[LocalMessageTable.id] = message.id.toJavaUuid()
-                    this[LocalMessageTable.groupId] = message.groupId.toJavaUuid()
-                    this[LocalMessageTable.senderId] = message.senderId.toJavaUuid()
-                    this[LocalMessageTable.content] = message.content
-                    this[LocalMessageTable.timestamp] = message.timestamp
-                    this[LocalMessageTable.delivery] = message.delivery.name
-                }
+        return dataTransaction {
+            LocalMessageTable.batchUpsert(messages) { message ->
+                this[LocalMessageTable.id] = message.id.toJavaUuid()
+                this[LocalMessageTable.groupId] = message.groupId.toJavaUuid()
+                this[LocalMessageTable.senderId] = message.senderId.toJavaUuid()
+                this[LocalMessageTable.content] = message.content
+                this[LocalMessageTable.timestamp] = message.timestamp
+                this[LocalMessageTable.delivery] = message.delivery.name
             }
-                .mapUnitOperationTransaction(context)
-                .onSuccess {
-                    for (message in messages) {
-                        reactiveMessageCache.update(message.id)
-                    }
-                    reactiveConversationsCache.update()
-                    return UnitSuccess
-                }
         }
+            .mapUnitOperationTransaction()
+            .onSuccess {
+                for (message in messages) {
+                    reactiveMessageCache.update(message.id)
+                }
+                reactiveConversationsCache.update()
+                return UnitSuccess
+            }
     }
 
     private suspend fun getConversations(): Outcome<LocalConversationPreviews, DataOperationError> {
-        memberBlockContext("getConversations") {
-            return dataTransaction {
-                val groupId = LocalMessageTable.groupId.alias("group_id")
-                val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
+        return dataTransaction {
+            val groupId = LocalMessageTable.groupId.alias("group_id")
+            val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
 
-                val conversations = LocalMessageTable
-                    .select(groupId, maxTimestamp)
-                    .groupBy(LocalMessageTable.groupId)
-                    .alias("conversations")
+            val conversations = LocalMessageTable
+                .select(groupId, maxTimestamp)
+                .groupBy(LocalMessageTable.groupId)
+                .alias("conversations")
 
-                val conversationPreviews = LocalMessageTable
-                    .join(
-                        conversations,
-                        JoinType.INNER,
-                    ) {
-                        (LocalMessageTable.groupId eq conversations[groupId]) and
-                                (LocalMessageTable.timestamp eq conversations[maxTimestamp])
-                    }.selectAll()
+            val conversationPreviews = LocalMessageTable
+                .join(
+                    conversations,
+                    JoinType.INNER,
+                ) {
+                    (LocalMessageTable.groupId eq conversations[groupId]) and
+                            (LocalMessageTable.timestamp eq conversations[maxTimestamp])
+                }.selectAll()
 
-                val sent = LocalMessageTable.senderId eq memberId.toJavaUuid()
-                val conversationRead = LocalMessageTable.delivery eq LocalDelivery.Read.name or sent
+            val sent = LocalMessageTable.senderId eq memberId.toJavaUuid()
+            val conversationRead = LocalMessageTable.delivery eq LocalDelivery.Read.name or sent
 
-                val unreadPreviews = conversationPreviews
-                    .where(not(conversationRead))
-                    .map { it.toLocalMessage() }
+            val unreadPreviews = conversationPreviews
+                .where(not(conversationRead))
+                .map { it.toLocalMessage() }
 
-                val readPreviews = conversationPreviews.where(conversationRead)
-                    .map { it.toLocalMessage() }
+            val readPreviews = conversationPreviews.where(conversationRead)
+                .map { it.toLocalMessage() }
 
-                val nudgedPreviews = when {
-                    unreadPreviews.size > 10 -> unreadPreviews.takeLast(2)
-                    else -> emptyList()
-                }
+            val nudgedPreviews = when {
+                unreadPreviews.size > 10 -> unreadPreviews.takeLast(2)
+                else -> emptyList()
+            }
 
-                LocalConversationPreviews(
-                    nudgedPreviews = nudgedPreviews.toSet(),
-                    unreadPreviews = unreadPreviews.toSet(),
-                    readPreviews = readPreviews.toSet(),
-                )
-            }.mapOperationTransaction(context)
-        }
+            LocalConversationPreviews(
+                nudgedPreviews = nudgedPreviews.toSet(),
+                unreadPreviews = unreadPreviews.toSet(),
+                readPreviews = readPreviews.toSet(),
+            )
+        }.mapOperationTransaction()
     }
 
     private suspend fun getConversationPreview(
         id: GroupId,
     ): Outcome<MessageId?, DataOperationError> {
-        memberBlockContext("getConversationPreview") {
-            return dataTransaction {
-                LocalMessageTable
-                    .selectAll()
-                    .where(LocalMessageTable.groupId eq id.toJavaUuid())
-                    .orderBy(LocalMessageTable.timestamp to SortOrder.DESC)
-                    .firstOrNull()
-                    ?.let { MessageId(it[LocalMessageTable.id].toCommonUuid()) }
-            }.mapOperationTransaction(context)
-        }
+        return dataTransaction {
+            LocalMessageTable
+                .selectAll()
+                .where(LocalMessageTable.groupId eq id.toJavaUuid())
+                .orderBy(LocalMessageTable.timestamp to SortOrder.DESC)
+                .firstOrNull()
+                ?.let { MessageId(it[LocalMessageTable.id].toCommonUuid()) }
+        }.mapOperationTransaction()
     }
 
     private suspend fun get(id: MessageId): Outcome<LocalMessage, GetError> {
-        memberBlockContext("get") {
-            return dataTransaction {
-                LocalMessageTable
-                    .selectAll()
-                    .where(LocalMessageTable.id eq id.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it.toLocalMessage() }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            LocalMessageTable
+                .selectAll()
+                .where(LocalMessageTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toLocalMessage() }
+        }.mapGetTransaction()
     }
 
     private fun ResultRow.toLocalMessage() = LocalMessage(

@@ -12,7 +12,7 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,7 +28,7 @@ class OfflineFirstMessageRepository(
 ) : MessageRepository {
     private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 
-    override val conversationPreviews = memberBlockContext("conversationsPreview") {
+    override val conversationPreviews = run {
         val sharedFlow =
             MutableSharedFlow<Outcome<LocalConversationPreviews, DataOperationError>>(replay = 1)
 
@@ -58,34 +58,32 @@ class OfflineFirstMessageRepository(
     }
 
     override fun get(id: MessageId): Flow<Outcome<LocalMessage, GetError>> {
-        memberBlockContext("get") {
-            val sharedFlow = MutableSharedFlow<Outcome<LocalMessage, GetError>>(replay = 1)
+        val sharedFlow = MutableSharedFlow<Outcome<LocalMessage, GetError>>(replay = 1)
 
-            coroutineScope.launch {
-                localDataSource.getMessageAsFlow(id).collect { localMessageOutcome ->
-                    val localMessage = localMessageOutcome.getOrElse {
-                        when (error) {
-                            GetError.NotFound -> {}
-                            GetError.ConnectionError, GetError.UnexpectedError ->
-                                sharedFlow.emit(mapError(error))
-                        }
-                        return@collect
+        coroutineScope.launch {
+            localDataSource.getMessageAsFlow(id).collect { localMessageOutcome ->
+                val localMessage = localMessageOutcome.getOrElse {
+                    when (error) {
+                        GetError.NotFound -> {}
+                        GetError.ConnectionError, GetError.UnexpectedError ->
+                            sharedFlow.emit(mapError(error))
                     }
-                    sharedFlow.emit(Success(localMessage))
+                    return@collect
                 }
+                sharedFlow.emit(Success(localMessage))
             }
-
-            coroutineScope.launch {
-                remoteDataSource.getMessageAsFlow(id).collect { remoteMessageOutcome ->
-                    val remoteMessage = remoteMessageOutcome.getOrElse {
-                        sharedFlow.emit(mapError(error))
-                        return@collect
-                    }
-                    localDataSource.upsert(remoteMessage.toLocalMessage())
-                }
-            }
-
-            return sharedFlow.asSharedFlow()
         }
+
+        coroutineScope.launch {
+            remoteDataSource.getMessageAsFlow(id).collect { remoteMessageOutcome ->
+                val remoteMessage = remoteMessageOutcome.getOrElse {
+                    sharedFlow.emit(mapError(error))
+                    return@collect
+                }
+                localDataSource.upsert(remoteMessage.toLocalMessage())
+            }
+        }
+
+        return sharedFlow.asSharedFlow()
     }
 }

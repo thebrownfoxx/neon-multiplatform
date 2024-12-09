@@ -9,7 +9,8 @@ import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
 import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.runFailing
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.converter
 import io.ktor.server.websocket.sendSerialized
@@ -28,14 +29,13 @@ abstract class KtorServerWebSocketSession(
     private val _close = MutableSharedFlow<Unit>()
     override val close = _close.asSharedFlow()
 
-    override suspend fun send(message: Any?, type: Type) = memberBlockContext("send") {
-        runFailing {
-            withContext(Dispatchers.IO) {
-                session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
-            }
-        }.mapError { SendError }
-    }
+    override suspend fun send(message: Any?, type: Type) = runFailing {
+        withContext(Dispatchers.IO) {
+            session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
+        }
+    }.mapError { SendError }
 }
+
 
 class MutableKtorServerWebSocketSession(
     id: WebSocketSessionId = WebSocketSessionId(),

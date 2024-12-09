@@ -13,13 +13,13 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.server.repository.InviteCode
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository.SetInviteCodeError
-import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.getOrElse
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.transform
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -37,52 +37,46 @@ class ExposedInviteCodeRepository(
     override fun getAsFlow(groupId: GroupId) = reactiveCache.getAsFlow(groupId)
 
     override suspend fun getGroup(inviteCode: String): Outcome<GroupId, GetError> {
-        memberBlockContext("getGroup") {
-            return dataTransaction {
-                InviteCodeTable
-                    .selectAll()
-                    .where(InviteCodeTable.inviteCode eq inviteCode)
-                    .firstOrNotFound(context)
-                    .map { GroupId(it[InviteCodeTable.groupId].toCommonUuid()) }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            InviteCodeTable
+                .selectAll()
+                .where(InviteCodeTable.inviteCode eq inviteCode)
+                .firstOrNotFound()
+                .map { GroupId(it[InviteCodeTable.groupId].toCommonUuid()) }
+        }.mapGetTransaction()
     }
 
     override suspend fun set(
         groupId: GroupId,
         inviteCode: String,
     ): ReversibleUnitOutcome<SetInviteCodeError> {
-        memberBlockContext("set") {
-            val exists = inviteCodeExists(inviteCode).getOrElse { return this.asReversible() }
-            if (exists) return Failure(SetInviteCodeError.DuplicateInviteCode).asReversible()
+        val exists = inviteCodeExists(inviteCode).getOrElse { return this.asReversible() }
+        if (exists) return Failure(SetInviteCodeError.DuplicateInviteCode).asReversible()
 
-            val id = UUID.randomUUID()
-            dataTransaction {
-                InviteCodeTable.upsert {
-                    it[this.id] = id
-                    it[this.groupId] = groupId.toJavaUuid()
-                    it[this.inviteCode] = inviteCode
-                }
+        val id = UUID.randomUUID()
+        dataTransaction {
+            InviteCodeTable.upsert {
+                it[this.id] = id
+                it[this.groupId] = groupId.toJavaUuid()
+                it[this.inviteCode] = inviteCode
             }
-            return UnitSuccess.asReversible(finalize = { reactiveCache.update(groupId) }) {
-                dataTransaction { InviteCodeTable.deleteWhere { InviteCodeTable.id eq id } }
-            }
+        }
+        return UnitSuccess.asReversible(finalize = { reactiveCache.update(groupId) }) {
+            dataTransaction { InviteCodeTable.deleteWhere { InviteCodeTable.id eq id } }
         }
     }
 
     private suspend fun get(groupId: GroupId): Outcome<InviteCode, GetError> {
-        memberBlockContext("get") {
-            return dataTransaction {
-                InviteCodeTable
-                    .selectAll()
-                    .where(InviteCodeTable.groupId eq groupId.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it[InviteCodeTable.inviteCode] }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            InviteCodeTable
+                .selectAll()
+                .where(InviteCodeTable.groupId eq groupId.toJavaUuid())
+                .firstOrNotFound()
+                .map { it[InviteCodeTable.inviteCode] }
+        }.mapGetTransaction()
     }
 
-    private suspend fun BlockContextScope.inviteCodeExists(
+    private suspend fun inviteCodeExists(
         inviteCode: String,
     ): Outcome<Boolean, SetInviteCodeError> {
         return getGroup(inviteCode).transform(

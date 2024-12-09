@@ -27,7 +27,7 @@ import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -46,15 +46,13 @@ class DefaultMessenger(
     override fun getConversationPreviews(
         actorId: MemberId,
     ): Flow<Outcome<List<Message>, GetConversationPreviewsError>> {
-        memberBlockContext("getConversationPreviews") {
-            return combine(
-                memberRepository.getAsFlow(actorId),
-                messageRepository.getConversationPreviewsAsFlow(actorId),
-            ) { memberOutcome, conversationsOutcome ->
-                memberOutcome
-                    .onFailure { return@combine mapError(error.toGetConversationPreviewsError()) }
-                conversationsOutcome.mapError { GetConversationPreviewsError.UnexpectedError }
-            }
+        return combine(
+            memberRepository.getAsFlow(actorId),
+            messageRepository.getConversationPreviewsAsFlow(actorId),
+        ) { memberOutcome, conversationsOutcome ->
+            memberOutcome
+                .onFailure { return@combine mapError(error.toGetConversationPreviewsError()) }
+            conversationsOutcome.mapError { GetConversationPreviewsError.UnexpectedError }
         }
     }
 
@@ -62,23 +60,21 @@ class DefaultMessenger(
         actorId: MemberId,
         id: MessageId,
     ): Flow<Outcome<Message, GetMessageError>> {
-        memberBlockContext("getMessage") {
-            return messageRepository.getAsFlow(id).flatMapLatest { messageOutcome ->
-                val message = messageOutcome.getOrElse {
-                    return@flatMapLatest mapError(error.toGetMessageError()).flow()
-                }
-
-                groupMemberRepository.getMembersAsFlow(message.groupId)
-                    .mapLatest { groupMemberIdsOutcome ->
-                        val groupMemberId = groupMemberIdsOutcome
-                            .getOrElse { return@mapLatest mapError(GetMessageError.UnexpectedError) }
-
-                        if (actorId !in groupMemberId)
-                            return@mapLatest Failure(GetMessageError.Unauthorized)
-
-                        Success(message)
-                    }
+        return messageRepository.getAsFlow(id).flatMapLatest { messageOutcome ->
+            val message = messageOutcome.getOrElse {
+                return@flatMapLatest mapError(error.toGetMessageError()).flow()
             }
+
+            groupMemberRepository.getMembersAsFlow(message.groupId)
+                .mapLatest { groupMemberIdsOutcome ->
+                    val groupMemberId = groupMemberIdsOutcome
+                        .getOrElse { return@mapLatest mapError(GetMessageError.UnexpectedError) }
+
+                    if (actorId !in groupMemberId)
+                        return@mapLatest Failure(GetMessageError.Unauthorized)
+
+                    Success(message)
+                }
         }
     }
 
@@ -92,31 +88,29 @@ class DefaultMessenger(
     override suspend fun newConversation(
         memberIds: Set<MemberId>,
     ): UnitOutcome<NewConversationError> {
-        memberBlockContext("newConversation") {
+        for (memberId in memberIds) {
+            memberRepository.get(memberId).onFailure {
+                return mapError(error.getMemberErrorToNewConversationError(memberId))
+            }
+        }
+
+        val chatGroup = ChatGroup()
+
+        return transaction {
+            groupRepository.add(chatGroup).register()
+                .onFailure { return@transaction mapError(NewConversationError.UnexpectedError) }
+
             for (memberId in memberIds) {
-                memberRepository.get(memberId).onFailure {
-                    return mapError(error.getMemberErrorToNewConversationError(memberId))
+                groupMemberRepository.addMember(
+                    groupId = chatGroup.id,
+                    memberId = memberId,
+                    isAdmin = false,
+                ).register().onFailure {
+                    return@transaction mapError(NewConversationError.UnexpectedError)
                 }
             }
 
-            val chatGroup = ChatGroup()
-
-            return transaction {
-                groupRepository.add(chatGroup).register()
-                    .onFailure { return@transaction mapError(NewConversationError.UnexpectedError) }
-
-                for (memberId in memberIds) {
-                    groupMemberRepository.addMember(
-                        groupId = chatGroup.id,
-                        memberId = memberId,
-                        isAdmin = false,
-                    ).register().onFailure {
-                        return@transaction mapError(NewConversationError.UnexpectedError)
-                    }
-                }
-
-                UnitSuccess
-            }
+            UnitSuccess
         }
     }
 
@@ -125,77 +119,71 @@ class DefaultMessenger(
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError> {
-        memberBlockContext("sendMessage") {
-            groupRepository.get(groupId)
-                .onFailure { return mapError(error.getGroupErrorToSendMessageError(groupId)) }
+        groupRepository.get(groupId)
+            .onFailure { return mapError(error.getGroupErrorToSendMessageError(groupId)) }
 
-            val groupMemberIds = groupMemberRepository.getMembers(groupId)
-                .getOrElse { return mapError(SendMessageError.UnexpectedError) }
+        val groupMemberIds = groupMemberRepository.getMembers(groupId)
+            .getOrElse { return mapError(SendMessageError.UnexpectedError) }
 
-            if (actorId !in groupMemberIds) return Failure(SendMessageError.Unauthorized(actorId))
+        if (actorId !in groupMemberIds) return Failure(SendMessageError.Unauthorized(actorId))
 
-            val message = Message(
-                groupId = groupId,
-                senderId = actorId,
-                content = content,
-                timestamp = Clock.System.now(),
-                delivery = Delivery.Sent,
-            )
+        val message = Message(
+            groupId = groupId,
+            senderId = actorId,
+            content = content,
+            timestamp = Clock.System.now(),
+            delivery = Delivery.Sent,
+        )
 
-            messageRepository.add(message).result
-                .onFailure { return mapError(SendMessageError.UnexpectedError) }
+        messageRepository.add(message).result
+            .onFailure { return mapError(SendMessageError.UnexpectedError) }
 
-            return UnitSuccess
-        }
+        return UnitSuccess
     }
 
     override suspend fun markConversationAsRead(
         actorId: MemberId,
         groupId: GroupId,
     ): UnitOutcome<MarkConversationAsReadError> {
-        memberBlockContext("markConversationAsRead") {
-            groupRepository.get(groupId)
-                .onFailure { return mapError(getGroupErrorToMarkConversationAsReadError(groupId)) }
+        groupRepository.get(groupId)
+            .onFailure { return mapError(getGroupErrorToMarkConversationAsReadError(groupId)) }
 
-            val groupMemberIds = groupMemberRepository.getMembers(groupId)
-                .getOrElse { return mapError(MarkConversationAsReadError.UnexpectedError) }
+        val groupMemberIds = groupMemberRepository.getMembers(groupId)
+            .getOrElse { return mapError(MarkConversationAsReadError.UnexpectedError) }
 
-            if (actorId !in groupMemberIds)
-                return Failure(MarkConversationAsReadError.Unauthorized(actorId))
+        if (actorId !in groupMemberIds)
+            return Failure(MarkConversationAsReadError.Unauthorized(actorId))
 
-            val unreadMessages = getUnreadMessages(groupId)
-                .getOrElse { return mapError(MarkConversationAsReadError.UnexpectedError) }
+        val unreadMessages = getUnreadMessages(groupId)
+            .getOrElse { return mapError(MarkConversationAsReadError.UnexpectedError) }
 
-            if (unreadMessages.isEmpty()) return Failure(MarkConversationAsReadError.AlreadyRead)
+        if (unreadMessages.isEmpty()) return Failure(MarkConversationAsReadError.AlreadyRead)
 
-            return transaction {
-                for (message in unreadMessages) {
-                    messageRepository.update(message.copy(delivery = Delivery.Read))
-                        .register()
-                        .onFailure {
-                            return@transaction Failure(MarkConversationAsReadError.UnexpectedError)
-                        }
-                }
-
-                UnitSuccess
+        return transaction {
+            for (message in unreadMessages) {
+                messageRepository.update(message.copy(delivery = Delivery.Read))
+                    .register()
+                    .onFailure {
+                        return@transaction Failure(MarkConversationAsReadError.UnexpectedError)
+                    }
             }
+
+            UnitSuccess
         }
     }
 
     private suspend fun getUnreadMessages(
         groupId: GroupId,
     ): Outcome<List<Message>, UnexpectedError> {
-        memberBlockContext("getUnreadMessages") {
-            val unreadMessageIds =
-                messageRepository.getUnreadMessages(groupId)
-                    .getOrElse { return mapError(UnexpectedError) }
+        val unreadMessageIds =
+            messageRepository.getUnreadMessages(groupId)
+                .getOrElse { return mapError(UnexpectedError) }
 
-            val unreadMessages = unreadMessageIds.map { id ->
-                messageRepository.get(id).getOrElse { return mapError(UnexpectedError) }
-            }
-
-            return Success(unreadMessages)
+        val unreadMessages = unreadMessageIds.map { id ->
+            messageRepository.get(id).getOrElse { return mapError(UnexpectedError) }
         }
+
+        return Success(unreadMessages)
     }
 
     private fun GetError.toGetConversationPreviewsError() = when (this) {

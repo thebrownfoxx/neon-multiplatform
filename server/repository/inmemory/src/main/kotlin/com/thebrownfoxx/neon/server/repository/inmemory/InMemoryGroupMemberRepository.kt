@@ -7,10 +7,10 @@ import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.memberBlockContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,20 +68,18 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
         memberId: MemberId,
         isAdmin: Boolean,
     ): ReversibleUnitOutcome<AddError> {
-        memberBlockContext("addMember") {
-            val groupMembers = groupMembers.value[groupId] ?: emptyList()
-            val duplicateMembership = groupMembers.any { it.id == memberId }
+        val groupMembers = groupMembers.value[groupId] ?: emptyList()
+        val duplicateMembership = groupMembers.any { it.id == memberId }
 
-            if (duplicateMembership) return Failure(AddError.Duplicate).asReversible()
+        if (duplicateMembership) return Failure(AddError.Duplicate).asReversible()
 
-            this@InMemoryGroupMemberRepository.groupMembers.update {
-                it + (groupId to groupMembers + GroupMember(memberId, isAdmin))
-            }
+        this@InMemoryGroupMemberRepository.groupMembers.update {
+            it + (groupId to groupMembers + GroupMember(memberId, isAdmin))
+        }
 
-            return UnitSuccess.asReversible {
-                this@InMemoryGroupMemberRepository.groupMembers.update { oldGroupMembers ->
-                    oldGroupMembers + (groupId to groupMembers.filter { it.id != memberId })
-                }
+        return UnitSuccess.asReversible {
+            this@InMemoryGroupMemberRepository.groupMembers.update { oldGroupMembers ->
+                oldGroupMembers + (groupId to groupMembers.filter { it.id != memberId })
             }
         }
     }

@@ -10,9 +10,9 @@ import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberRequest
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberUnexpectedError
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.memberBlockContext
 import com.thebrownfoxx.outcome.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,23 +26,19 @@ class WebSocketRemoteMemberDataSource(
     private val cache = Cache<MemberId, Outcome<Member, GetError>>(dataSourceScope)
 
     init {
-        memberBlockContext("init") {
-            session.subscribe<GetMemberNotFound> { response ->
-                cache.emit(response.id, Failure(GetError.NotFound))
-            }
-            session.subscribe<GetMemberUnexpectedError> { response ->
-                cache.emit(response.id, Failure(GetError.UnexpectedError))
-            }
-            session.subscribe<GetMemberSuccessful> { response ->
-                cache.emit(response.member.id, Success(response.member))
-            }
+        session.subscribe<GetMemberNotFound> { response ->
+            cache.emit(response.id, Failure(GetError.NotFound))
+        }
+        session.subscribe<GetMemberUnexpectedError> { response ->
+            cache.emit(response.id, Failure(GetError.UnexpectedError))
+        }
+        session.subscribe<GetMemberSuccessful> { response ->
+            cache.emit(response.member.id, Success(response.member))
         }
     }
 
-    override fun getAsFlow(id: MemberId) = memberBlockContext("getAsFlow") {
-        cache.getAsFlow(id) {
-            session.send(GetMemberRequest(id))
-                .onFailure { cache.emit(id, Failure(GetError.ConnectionError)) }
-        }
+    override fun getAsFlow(id: MemberId) = cache.getAsFlow(id) {
+        session.send(GetMemberRequest(id))
+            .onFailure { cache.emit(id, Failure(GetError.ConnectionError)) }
     }
 }

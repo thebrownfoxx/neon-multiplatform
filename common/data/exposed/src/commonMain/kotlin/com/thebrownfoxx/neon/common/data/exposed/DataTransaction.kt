@@ -4,21 +4,22 @@ import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
-import com.thebrownfoxx.outcome.BlockContext
-import com.thebrownfoxx.outcome.BlockContextScope
 import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.StackTrace
 import com.thebrownfoxx.outcome.flatMap
 import com.thebrownfoxx.outcome.flatMapError
 import com.thebrownfoxx.outcome.map
 import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.runFailing
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-suspend fun <T> BlockContextScope.dataTransaction(
+suspend fun <T> dataTransaction(
+    stackTrace: StackTrace = StackTrace(),
     block: () -> T,
 ): Outcome<T, DataTransactionError> =
-    runFailing { newSuspendedTransaction(Dispatchers.IO) { block() } }
+    runFailing(stackTrace) { newSuspendedTransaction(Dispatchers.IO) { block() } }
         .mapError { error ->
             when (error) {
                 is ExposedSQLException -> DataTransactionError.SqlError
@@ -27,40 +28,40 @@ suspend fun <T> BlockContextScope.dataTransaction(
         }
 
 fun <T> Outcome<T, DataTransactionError>.mapOperationTransaction(
-    context: BlockContext,
-) = mapError(context, DataTransactionError::toDataOperationError)
+    stackTrace: StackTrace = StackTrace(),
+) = mapError(stackTrace, DataTransactionError::toDataOperationError)
 
 fun Outcome<*, DataTransactionError>.mapUnitOperationTransaction(
-    context: BlockContext,
+    stackTrace: StackTrace = StackTrace(),
 ) = map(
-    context,
+    stackTrace = stackTrace,
     onSuccess = {},
     onFailure = DataTransactionError::toDataOperationError,
 )
 
 fun Outcome<Outcome<*, AddError>, DataTransactionError>.mapAddTransaction(
-    context: BlockContext,
+    stackTrace: StackTrace = StackTrace(),
 ) = flatMap(
-    context = context,
+    stackTrace = stackTrace,
     onSuccess = {},
     onInnerFailure = { it },
     onOuterFailure = DataTransactionError::toAddError,
 )
 
 fun Outcome<Outcome<*, UpdateError>, DataTransactionError>.mapUpdateTransaction(
-    context: BlockContext,
+    stackTrace: StackTrace = StackTrace(),
 ) = flatMap(
-    context = context,
+    stackTrace = stackTrace,
     onSuccess = {},
     onInnerFailure = { it },
     onOuterFailure = DataTransactionError::toUpdateError,
 )
 
 fun <T> Outcome<Outcome<T, GetError>, DataTransactionError>.mapGetTransaction(
-    context: BlockContext,
+    stackTrace: StackTrace = StackTrace(),
 ) =
     flatMapError(
-        context = context,
+        stackTrace = stackTrace,
         onInnerFailure = { it },
         onOuterFailure = DataTransactionError::toGetError,
     )

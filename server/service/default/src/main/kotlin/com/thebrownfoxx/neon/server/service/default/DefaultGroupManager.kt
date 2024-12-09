@@ -16,12 +16,13 @@ import com.thebrownfoxx.neon.server.service.GroupManager.CreateCommunityError
 import com.thebrownfoxx.neon.server.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.server.service.GroupManager.SetInviteCodeError
 import com.thebrownfoxx.neon.server.service.PermissionChecker
-import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.map
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onFailure
 import com.thebrownfoxx.outcome.transform
 import kotlinx.coroutines.flow.Flow
@@ -38,10 +39,8 @@ class DefaultGroupManager(
     private val maxCommunityNameLength = 16
 
     override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
-        memberBlockContext("getGroup") {
-            return groupRepository.getAsFlow(id).map { groupOutcome ->
-                groupOutcome.mapError { it.toGetGroupError() }
-            }
+        return groupRepository.getAsFlow(id).map { groupOutcome ->
+            groupOutcome.mapError { it.toGetGroupError() }
         }
     }
 
@@ -50,26 +49,24 @@ class DefaultGroupManager(
         name: String,
         isGod: Boolean,
     ): Outcome<GroupId, CreateCommunityError> {
-        memberBlockContext("createCommunity") {
-            val isActorGod = permissionChecker.isGod(actorId)
-                .getOrElse { return mapError(CreateCommunityError.UnexpectedError) }
+        val isActorGod = permissionChecker.isGod(actorId)
+            .getOrElse { return mapError(CreateCommunityError.UnexpectedError) }
 
-            if (!isActorGod) return Failure(CreateCommunityError.Unauthorized)
+        if (!isActorGod) return Failure(CreateCommunityError.Unauthorized)
 
-            if (name.length > maxCommunityNameLength)
-                return Failure(CreateCommunityError.NameTooLong(maxCommunityNameLength))
+        if (name.length > maxCommunityNameLength)
+            return Failure(CreateCommunityError.NameTooLong(maxCommunityNameLength))
 
-            val community = Community(
-                name = name,
-                avatarUrl = null,
-                isGod = isGod,
-            )
+        val community = Community(
+            name = name,
+            avatarUrl = null,
+            isGod = isGod,
+        )
 
-            return groupRepository.add(community).result.map(
-                onSuccess = { community.id },
-                onFailure = { CreateCommunityError.UnexpectedError },
-            )
-        }
+        return groupRepository.add(community).result.map(
+            onSuccess = { community.id },
+            onFailure = { CreateCommunityError.UnexpectedError },
+        )
     }
 
     override suspend fun setInviteCode(
@@ -77,26 +74,24 @@ class DefaultGroupManager(
         groupId: GroupId,
         inviteCode: String,
     ): UnitOutcome<SetInviteCodeError> {
-        memberBlockContext("setInviteCode") {
-            val isGod = permissionChecker.isGod(actorId)
-                .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
+        val isGod = permissionChecker.isGod(actorId)
+            .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
 
-            val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
-                .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
+        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
+            .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
 
-            if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized)
+        if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized)
 
-            val inviteCodeExists = inviteCodeExists(inviteCode).getOrElse { return this }
-            if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode)
+        val inviteCodeExists = inviteCodeExists(inviteCode).getOrElse { return this }
+        if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode)
 
-            val group = groupRepository.get(groupId)
-                .getOrElse { return mapError(error.getGroupErrorToSetInviteCodeError()) }
+        val group = groupRepository.get(groupId)
+            .getOrElse { return mapError(error.getGroupErrorToSetInviteCodeError()) }
 
-            if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
+        if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
 
-            return inviteCodeRepository.set(groupId, inviteCode).result
-                .mapError { it.toSetInviteCodeError() }
-        }
+        return inviteCodeRepository.set(groupId, inviteCode).result
+            .mapError { it.toSetInviteCodeError() }
     }
 
     override suspend fun addMember(
@@ -105,34 +100,32 @@ class DefaultGroupManager(
         memberId: MemberId,
         isAdmin: Boolean,
     ): UnitOutcome<AddGroupMemberError> {
-        memberBlockContext("addMember") {
-            val isGod = permissionChecker.isGod(actorId)
-                .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+        val isGod = permissionChecker.isGod(actorId)
+            .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
 
-            val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
-                .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+        val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
+            .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
 
-            if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized)
+        if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized)
 
-            groupRepository.get(groupId)
-                .onFailure { return mapError(error.getGroupErrorToAddGroupMemberError()) }
+        groupRepository.get(groupId)
+            .onFailure { return mapError(error.getGroupErrorToAddGroupMemberError()) }
 
-            memberRepository.get(memberId)
-                .onFailure { return mapError(error.getMemberErrorToAddGroupMemberError()) }
+        memberRepository.get(memberId)
+            .onFailure { return mapError(error.getMemberErrorToAddGroupMemberError()) }
 
-            val groupMembers = groupMemberRepository.getMembers(groupId)
-                .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+        val groupMembers = groupMemberRepository.getMembers(groupId)
+            .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
 
-            if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
+        if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
 
-            return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
-                onSuccess = {},
-                onFailure = { it.toAddGroupMemberError() },
-            )
-        }
+        return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
+            onSuccess = {},
+            onFailure = { it.toAddGroupMemberError() },
+        )
     }
 
-    private suspend fun BlockContextScope.inviteCodeExists(
+    private suspend fun inviteCodeExists(
         inviteCode: String,
     ): Outcome<Boolean, SetInviteCodeError> {
         return inviteCodeRepository.getGroup(inviteCode).transform(

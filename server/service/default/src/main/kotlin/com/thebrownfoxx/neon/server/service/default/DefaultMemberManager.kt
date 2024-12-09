@@ -13,10 +13,11 @@ import com.thebrownfoxx.neon.server.repository.PasswordRepository
 import com.thebrownfoxx.neon.server.service.MemberManager
 import com.thebrownfoxx.neon.server.service.MemberManager.GetMemberError
 import com.thebrownfoxx.neon.server.service.MemberManager.RegisterMemberError
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -35,11 +36,9 @@ class DefaultMemberManager(
     private val passwordMinLength = 8
 
     override fun getMember(id: MemberId): Flow<Outcome<Member, GetMemberError>> {
-        memberBlockContext("getMember") {
             return memberRepository.getAsFlow(id).mapLatest { memberOutcome ->
                 memberOutcome.mapError { it.toGetMemberError() }
             }
-        }
     }
 
     override suspend fun registerMember(
@@ -47,7 +46,6 @@ class DefaultMemberManager(
         username: String,
         password: String,
     ): Outcome<MemberId, RegisterMemberError> {
-        memberBlockContext("registerMember") {
             val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode)
                 .getOrElse { return mapError(error.getInviteCodeGroupToRegisterMemberError()) }
 
@@ -77,7 +75,6 @@ class DefaultMemberManager(
 
                 Success(member.id)
             }
-        }
     }
 
     private fun GetError.toGetMemberError() = when (this) {

@@ -13,10 +13,10 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.MessageRepository
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.memberBlockContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,12 +33,10 @@ class InMemoryMessageRepository : MessageRepository {
     }
 
     override fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>> {
-        memberBlockContext("getAsFlow") {
-            return messages.mapLatest { messages ->
-                when (val message = messages[id]) {
-                    null -> Failure(GetError.NotFound)
-                    else -> Success(message)
-                }
+        return messages.mapLatest { messages ->
+            when (val message = messages[id]) {
+                null -> Failure(GetError.NotFound)
+                else -> Success(message)
             }
         }
     }
@@ -48,24 +46,20 @@ class InMemoryMessageRepository : MessageRepository {
     }
 
     override suspend fun add(message: Message): ReversibleUnitOutcome<AddError> {
-        memberBlockContext("add") {
-            return when {
-                messages.value.containsKey(message.id) -> Failure(AddError.Duplicate)
-                else -> {
-                    messages.update { it + (message.id to message) }
-                    UnitSuccess
-                }
-            }.asReversible { messages.update { it - message.id } }
-        }
+        return when {
+            messages.value.containsKey(message.id) -> Failure(AddError.Duplicate)
+            else -> {
+                messages.update { it + (message.id to message) }
+                UnitSuccess
+            }
+        }.asReversible { messages.update { it - message.id } }
     }
 
     override suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError> {
-        memberBlockContext("update") {
-            if (!messages.value.containsKey(message.id))
-                return Failure(UpdateError.NotFound).asReversible()
-            messages.update { it + (message.id to message) }
-            return UnitSuccess.asReversible { messages.update { it - message.id } }
-        }
+        if (!messages.value.containsKey(message.id))
+            return Failure(UpdateError.NotFound).asReversible()
+        messages.update { it + (message.id to message) }
+        return UnitSuccess.asReversible { messages.update { it - message.id } }
     }
 
     override suspend fun getMessages(

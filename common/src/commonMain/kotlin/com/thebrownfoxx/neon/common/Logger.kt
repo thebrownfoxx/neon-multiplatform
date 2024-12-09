@@ -1,23 +1,23 @@
 package com.thebrownfoxx.neon.common
 
-import com.thebrownfoxx.outcome.BlockContext
+import com.thebrownfoxx.outcome.StackTrace
 
 interface Logger {
-    fun logInfo(message: Any, context: BlockContext)
-    fun logError(message: Any, context: BlockContext)
-    fun logDebug(message: Any, context: BlockContext)
+    fun logInfo(message: Any, stackTrace: StackTrace = StackTrace())
+    fun logError(message: Any, stackTrace: StackTrace = StackTrace())
+    fun logDebug(message: Any, stackTrace: StackTrace = StackTrace())
 }
 
 object PrintLogger : Logger {
-    override fun logInfo(message: Any, context: BlockContext) {
-        println("INFO: $message")
+    override fun logInfo(message: Any, stackTrace: StackTrace) {
+        println("INFO: $message $stackTrace")
     }
 
-    override fun logError(message: Any, context: BlockContext) {
-        println("ERROR: $message")
+    override fun logError(message: Any, stackTrace: StackTrace) {
+        println("ERROR: $message $stackTrace")
     }
 
-    override fun logDebug(message: Any, context: BlockContext) {
-        println("DEBUG: $message")
+    override fun logDebug(message: Any, stackTrace: StackTrace) {
+        println("DEBUG: $message $stackTrace")
     }
 }

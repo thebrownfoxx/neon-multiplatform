@@ -13,8 +13,8 @@ import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.blockContext
 import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onFailure
 
 suspend fun ServiceData.integrate(
@@ -27,49 +27,47 @@ suspend fun ServiceData.integrate(
     messageRepository: MessageRepository,
     hasher: Hasher,
 ): UnitOutcome<Any> {
-    blockContext("ServiceData::integrate") {
-        if (configurationRepository.getInitialized().getOrElse { return mapError(error) })
-            return UnitSuccess
+    if (configurationRepository.getInitialized().getOrElse { return mapError(error) })
+        return UnitSuccess
 
-        println("Integrating $this")
-        return transaction {
-            for (groupRecord in groupRecords) {
-                val (group, memberIds) = groupRecord
+    println("Integrating $this")
+    return transaction {
+        for (groupRecord in groupRecords) {
+            val (group, memberIds) = groupRecord
 
-                groupRepository.add(groupRecord.group).register()
-                    .onFailure { return@transaction mapError(error) }
-
-                for (memberId in memberIds) {
-                    groupMemberRepository.addMember(group.id, memberId).register()
-                        .onFailure { return@transaction mapError(error) }
-                }
-
-                if (groupRecord is CommunityRecord) {
-                    val inviteCode = groupRecord.inviteCode
-
-                    if (inviteCode != null) {
-                        inviteCodeRepository.set(group.id, inviteCode).register()
-                            .onFailure { return@transaction mapError(error) }
-                    }
-                }
-            }
-
-            for ((member, _, password) in memberRecords) {
-                memberRepository.add(member).register()
-                    .onFailure { return@transaction mapError(error) }
-                passwordRepository.setHash(member.id, hasher.hash(password)).register()
-                    .onFailure { return@transaction mapError(error) }
-            }
-
-            for (message in messages) {
-                messageRepository.add(message).register()
-                    .onFailure { return@transaction mapError(error) }
-            }
-
-            configurationRepository.setInitialized(true).register()
+            groupRepository.add(groupRecord.group).register()
                 .onFailure { return@transaction mapError(error) }
 
-            UnitSuccess
+            for (memberId in memberIds) {
+                groupMemberRepository.addMember(group.id, memberId).register()
+                    .onFailure { return@transaction mapError(error) }
+            }
+
+            if (groupRecord is CommunityRecord) {
+                val inviteCode = groupRecord.inviteCode
+
+                if (inviteCode != null) {
+                    inviteCodeRepository.set(group.id, inviteCode).register()
+                        .onFailure { return@transaction mapError(error) }
+                }
+            }
         }
+
+        for ((member, _, password) in memberRecords) {
+            memberRepository.add(member).register()
+                .onFailure { return@transaction mapError(error) }
+            passwordRepository.setHash(member.id, hasher.hash(password)).register()
+                .onFailure { return@transaction mapError(error) }
+        }
+
+        for (message in messages) {
+            messageRepository.add(message).register()
+                .onFailure { return@transaction mapError(error) }
+        }
+
+        configurationRepository.setInitialized(true).register()
+            .onFailure { return@transaction mapError(error) }
+
+        UnitSuccess
     }
 }

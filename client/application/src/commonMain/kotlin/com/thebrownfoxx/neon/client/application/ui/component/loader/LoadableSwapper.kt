@@ -3,10 +3,10 @@ package com.thebrownfoxx.neon.client.application.ui.component.loader
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.thebrownfoxx.neon.client.application.ui.extension.loaderContentTransition
 import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
-import com.thebrownfoxx.neon.client.application.ui.extension.loaderContentTransition
 
 @Composable
 fun <T> LoadableSwapper(

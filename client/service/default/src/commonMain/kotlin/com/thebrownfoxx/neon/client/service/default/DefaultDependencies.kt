@@ -11,7 +11,7 @@ import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import io.ktor.client.HttpClient
 import org.jetbrains.exposed.sql.Database
 
@@ -35,10 +35,8 @@ class DefaultDependencies(
     override suspend fun getGroupManager(): Outcome<GroupManager, GetGroupManagerError> {
         val localDataSource = ExposedLocalGroupDataSource(database)
 
-        val webSocketSession = memberBlockContext("webSocketSession") {
-            webSocketProvider.getSession().getOrElse {
-                return mapError(error.toGetGroupManagerError())
-            }
+        val webSocketSession = webSocketProvider.getSession().getOrElse {
+            return mapError(error.toGetGroupManagerError())
         }
 
         val remoteDataSource = WebSocketRemoteGroupDataSource(webSocketSession)
@@ -49,7 +47,7 @@ class DefaultDependencies(
     }
 
     private fun ConnectWebSocketError.toGetGroupManagerError() = when (this) {
-            ConnectWebSocketError.Unauthorized -> GetGroupManagerError.Unauthorized
-            ConnectWebSocketError.ConnectionError -> GetGroupManagerError.ConnectionError
-        }
+        ConnectWebSocketError.Unauthorized -> GetGroupManagerError.Unauthorized
+        ConnectWebSocketError.ConnectionError -> GetGroupManagerError.ConnectionError
+    }
 }

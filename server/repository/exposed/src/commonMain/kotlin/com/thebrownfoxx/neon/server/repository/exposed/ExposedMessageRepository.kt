@@ -23,11 +23,10 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.MessageRepository
-import com.thebrownfoxx.outcome.BlockContextScope
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.getOrElse
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -53,48 +52,42 @@ class ExposedMessageRepository(
     override fun getAsFlow(id: MessageId) = reactiveMessageCache.getAsFlow(id)
 
     override suspend fun get(id: MessageId): Outcome<Message, GetError> {
-        memberBlockContext("get") {
-            return dataTransaction {
-                MessageTable
-                    .selectAll()
-                    .where(MessageTable.id eq id.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it.toMessage() }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            MessageTable
+                .selectAll()
+                .where(MessageTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toMessage() }
+        }.mapGetTransaction()
     }
 
     override suspend fun add(message: Message): ReversibleUnitOutcome<AddError> {
-        memberBlockContext("add") {
-            return dataTransaction {
-                MessageTable.tryAdd(context) {
-                    it[id] = message.id.toJavaUuid()
-                    it[groupId] = message.groupId.toJavaUuid()
-                    it[senderId] = message.senderId.toJavaUuid()
-                    it[content] = message.content
-                    it[timestamp] = message.timestamp
-                    it[delivery] = message.delivery.name
-                }
+        return dataTransaction {
+            MessageTable.tryAdd() {
+                it[id] = message.id.toJavaUuid()
+                it[groupId] = message.groupId.toJavaUuid()
+                it[senderId] = message.senderId.toJavaUuid()
+                it[content] = message.content
+                it[timestamp] = message.timestamp
+                it[delivery] = message.delivery.name
             }
-                .mapAddTransaction(context)
-                .asReversible {
-                    dataTransaction { MessageTable.deleteWhere { id eq message.id.toJavaUuid() } }
-                }
         }
+            .mapAddTransaction()
+            .asReversible {
+                dataTransaction { MessageTable.deleteWhere { id eq message.id.toJavaUuid() } }
+            }
     }
 
     override suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError> {
-        memberBlockContext("update") {
-            val oldMessage = get(message.id)
-                .getOrElse { return mapError(error.toUpdateError()).asReversible() }
+        val oldMessage = get(message.id)
+            .getOrElse { return mapError(error.toUpdateError()).asReversible() }
 
-            return dataTransaction { updateMessage(message) }
-                .mapUpdateTransaction(context)
-                .asReversible { dataTransaction { updateMessage(oldMessage) } }
-        }
+        return dataTransaction { updateMessage(message) }
+            .mapUpdateTransaction()
+            .asReversible { dataTransaction { updateMessage(oldMessage) } }
     }
 
-    private fun BlockContextScope.updateMessage(message: Message) = MessageTable.tryUpdate(context) {
+    private fun updateMessage(message: Message) = MessageTable.tryUpdate {
         it[id] = message.id.toJavaUuid()
         it[groupId] = message.groupId.toJavaUuid()
         it[senderId] = message.senderId.toJavaUuid()
@@ -118,34 +111,32 @@ class ExposedMessageRepository(
     private suspend fun getConversationPreviews(
         memberId: MemberId,
     ): Outcome<List<Message>, DataOperationError> {
-        memberBlockContext("getConversationPreviews") {
-            return dataTransaction {
-                val groupId = MessageTable.groupId.alias("group_id")
-                val maxTimestamp = MessageTable.timestamp.max().alias("max_timestamp")
+        return dataTransaction {
+            val groupId = MessageTable.groupId.alias("group_id")
+            val maxTimestamp = MessageTable.timestamp.max().alias("max_timestamp")
 
-                val conversations = MessageTable
-                    .join(
-                        GroupMemberTable,
-                        JoinType.INNER,
-                        onColumn = MessageTable.groupId,
-                        otherColumn = GroupMemberTable.groupId,
-                    )
-                    .select(groupId, maxTimestamp)
-                    .groupBy(MessageTable.groupId)
-                    .where(GroupMemberTable.memberId eq memberId.toJavaUuid())
-                    .alias("conversations")
+            val conversations = MessageTable
+                .join(
+                    GroupMemberTable,
+                    JoinType.INNER,
+                    onColumn = MessageTable.groupId,
+                    otherColumn = GroupMemberTable.groupId,
+                )
+                .select(groupId, maxTimestamp)
+                .groupBy(MessageTable.groupId)
+                .where(GroupMemberTable.memberId eq memberId.toJavaUuid())
+                .alias("conversations")
 
-                MessageTable
-                    .join(
-                        conversations,
-                        JoinType.INNER,
-                    ) {
-                        (MessageTable.groupId eq conversations[groupId]) and
-                                (MessageTable.timestamp eq conversations[maxTimestamp])
-                    }.selectAll()
-                    .map { it.toMessage() }
-            }.mapOperationTransaction(context)
-        }
+            MessageTable
+                .join(
+                    conversations,
+                    JoinType.INNER,
+                ) {
+                    (MessageTable.groupId eq conversations[groupId]) and
+                            (MessageTable.timestamp eq conversations[maxTimestamp])
+                }.selectAll()
+                .map { it.toMessage() }
+        }.mapOperationTransaction()
     }
 
     private fun ResultRow.toMessage() = Message(

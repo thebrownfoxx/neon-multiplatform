@@ -17,7 +17,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.getOrElse
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -32,44 +32,40 @@ class ExposedPasswordRepository(
     database: Database,
 ) : PasswordRepository, ExposedDataSource(database, PasswordTable) {
     override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
-        memberBlockContext("getHash") {
-            return dataTransaction {
-                PasswordTable
-                    .selectAll()
-                    .where(PasswordTable.memberId eq memberId.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it.toHash() }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            PasswordTable
+                .selectAll()
+                .where(PasswordTable.memberId eq memberId.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toHash() }
+        }.mapGetTransaction()
     }
 
     override suspend fun setHash(
         memberId: MemberId,
         hash: Hash,
     ): ReversibleUnitOutcome<DataOperationError> {
-        memberBlockContext("setHash") {
-            val oldHash = getHash(memberId).getOrElse {
-                when (error) {
-                    GetError.NotFound -> null
+        val oldHash = getHash(memberId).getOrElse {
+            when (error) {
+                GetError.NotFound -> null
 
-                    GetError.ConnectionError ->
-                        return mapError(DataOperationError.ConnectionError).asReversible()
+                GetError.ConnectionError ->
+                    return mapError(DataOperationError.ConnectionError).asReversible()
 
-                    GetError.UnexpectedError ->
-                        return mapError(DataOperationError.UnexpectedError).asReversible()
-                }
+                GetError.UnexpectedError ->
+                    return mapError(DataOperationError.UnexpectedError).asReversible()
             }
+        }
 
-            val id = UUID.randomUUID()
+        val id = UUID.randomUUID()
+        dataTransaction {
+            updateHash(memberId, hash)
+        }.mapOperationTransaction()
+
+        return UnitSuccess.asReversible {
             dataTransaction {
-                updateHash(memberId, hash)
-            }.mapOperationTransaction(context)
-
-            return UnitSuccess.asReversible {
-                dataTransaction {
-                    if (oldHash == null) PasswordTable.deleteWhere { PasswordTable.id eq id }
-                    else updateHash(memberId, oldHash)
-                }
+                if (oldHash == null) PasswordTable.deleteWhere { PasswordTable.id eq id }
+                else updateHash(memberId, oldHash)
             }
         }
     }

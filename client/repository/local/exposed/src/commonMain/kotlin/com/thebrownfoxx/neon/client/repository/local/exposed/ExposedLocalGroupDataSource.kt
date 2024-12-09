@@ -18,7 +18,6 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
 import com.thebrownfoxx.outcome.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -35,32 +34,28 @@ class ExposedLocalGroupDataSource(
     override fun getAsFlow(id: GroupId) = reactiveCache.getAsFlow(id)
 
     override suspend fun upsert(group: LocalGroup): UnitOutcome<DataOperationError> {
-        memberBlockContext("upsert") {
-            return dataTransaction {
-                LocalGroupTable.upsert {
-                    it[id] = group.id.toJavaUuid()
-                    if (group is LocalCommunity) {
-                        it[name] = group.name
-                        it[avatarUrl] = group.avatarUrl?.value
-                        it[isGod] = group.isGod
-                    }
+        return dataTransaction {
+            LocalGroupTable.upsert {
+                it[id] = group.id.toJavaUuid()
+                if (group is LocalCommunity) {
+                    it[name] = group.name
+                    it[avatarUrl] = group.avatarUrl?.value
+                    it[isGod] = group.isGod
                 }
             }
-                .mapUnitOperationTransaction(context)
-                .onSuccess { reactiveCache.update(group.id) }
         }
+            .mapUnitOperationTransaction()
+            .onSuccess { reactiveCache.update(group.id) }
     }
 
     private suspend fun get(id: GroupId): Outcome<LocalGroup, GetError> {
-        memberBlockContext("get") {
-            return dataTransaction {
-                LocalGroupTable
-                    .selectAll()
-                    .where(LocalGroupTable.id eq id.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it.toLocalGroup() }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            LocalGroupTable
+                .selectAll()
+                .where(LocalGroupTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toLocalGroup() }
+        }.mapGetTransaction()
     }
 
     private fun ResultRow.toLocalGroup(): LocalGroup {

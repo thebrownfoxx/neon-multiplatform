@@ -10,7 +10,7 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,34 +27,32 @@ class OfflineFirstMemberRepository(
     private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 
     override fun get(id: MemberId): Flow<Outcome<LocalMember, GetError>> {
-        memberBlockContext("get") {
-            val sharedFlow = MutableSharedFlow<Outcome<LocalMember, GetError>>(replay = 1)
+        val sharedFlow = MutableSharedFlow<Outcome<LocalMember, GetError>>(replay = 1)
 
-            coroutineScope.launch {
-                localDataSource.getAsFlow(id).collect { localGroupOutcome ->
-                    val localMember = localGroupOutcome.getOrElse {
-                        when (error) {
-                            GetError.NotFound -> {}
-                            GetError.ConnectionError, GetError.UnexpectedError ->
-                                sharedFlow.emit(mapError(error))
-                        }
-                        return@collect
+        coroutineScope.launch {
+            localDataSource.getAsFlow(id).collect { localGroupOutcome ->
+                val localMember = localGroupOutcome.getOrElse {
+                    when (error) {
+                        GetError.NotFound -> {}
+                        GetError.ConnectionError, GetError.UnexpectedError ->
+                            sharedFlow.emit(mapError(error))
                     }
-                    sharedFlow.emit(Success(localMember))
+                    return@collect
                 }
+                sharedFlow.emit(Success(localMember))
             }
-
-            coroutineScope.launch {
-                remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
-                    val remoteGroup = remoteGroupOutcome.getOrElse {
-                        sharedFlow.emit(mapError(error))
-                        return@collect
-                    }
-                    localDataSource.upsert(remoteGroup.toLocalMember())
-                }
-            }
-
-            return sharedFlow.asSharedFlow()
         }
+
+        coroutineScope.launch {
+            remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
+                val remoteGroup = remoteGroupOutcome.getOrElse {
+                    sharedFlow.emit(mapError(error))
+                    return@collect
+                }
+                localDataSource.upsert(remoteGroup.toLocalMember())
+            }
+        }
+
+        return sharedFlow.asSharedFlow()
     }
 }

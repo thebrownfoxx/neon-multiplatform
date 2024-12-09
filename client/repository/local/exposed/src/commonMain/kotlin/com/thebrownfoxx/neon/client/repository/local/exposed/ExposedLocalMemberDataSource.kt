@@ -16,7 +16,6 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
 import com.thebrownfoxx.outcome.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -33,7 +32,6 @@ class ExposedLocalMemberDataSource(
     override fun getAsFlow(id: MemberId) = reactiveCache.getAsFlow(id)
 
     override suspend fun upsert(member: LocalMember): UnitOutcome<DataOperationError> {
-        memberBlockContext("upsert") {
             return dataTransaction {
                 LocalMemberTable.upsert {
                     it[id] = member.id.toJavaUuid()
@@ -41,21 +39,18 @@ class ExposedLocalMemberDataSource(
                     it[avatarUrl] = member.avatarUrl?.value
                 }
             }
-                .mapUnitOperationTransaction(context)
+                .mapUnitOperationTransaction()
                 .onSuccess { reactiveCache.update(member.id) }
-        }
     }
 
     private suspend fun get(id: MemberId): Outcome<LocalMember, GetError> {
-        memberBlockContext("get") {
             return dataTransaction {
                 LocalMemberTable
                     .selectAll()
                     .where(LocalMemberTable.id eq id.toJavaUuid())
-                    .firstOrNotFound(context)
+                    .firstOrNotFound()
                     .map { it.toLocalMember() }
-            }.mapGetTransaction(context)
-        }
+            }.mapGetTransaction()
     }
 
     private fun ResultRow.toLocalMember() = LocalMember(

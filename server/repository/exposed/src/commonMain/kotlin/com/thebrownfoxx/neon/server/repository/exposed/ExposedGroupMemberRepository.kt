@@ -16,9 +16,9 @@ import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
-import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onInnerSuccess
 import com.thebrownfoxx.outcome.onOuterFailure
 import org.jetbrains.exposed.sql.Database
@@ -44,39 +44,33 @@ class ExposedGroupMemberRepository(
     override fun getAdminsAsFlow(groupId: GroupId) = reactiveAdminsCache.getAsFlow(groupId)
 
     override suspend fun getMembers(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
-        memberBlockContext("getMembers") {
-            return dataTransaction {
-                GroupMemberTable
-                    .selectAll()
-                    .where(GroupMemberTable.groupId eq groupId.toJavaUuid())
-                    .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
-            }.mapOperationTransaction(context)
-        }
+        return dataTransaction {
+            GroupMemberTable
+                .selectAll()
+                .where(GroupMemberTable.groupId eq groupId.toJavaUuid())
+                .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
+        }.mapOperationTransaction()
     }
 
     override suspend fun getGroups(memberId: MemberId): Outcome<List<GroupId>, DataOperationError> {
-        memberBlockContext("getGroups") {
-            return dataTransaction {
-                GroupMemberTable
-                    .selectAll()
-                    .where(GroupMemberTable.memberId eq memberId.toJavaUuid())
-                    .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
-            }.mapOperationTransaction(context)
-        }
+        return dataTransaction {
+            GroupMemberTable
+                .selectAll()
+                .where(GroupMemberTable.memberId eq memberId.toJavaUuid())
+                .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
+        }.mapOperationTransaction()
     }
 
     override suspend fun getAdmins(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
-        memberBlockContext("getAdmins") {
-            return dataTransaction {
-                GroupMemberTable
-                    .selectAll()
-                    .where(
-                        (GroupMemberTable.groupId eq groupId.toJavaUuid()) and
-                                (GroupMemberTable.isAdmin eq true)
-                    )
-                    .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
-            }.mapOperationTransaction(context)
-        }
+        return dataTransaction {
+            GroupMemberTable
+                .selectAll()
+                .where(
+                    (GroupMemberTable.groupId eq groupId.toJavaUuid()) and
+                            (GroupMemberTable.isAdmin eq true)
+                )
+                .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
+        }.mapOperationTransaction()
     }
 
     override suspend fun addMember(
@@ -84,36 +78,34 @@ class ExposedGroupMemberRepository(
         memberId: MemberId,
         isAdmin: Boolean,
     ): ReversibleUnitOutcome<AddError> {
-        memberBlockContext("addMember") {
-            dataTransaction { getMembership(groupId, memberId) }
-                .onInnerSuccess { return Failure(AddError.Duplicate).asReversible() }
-                .onOuterFailure {
-                    return mapError(error.toAddError()).asReversible()
-                }
-
-            val id = UUID.randomUUID()
-            return dataTransaction {
-                GroupMemberTable.tryAdd(context) {
-                    it[this.id] = id
-                    it[this.groupId] = groupId.toJavaUuid()
-                    it[this.memberId] = memberId.toJavaUuid()
-                    it[this.isAdmin] = isAdmin
-                }
+        dataTransaction { getMembership(groupId, memberId) }
+            .onInnerSuccess { return Failure(AddError.Duplicate).asReversible() }
+            .onOuterFailure {
+                return mapError(error.toAddError()).asReversible()
             }
-                .mapAddTransaction(context)
-                .asReversible(
-                    finalize = {
-                        reactiveMembersCache.update(groupId)
-                        reactiveGroupsCache.update(memberId)
-                        reactiveAdminsCache.update(groupId)
-                    }
-                ) {
-                    dataTransaction { GroupMemberTable.deleteWhere { GroupMemberTable.id eq id } }
-                }
+
+        val id = UUID.randomUUID()
+        return dataTransaction {
+            GroupMemberTable.tryAdd {
+                it[this.id] = id
+                it[this.groupId] = groupId.toJavaUuid()
+                it[this.memberId] = memberId.toJavaUuid()
+                it[this.isAdmin] = isAdmin
+            }
         }
+            .mapAddTransaction()
+            .asReversible(
+                finalize = {
+                    reactiveMembersCache.update(groupId)
+                    reactiveGroupsCache.update(memberId)
+                    reactiveAdminsCache.update(groupId)
+                }
+            ) {
+                dataTransaction { GroupMemberTable.deleteWhere { GroupMemberTable.id eq id } }
+            }
     }
 
-    private fun BlockContextScope.getMembership(
+    private fun getMembership(
         groupId: GroupId,
         memberId: MemberId,
     ): Outcome<ResultRow, GetError> {
@@ -123,7 +115,7 @@ class ExposedGroupMemberRepository(
                 (GroupMemberTable.groupId eq groupId.toJavaUuid()) and
                         (GroupMemberTable.memberId eq memberId.toJavaUuid())
             )
-            .firstOrNotFound(context)
+            .firstOrNotFound()
     }
 }
 

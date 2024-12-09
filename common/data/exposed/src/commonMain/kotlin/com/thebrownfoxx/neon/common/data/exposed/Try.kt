@@ -2,9 +2,9 @@ package com.thebrownfoxx.neon.common.data.exposed
 
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.UpdateError
-import com.thebrownfoxx.outcome.BlockContext
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.StackTrace
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
@@ -17,15 +17,15 @@ import org.jetbrains.exposed.sql.statements.UpdateStatement
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 inline fun <T : Table> T.tryAdd(
-    context: BlockContext,
+    stackTrace: StackTrace = StackTrace(),
     crossinline body: T.(InsertStatement<Number>) -> Unit,
 ): Outcome<InsertStatement<Number>, AddError> {
-    return runFailing(context) {
+    return runFailing(stackTrace) {
         InsertStatement<Number>(this@tryAdd).apply {
             body(this)
             execute(TransactionManager.current())
         }
-    }.mapError(context) { error ->
+    }.mapError(stackTrace) { error ->
         when (error) {
             is ExposedSQLException -> AddError.Duplicate
             else -> AddError.ConnectionError
@@ -34,15 +34,15 @@ inline fun <T : Table> T.tryAdd(
 }
 
 inline fun <T : Table> T.tryUpdate(
-    context: BlockContext,
+    stackTrace: StackTrace = StackTrace(),
     limit: Int? = null,
     crossinline body: T.(UpdateStatement) -> Unit,
 ): UnitOutcome<UpdateError> {
-    val changedRows = runFailing(context) {
+    val changedRows = runFailing(stackTrace) {
         val query = UpdateStatement(this, limit, null)
         body(query)
         query.execute(TransactionManager.current()) ?: 0
-    }.mapError(context) { error ->
+    }.mapError(stackTrace) { error ->
         when (error) {
             is ExposedSQLException -> UpdateError.NotFound
             else -> UpdateError.ConnectionError
@@ -52,8 +52,8 @@ inline fun <T : Table> T.tryUpdate(
     return when (changedRows) {
         is Success -> when {
             changedRows.value >= 0 -> UnitSuccess
-            else -> Failure(UpdateError.NotFound, context)
+            else -> Failure(UpdateError.NotFound, stackTrace)
         }
-        is Failure -> Failure(changedRows.error, context)
+        is Failure -> Failure(changedRows.error, stackTrace)
     }
 }

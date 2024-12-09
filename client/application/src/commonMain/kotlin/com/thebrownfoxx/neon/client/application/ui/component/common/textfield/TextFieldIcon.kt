@@ -6,8 +6,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 import com.thebrownfoxx.neon.client.application.ui.component.common.AnimatedVisibility
+import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 
 @Composable
 fun TextFieldIcon(

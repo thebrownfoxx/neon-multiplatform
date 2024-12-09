@@ -18,9 +18,9 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageUnexpectedError
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.memberBlockContext
 import com.thebrownfoxx.outcome.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,43 +39,37 @@ class WebSocketRemoteMessageDataSource(
     private val messageCache = Cache<MessageId, Outcome<Message, GetError>>(dataSourceScope)
 
     init {
-        memberBlockContext("init") {
-            session.subscribe<GetConversationPreviewsMemberNotFound> { response ->
-                logger.logError(response, context)
-            }
-            session.subscribe<GetConversationPreviewsUnexpectedError> {
-                conversationsCache.emit(Failure(DataOperationError.UnexpectedError))
-            }
-            session.subscribe<GetConversationPreviewsSuccessful> { response ->
-                conversationsCache.emit(Success(response.conversations))
-            }
+        session.subscribe<GetConversationPreviewsMemberNotFound> { response ->
+            logger.logError(response)
+        }
+        session.subscribe<GetConversationPreviewsUnexpectedError> {
+            conversationsCache.emit(Failure(DataOperationError.UnexpectedError))
+        }
+        session.subscribe<GetConversationPreviewsSuccessful> { response ->
+            conversationsCache.emit(Success(response.conversations))
+        }
 
-            session.subscribe<GetMessageUnauthorized> { response ->
-                logger.logError(response, context)
-            }
-            session.subscribe<GetMessageNotFound> { response ->
-                messageCache.emit(response.id, Failure(GetError.NotFound))
-            }
-            session.subscribe<GetMessageUnexpectedError> { response ->
-                messageCache.emit(response.id, Failure(GetError.UnexpectedError))
-            }
-            session.subscribe<GetMessageSuccessful> { response ->
-                messageCache.emit(response.message.id, Success(response.message))
-            }
+        session.subscribe<GetMessageUnauthorized> { response ->
+            logger.logError(response)
+        }
+        session.subscribe<GetMessageNotFound> { response ->
+            messageCache.emit(response.id, Failure(GetError.NotFound))
+        }
+        session.subscribe<GetMessageUnexpectedError> { response ->
+            messageCache.emit(response.id, Failure(GetError.UnexpectedError))
+        }
+        session.subscribe<GetMessageSuccessful> { response ->
+            messageCache.emit(response.message.id, Success(response.message))
         }
     }
 
-    override val conversationPreviews = memberBlockContext("conversationPreviews") {
-        conversationsCache.getAsFlow {
-            session.send(GetConversationsRequest())
-                .onFailure { conversationsCache.emit(Failure(DataOperationError.ConnectionError)) }
-        }
+    override val conversationPreviews = conversationsCache.getAsFlow {
+        session.send(GetConversationsRequest())
+            .onFailure { conversationsCache.emit(Failure(DataOperationError.ConnectionError)) }
     }
 
-    override fun getMessageAsFlow(id: MessageId) = memberBlockContext("getMesssageAsFlow") {
-        messageCache.getAsFlow(id) {
-            session.send(GetMessageRequest(id))
-                .onFailure { conversationsCache.emit(Failure(DataOperationError.ConnectionError)) }
-        }
+    override fun getMessageAsFlow(id: MessageId) = messageCache.getAsFlow(id) {
+        session.send(GetMessageRequest(id))
+            .onFailure { conversationsCache.emit(Failure(DataOperationError.ConnectionError)) }
     }
 }

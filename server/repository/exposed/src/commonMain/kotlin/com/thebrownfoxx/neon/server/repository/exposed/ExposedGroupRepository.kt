@@ -20,7 +20,6 @@ import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -36,34 +35,30 @@ class ExposedGroupRepository(
     override fun getAsFlow(id: GroupId) = reactiveCache.getAsFlow(id)
 
     override suspend fun get(id: GroupId): Outcome<Group, GetError> {
-        memberBlockContext("get") {
-            return dataTransaction {
-                GroupTable
-                    .selectAll()
-                    .where(GroupTable.id eq id.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it.toGroup() }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            GroupTable
+                .selectAll()
+                .where(GroupTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toGroup() }
+        }.mapGetTransaction()
     }
 
     override suspend fun add(group: Group): ReversibleUnitOutcome<AddError> {
-        memberBlockContext("add") {
-            return dataTransaction {
-                GroupTable.tryAdd(context) {
-                    it[id] = group.id.toJavaUuid()
-                    if (group is Community) {
-                        it[name] = group.name
-                        it[avatarUrl] = group.avatarUrl?.value
-                        it[isGod] = group.isGod
-                    }
+        return dataTransaction {
+            GroupTable.tryAdd {
+                it[id] = group.id.toJavaUuid()
+                if (group is Community) {
+                    it[name] = group.name
+                    it[avatarUrl] = group.avatarUrl?.value
+                    it[isGod] = group.isGod
                 }
             }
-                .mapAddTransaction(context)
-                .asReversible {
-                    dataTransaction { GroupTable.deleteWhere { id eq group.id.toJavaUuid() } }
-                }
         }
+            .mapAddTransaction()
+            .asReversible {
+                dataTransaction { GroupTable.deleteWhere { id eq group.id.toJavaUuid() } }
+            }
     }
 
     private fun ResultRow.toGroup(): Group {

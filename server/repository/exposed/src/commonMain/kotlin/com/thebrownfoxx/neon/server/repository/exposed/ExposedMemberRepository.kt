@@ -17,12 +17,12 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.neon.server.repository.MemberRepository
 import com.thebrownfoxx.neon.server.repository.MemberRepository.AddMemberError
-import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
 import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.transform
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -39,48 +39,42 @@ class ExposedMemberRepository(
     override fun getAsFlow(id: MemberId) = reactiveCache.getAsFlow(id)
 
     override suspend fun get(id: MemberId): Outcome<Member, GetError> {
-        memberBlockContext("get") {
-            return dataTransaction {
-                MemberTable
-                    .selectAll()
-                    .where(MemberTable.id eq id.toJavaUuid())
-                    .firstOrNotFound(context)
-                    .map { it.toMember() }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            MemberTable
+                .selectAll()
+                .where(MemberTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toMember() }
+        }.mapGetTransaction()
     }
 
     override suspend fun getId(username: String): Outcome<MemberId, GetError> {
-        memberBlockContext("getId") {
-            return dataTransaction {
-                MemberTable
-                    .selectAll()
-                    .where(MemberTable.username eq username)
-                    .firstOrNotFound(context)
-                    .map { MemberId(it[MemberTable.id].toCommonUuid()) }
-            }.mapGetTransaction(context)
-        }
+        return dataTransaction {
+            MemberTable
+                .selectAll()
+                .where(MemberTable.username eq username)
+                .firstOrNotFound()
+                .map { MemberId(it[MemberTable.id].toCommonUuid()) }
+        }.mapGetTransaction()
     }
 
     override suspend fun add(member: Member): ReversibleUnitOutcome<AddMemberError> {
-        memberBlockContext("add") {
-            val usernameExists = usernameExists(member.username)
-                .getOrElse { return this.asReversible() }
-            if (usernameExists) return Failure(AddMemberError.DuplicateUsername).asReversible()
+        val usernameExists = usernameExists(member.username)
+            .getOrElse { return this.asReversible() }
+        if (usernameExists) return Failure(AddMemberError.DuplicateUsername).asReversible()
 
-            return dataTransaction {
-                MemberTable.tryAdd(context) {
-                    it[id] = member.id.toJavaUuid()
-                    it[username] = member.username
-                    it[avatarUrl] = member.avatarUrl?.value
-                }
+        return dataTransaction {
+            MemberTable.tryAdd() {
+                it[id] = member.id.toJavaUuid()
+                it[username] = member.username
+                it[avatarUrl] = member.avatarUrl?.value
             }
-                .mapAddTransaction(context)
-                .mapError { it.toAddMemberError() }
-                .asReversible {
-                    dataTransaction { MemberTable.deleteWhere { id eq member.id.toJavaUuid() } }
-                }
         }
+            .mapAddTransaction()
+            .mapError { it.toAddMemberError() }
+            .asReversible {
+                dataTransaction { MemberTable.deleteWhere { id eq member.id.toJavaUuid() } }
+            }
     }
 
     private fun ResultRow.toMember() = Member(
@@ -89,7 +83,7 @@ class ExposedMemberRepository(
         avatarUrl = this[MemberTable.avatarUrl]?.let { Url(it) },
     )
 
-    private suspend fun BlockContextScope.usernameExists(
+    private suspend fun usernameExists(
         username: String,
     ): Outcome<Boolean, AddMemberError> {
         return getId(username).transform(

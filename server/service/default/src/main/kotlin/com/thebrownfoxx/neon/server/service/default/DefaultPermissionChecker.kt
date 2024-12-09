@@ -10,29 +10,25 @@ import com.thebrownfoxx.neon.server.service.PermissionChecker.IsGroupAdminUnexpe
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 
 class DefaultPermissionChecker(
     private val groupMemberRepository: GroupMemberRepository,
 ) : PermissionChecker {
     override suspend fun isGod(memberId: MemberId): Outcome<Boolean, IsGodUnexpectedError> {
-        memberBlockContext("isGod") {
-            val communities = groupMemberRepository.getGroups(memberId).getOrElse {
-                return mapError(IsGodUnexpectedError)
-            }.filterIsInstance<Community>()
-            return Success(communities.any { it.isGod })
-        }
+        val communities = groupMemberRepository.getGroups(memberId).getOrElse {
+            return mapError(IsGodUnexpectedError)
+        }.filterIsInstance<Community>()
+        return Success(communities.any { it.isGod })
     }
 
     override suspend fun isGroupAdmin(
         groupId: GroupId,
         memberId: MemberId,
     ): Outcome<Boolean, IsGroupAdminUnexpectedError> {
-        memberBlockContext("isGroupAdmin") {
-            val admins = groupMemberRepository.getAdmins(groupId).getOrElse {
-                return mapError(IsGroupAdminUnexpectedError)
-            }
-            return Success(memberId in admins)
+        val admins = groupMemberRepository.getAdmins(groupId).getOrElse {
+            return mapError(IsGroupAdminUnexpectedError)
         }
+        return Success(memberId in admins)
     }
 }

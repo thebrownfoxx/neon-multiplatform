@@ -8,12 +8,12 @@ import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessageLabel
 import com.thebrownfoxx.neon.common.websocket.model.deserialize
 import com.thebrownfoxx.neon.common.websocket.model.typeOf
-import com.thebrownfoxx.outcome.BlockContextScope
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.getOrElse
 import com.thebrownfoxx.outcome.getOrNull
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onFailure
 import com.thebrownfoxx.outcome.onSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -42,40 +42,33 @@ abstract class WebSocketSession(private val logger: Logger) {
     suspend inline fun <reified T : WebSocketMessage> sendAndWait(
         message: T,
     ): Outcome<SerializedWebSocketMessage, SendAndWaitError> {
-        memberBlockContext("sendAndWaitForResponse") {
-            if (message.requestId != null) return Failure(SendAndWaitError.NoRequestIdError)
-            send(message).onFailure { return mapError(SendAndWaitError.SendError) }
-            return withTimeout(waitTimeout) {
-                incomingMessages.first { it.getRequestId().getOrNull() == message.requestId }
-            }.mapError { SendAndWaitError.WaitTimeout }
-        }
+        if (message.requestId != null) return Failure(SendAndWaitError.NoRequestIdError)
+        send(message).onFailure { return mapError(SendAndWaitError.SendError) }
+        return withTimeout(waitTimeout) {
+            incomingMessages.first { it.getRequestId().getOrNull() == message.requestId }
+        }.mapError { SendAndWaitError.WaitTimeout }
     }
 
     inline fun <reified T : WebSocketMessage> subscribe(
         crossinline action: (T) -> Unit,
     ): Job {
-        memberBlockContext("subscribe") {
-            return internalSessionScope.launch {
-                incomingMessages
-                    .filter { it.getLabel().getOrNull() == WebSocketMessageLabel(T::class) }
-                    .collect { serializedMessage ->
-                        serializedMessage.deserialize<T>()
-                            .onSuccess { action(it) }
-                            .onFailure { logSerializationFailure(serializedMessage) }
-                    }
-            }
+        return internalSessionScope.launch {
+            incomingMessages
+                .filter { it.getLabel().getOrNull() == WebSocketMessageLabel(T::class) }
+                .collect { serializedMessage ->
+                    serializedMessage.deserialize<T>()
+                        .onSuccess { action(it) }
+                        .onFailure { logSerializationFailure(serializedMessage) }
+                }
         }
     }
 
     @PublishedApi
-    internal fun BlockContextScope.logSerializationFailure(
+    internal fun logSerializationFailure(
         serializedMessage: SerializedWebSocketMessage,
     ) {
         val string = serializedMessage.serializedValue.getOrElse { serializedMessage.toString() }
-        internalLogger.logError(
-            message = "Failed to deserialize $string",
-            context = context,
-        )
+        internalLogger.logError(message = "Failed to deserialize $string")
     }
 
     @PublishedApi

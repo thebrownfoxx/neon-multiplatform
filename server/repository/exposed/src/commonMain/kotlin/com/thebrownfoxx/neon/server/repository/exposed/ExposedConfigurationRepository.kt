@@ -12,7 +12,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.fold
 import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.memberBlockContext
+import com.thebrownfoxx.outcome.mapError
 import com.thebrownfoxx.outcome.onFailure
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -24,40 +24,36 @@ class ExposedConfigurationRepository(
     database: Database,
 ) : ConfigurationRepository, ExposedDataSource(database, ConfigurationTable) {
     override suspend fun getInitialized(): Outcome<Boolean, DataOperationError> {
-        memberBlockContext("getInitialized") {
-            return dataTransaction {
-                ConfigurationTable
-                    .selectAll()
-                    .where(ConfigurationTable.key eq ConfigurationTable.INITIALIZED_KEY)
-                    .firstOrNotFound(context)
-                    .fold(
-                        onSuccess = { it[ConfigurationTable.value].toBoolean() },
-                        onFailure = { false },
-                    )
-            }.mapOperationTransaction(context)
-        }
+        return dataTransaction {
+            ConfigurationTable
+                .selectAll()
+                .where(ConfigurationTable.key eq ConfigurationTable.INITIALIZED_KEY)
+                .firstOrNotFound()
+                .fold(
+                    onSuccess = { it[ConfigurationTable.value].toBoolean() },
+                    onFailure = { false },
+                )
+        }.mapOperationTransaction()
     }
 
     override suspend fun setInitialized(
         initialized: Boolean,
     ): ReversibleUnitOutcome<DataOperationError> {
-        memberBlockContext("setInitialized") {
-            val oldInitialized = getInitialized()
-                .getOrElse { return mapError(error).asReversible() }
+        val oldInitialized = getInitialized()
+            .getOrElse { return mapError(error).asReversible() }
 
+        dataTransaction {
+            ConfigurationTable.upsert {
+                it[key] = INITIALIZED_KEY
+                it[value] = initialized.toString()
+            }
+        }.onFailure { return mapError(error.toDataOperationError()).asReversible() }
+
+        return UnitSuccess.asReversible {
             dataTransaction {
                 ConfigurationTable.upsert {
                     it[key] = INITIALIZED_KEY
-                    it[value] = initialized.toString()
-                }
-            }.onFailure { return mapError(error.toDataOperationError()).asReversible() }
-
-            return UnitSuccess.asReversible {
-                dataTransaction {
-                    ConfigurationTable.upsert {
-                        it[key] = INITIALIZED_KEY
-                        it[value] = oldInitialized.toString()
-                    }
+                    it[value] = oldInitialized.toString()
                 }
             }
         }

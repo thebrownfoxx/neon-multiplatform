@@ -6,7 +6,7 @@ kotlinx-serialization = "1.7.3"
 kotlinx-datetime = "0.6.1"
 
 # Common
-outcome = "0.0.9"
+outcome = "0.1.0"
 kotlincrypto-hash = "0.5.3"
 kotlincrypto-random = "0.3.2"
 

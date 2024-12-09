@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.model
 
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.Url
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import kotlinx.serialization.Serializable
 
 @Serializable

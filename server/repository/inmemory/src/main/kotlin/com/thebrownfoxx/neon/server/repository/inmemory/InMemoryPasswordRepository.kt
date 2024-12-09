@@ -7,20 +7,18 @@ import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.hash.Hash
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.PasswordRepository
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.memberBlockContext
 
 class InMemoryPasswordRepository : PasswordRepository {
     private val passwordHashes = mutableMapOf<MemberId, Hash>()
 
     override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
-        memberBlockContext("getHash") {
-            return when (val passwordHash = passwordHashes[memberId]) {
-                null -> Failure(GetError.NotFound)
-                else -> Success(passwordHash)
-            }
+        return when (val passwordHash = passwordHashes[memberId]) {
+            null -> Failure(GetError.NotFound)
+            else -> Success(passwordHash)
         }
     }
 

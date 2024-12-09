@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
-import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.client.application.ui.extension.rememberMutableStateOf
+import com.thebrownfoxx.neon.common.type.id.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlin.time.Duration

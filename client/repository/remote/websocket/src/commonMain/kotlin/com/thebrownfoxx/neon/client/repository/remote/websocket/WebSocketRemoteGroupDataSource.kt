@@ -11,9 +11,9 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulChatGroup
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulCommunity
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupUnexpectedError
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.memberBlockContext
 import com.thebrownfoxx.outcome.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,26 +27,22 @@ class WebSocketRemoteGroupDataSource(
     private val cache = Cache<GroupId, Outcome<Group, GetError>>(dataSourceScope)
 
     init {
-        memberBlockContext("init") {
-            session.subscribe<GetGroupNotFound> { response ->
-                cache.emit(response.id, Failure(GetError.NotFound))
-            }
-            session.subscribe<GetGroupUnexpectedError> { response ->
-                cache.emit(response.id, Failure(GetError.UnexpectedError))
-            }
-            session.subscribe<GetGroupSuccessfulChatGroup> { response ->
-                cache.emit(response.chatGroup.id, Success(response.chatGroup))
-            }
-            session.subscribe<GetGroupSuccessfulCommunity> { response ->
-                cache.emit(response.community.id, Success(response.community))
-            }
+        session.subscribe<GetGroupNotFound> { response ->
+            cache.emit(response.id, Failure(GetError.NotFound))
+        }
+        session.subscribe<GetGroupUnexpectedError> { response ->
+            cache.emit(response.id, Failure(GetError.UnexpectedError))
+        }
+        session.subscribe<GetGroupSuccessfulChatGroup> { response ->
+            cache.emit(response.chatGroup.id, Success(response.chatGroup))
+        }
+        session.subscribe<GetGroupSuccessfulCommunity> { response ->
+            cache.emit(response.community.id, Success(response.community))
         }
     }
 
-    override fun getAsFlow(id: GroupId) = memberBlockContext("getAsFlow") {
-        cache.getAsFlow(id) {
-            session.send(GetGroupRequest(id))
-                .onFailure { cache.emit(id, Failure(GetError.ConnectionError)) }
-        }
+    override fun getAsFlow(id: GroupId) = cache.getAsFlow(id) {
+        session.send(GetGroupRequest(id))
+            .onFailure { cache.emit(id, Failure(GetError.ConnectionError)) }
     }
 }

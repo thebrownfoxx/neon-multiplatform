@@ -19,8 +19,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.client.application.ui.extension.rememberMutableStateOf
+import com.thebrownfoxx.neon.common.type.id.Uuid
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
