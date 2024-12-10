@@ -19,7 +19,11 @@ import kotlinx.serialization.Serializable
 data object ChatRoute
 
 fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
-    val viewModel = viewModel { ChatViewModel(dependencies::getGroupManager) }
+    val viewModel = viewModel {
+        with(dependencies) {
+            ChatViewModel(groupManager, memberManager, messenger, logger)
+        }
+    }
     with(viewModel) {
         val chatPreviews by chatPreviews.collectAsStateWithLifecycle()
         val conversation by conversation.collectAsStateWithLifecycle()

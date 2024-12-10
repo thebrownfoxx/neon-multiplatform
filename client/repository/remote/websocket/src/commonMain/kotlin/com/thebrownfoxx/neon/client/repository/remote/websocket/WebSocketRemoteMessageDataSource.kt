@@ -10,9 +10,9 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsUnexpectedError
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -33,7 +33,7 @@ class WebSocketRemoteMessageDataSource(
 ) : RemoteMessageDataSource {
     private val dataSourceScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 
-    private val conversationsCache =
+    private val conversationPreviewsCache =
         SingleCache<Outcome<List<Message>, DataOperationError>>(dataSourceScope)
 
     private val messageCache = Cache<MessageId, Outcome<Message, GetError>>(dataSourceScope)
@@ -43,10 +43,10 @@ class WebSocketRemoteMessageDataSource(
             logger.logError(response)
         }
         session.subscribe<GetConversationPreviewsUnexpectedError> {
-            conversationsCache.emit(Failure(DataOperationError.UnexpectedError))
+            conversationPreviewsCache.emit(Failure(DataOperationError.UnexpectedError))
         }
         session.subscribe<GetConversationPreviewsSuccessful> { response ->
-            conversationsCache.emit(Success(response.conversations))
+            conversationPreviewsCache.emit(Success(response.conversations))
         }
 
         session.subscribe<GetMessageUnauthorized> { response ->
@@ -63,13 +63,13 @@ class WebSocketRemoteMessageDataSource(
         }
     }
 
-    override val conversationPreviews = conversationsCache.getAsFlow {
-        session.send(GetConversationsRequest())
-            .onFailure { conversationsCache.emit(Failure(DataOperationError.ConnectionError)) }
+    override val conversationPreviews = conversationPreviewsCache.getAsFlow {
+        session.send(GetConversationPreviewsRequest())
+            .onFailure { conversationPreviewsCache.emit(Failure(DataOperationError.ConnectionError)) }
     }
 
     override fun getMessageAsFlow(id: MessageId) = messageCache.getAsFlow(id) {
         session.send(GetMessageRequest(id))
-            .onFailure { conversationsCache.emit(Failure(DataOperationError.ConnectionError)) }
+            .onFailure { conversationPreviewsCache.emit(Failure(DataOperationError.ConnectionError)) }
     }
 }

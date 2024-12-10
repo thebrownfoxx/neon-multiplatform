@@ -24,6 +24,7 @@ import com.thebrownfoxx.outcome.map
 import com.thebrownfoxx.outcome.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -93,31 +94,15 @@ class ExposedLocalMessageDataSource(
     private suspend fun getConversations(): Outcome<LocalConversationPreviews, DataOperationError> {
         val memberId = getMemberId()
         return dataTransaction {
-            val groupId = LocalMessageTable.groupId.alias("group_id")
-            val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
-
-            val conversations = LocalMessageTable
-                .select(groupId, maxTimestamp)
-                .groupBy(LocalMessageTable.groupId)
-                .alias("conversations")
-
-            val conversationPreviews = LocalMessageTable
-                .join(
-                    conversations,
-                    JoinType.INNER,
-                ) {
-                    (LocalMessageTable.groupId eq conversations[groupId]) and
-                            (LocalMessageTable.timestamp eq conversations[maxTimestamp])
-                }.selectAll()
-
             val sent = LocalMessageTable.senderId eq memberId.toJavaUuid()
             val conversationRead = LocalMessageTable.delivery eq LocalDelivery.Read.name or sent
 
-            val unreadPreviews = conversationPreviews
+            val unreadPreviews = getConversationPreviews()
                 .where(not(conversationRead))
                 .map { it.toLocalMessage() }
 
-            val readPreviews = conversationPreviews.where(conversationRead)
+            val readPreviews = getConversationPreviews()
+                .where(conversationRead)
                 .map { it.toLocalMessage() }
 
             val nudgedPreviews = when {
@@ -131,6 +116,26 @@ class ExposedLocalMessageDataSource(
                 readPreviews = readPreviews.toSet(),
             )
         }.mapOperationTransaction()
+    }
+
+    private fun getConversationPreviews(): Query {
+        val groupId = LocalMessageTable.groupId.alias("group_id")
+        val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
+
+        val conversations = LocalMessageTable
+            .select(groupId, maxTimestamp)
+            .groupBy(LocalMessageTable.groupId)
+            .alias("conversations")
+
+        val conversationPreviews = LocalMessageTable
+            .join(
+                conversations,
+                JoinType.INNER,
+            ) {
+                (LocalMessageTable.groupId eq conversations[groupId]) and
+                        (LocalMessageTable.timestamp eq conversations[maxTimestamp])
+            }.selectAll()
+        return conversationPreviews
     }
 
     private suspend fun get(id: MessageId): Outcome<LocalMessage, GetError> {

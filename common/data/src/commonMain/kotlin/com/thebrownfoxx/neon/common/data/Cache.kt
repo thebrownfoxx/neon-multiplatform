@@ -36,10 +36,11 @@ class Cache<in K, V>(private val coroutineScope: CoroutineScope) {
 }
 
 class SingleCache<V>(private val coroutineScope: CoroutineScope) {
-    private val flow: MutableSharedFlow<V>? = null
+    private var flow: MutableSharedFlow<V>? = null
 
     fun getAsFlow(initialization: suspend MutableSharedFlow<V>.() -> Unit): Flow<V> {
         return flow ?: MutableSharedFlow<V>(replay = 1).apply {
+            flow = this
             coroutineScope.launch {
                 initialization()
             }

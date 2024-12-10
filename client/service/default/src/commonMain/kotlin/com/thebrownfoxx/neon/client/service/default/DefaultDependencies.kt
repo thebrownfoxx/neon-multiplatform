@@ -19,19 +19,26 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.getOrElse
 import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.onSuccess
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Database
+import kotlin.time.Duration.Companion.seconds
 
 class DefaultDependencies(
     httpClient: HttpClient,
     private val database: Database,
 ) : Dependencies {
+    override val logger = PrintLogger
+
     override val tokenStorage = InMemoryTokenStorage()
 
     override val authenticator = RemoteAuthenticator(httpClient, tokenStorage)
-
-    private val logger = PrintLogger
 
     private val webSocketProvider = KtorClientWebSocketProvider(
         httpClient,
@@ -40,8 +47,20 @@ class DefaultDependencies(
         logger,
     )
 
-    private val webSocketSession = AlwaysActiveWebSocketSession(logger).apply {
-        connect { webSocketProvider.getSession() }
+    private val webSocketSession = AlwaysActiveWebSocketSession(logger)
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            var done = false
+            while (!done) {
+                tokenStorage.get()
+                    .onSuccess {
+                        done = true
+                        webSocketSession.connect { webSocketProvider.getSession() }
+                    }
+                    .onFailure { delay(1.seconds) }
+            }
+        }
     }
 
     override val groupManager = run {

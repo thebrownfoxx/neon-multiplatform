@@ -19,7 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlin.time.Duration.Companion.seconds
@@ -62,9 +62,10 @@ class AlwaysActiveWebSocketSession(
     ) {
         sessionScope.launch {
             var sessionOutcome = tryConnecting(initializeSession)
-            val cancelReconnection = { cancel() }
-            val reconnect = suspend { sessionOutcome = tryConnecting(initializeSession) }
             while (true) {
+                val cancelReconnection = { cancel() }
+                val reconnect = suspend { sessionOutcome = tryConnecting(initializeSession) }
+
                 sessionOutcome
                     .onFailure { onConnectionFailure(cancelReconnection, reconnect) }
                     .onSuccess { session -> onSuccessfulConnection(session, reconnect) }
@@ -92,16 +93,15 @@ class AlwaysActiveWebSocketSession(
         }
     }
 
-    private fun onSuccessfulConnection(
+    private suspend fun onSuccessfulConnection(
         session: WebSocketSession,
         reconnect: suspend () -> Unit,
     ) {
-        logger.logError("WebSocket connected")
+        logger.logInfo("WebSocket connected")
         backoffTime = minBackoffTime
-        session.incomingMessages.onCompletion {
-            logger.logError("WebSocket finished. Reconnecting...")
-            reconnect()
-        }
+        session.incomingMessages.last()
+        logger.logInfo("WebSocket finished. Reconnecting...")
+        reconnect()
     }
 
     private suspend fun tryConnecting(

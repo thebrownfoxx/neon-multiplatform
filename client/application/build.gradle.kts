@@ -59,6 +59,7 @@ kotlin {
             implementation(projects.common)
             implementation(projects.server.model)
             implementation(projects.server.route)
+            implementation(projects.client.model)
             implementation(projects.client.websocket)
             implementation(projects.client.service)
             implementation(projects.client.service.default)

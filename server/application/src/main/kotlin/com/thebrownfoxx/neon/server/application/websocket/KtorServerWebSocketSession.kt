@@ -24,11 +24,12 @@ abstract class KtorServerWebSocketSession(
     val id: WebSocketSessionId = WebSocketSessionId(),
     val memberId: MemberId,
     private val session: WebSocketServerSession,
-    logger: Logger,
+    private val logger: Logger,
 ) : KtorWebSocketSession(session, logger) {
     override suspend fun send(message: Any?, type: Type) = runFailing {
         withContext(Dispatchers.IO) {
             session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
+            logger.logInfo("Sent: $message")
         }
     }.mapError { SendError }
 }
@@ -38,7 +39,7 @@ class MutableKtorServerWebSocketSession(
     id: WebSocketSessionId = WebSocketSessionId(),
     memberId: MemberId,
     private val session: WebSocketServerSession,
-    logger: Logger,
+    private val logger: Logger,
 ) : KtorServerWebSocketSession(id, memberId, session, logger) {
     private val _close = MutableSharedFlow<Unit>(replay = 1)
     override val close = _close.asSharedFlow()
@@ -47,8 +48,9 @@ class MutableKtorServerWebSocketSession(
     override val incomingMessages = _incomingMessages.asSharedFlow()
 
     suspend fun emitFrame(frame: Frame) {
-        _incomingMessages
-            .emit(KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame))
+        val message = KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame)
+        logger.logInfo("Received: ${message.serializedValue}")
+        _incomingMessages.emit(message)
     }
 
     override suspend fun close() {

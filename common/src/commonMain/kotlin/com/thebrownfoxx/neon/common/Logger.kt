@@ -10,14 +10,14 @@ interface Logger {
 
 object PrintLogger : Logger {
     override fun logInfo(message: Any, stackTrace: StackTrace) {
-        println("INFO: $message $stackTrace")
+        println("INFO: $message ${stackTrace.label}")
     }
 
     override fun logError(message: Any, stackTrace: StackTrace) {
-        println("ERROR: $message $stackTrace")
+        println("ERROR: $message ${stackTrace.label}")
     }
 
     override fun logDebug(message: Any, stackTrace: StackTrace) {
-        println("DEBUG: $message $stackTrace")
+        println("DEBUG: $message ${stackTrace.label}")
     }
 }

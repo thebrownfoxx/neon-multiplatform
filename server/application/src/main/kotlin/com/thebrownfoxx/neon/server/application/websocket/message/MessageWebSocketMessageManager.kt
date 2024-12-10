@@ -2,10 +2,9 @@ package com.thebrownfoxx.neon.server.application.websocket.message
 
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
+import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsMemberNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationsUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -47,10 +46,10 @@ class MessageWebSocketMessageManager(
                 }.onFailure {
                     when (error) {
                         GetConversationPreviewsError.MemberNotFound ->
-                            session.send(GetConversationsMemberNotFound(session.memberId))
+                            session.send(GetConversationPreviewsMemberNotFound(session.memberId))
 
                         GetConversationPreviewsError.UnexpectedError ->
-                            session.send(GetConversationsUnexpectedError(session.memberId))
+                            session.send(GetConversationPreviewsMemberNotFound(session.memberId))
                     }
                 }
             }
