@@ -8,8 +8,8 @@ import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberUnexpectedError
 import com.thebrownfoxx.neon.server.service.MemberManager
 import com.thebrownfoxx.neon.server.service.MemberManager.GetMemberError
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,7 +34,7 @@ class MemberWebSocketMessageManager(
             memberManager.getMember(id).collect { memberOutcome ->
                 memberOutcome.onSuccess { member ->
                     session.send(GetMemberSuccessful(member))
-                }.onFailure {
+                }.onFailure { error ->
                     when (error) {
                         GetMemberError.NotFound -> session.send(GetMemberNotFound(id))
                         GetMemberError.UnexpectedError -> session.send(GetMemberUnexpectedError(id))

@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage.DeserializationError
 import com.thebrownfoxx.neon.common.websocket.model.Type
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessageHeader
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.serialization.WebsocketContentConverter
 import io.ktor.serialization.deserialize

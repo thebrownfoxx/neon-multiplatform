@@ -24,9 +24,8 @@ import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.map
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -80,7 +79,7 @@ class ExposedMessageRepository(
 
     override suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError> {
         val oldMessage = get(message.id)
-            .getOrElse { return mapError(error.toUpdateError()).asReversible() }
+            .getOrElse { return Failure(it.toUpdateError()).asReversible() }
 
         return dataTransaction { updateMessage(message) }
             .mapUpdateTransaction()

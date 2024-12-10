@@ -4,12 +4,11 @@ import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,7 +57,7 @@ class AlwaysActiveWebSocketSession(
     }
 
     fun connect(
-        initializeSession: suspend () -> Outcome<WebSocketSession, ConnectWebSocketError>,
+        initializeSession: suspend () -> Outcome<WebSocketSession, WebSocketConnectionError>,
     ) {
         sessionScope.launch {
             var sessionOutcome = tryConnecting(initializeSession)
@@ -67,25 +66,27 @@ class AlwaysActiveWebSocketSession(
                 val reconnect = suspend { sessionOutcome = tryConnecting(initializeSession) }
 
                 sessionOutcome
-                    .onFailure { onConnectionFailure(cancelReconnection, reconnect) }
-                    .onSuccess { session -> onSuccessfulConnection(session, reconnect) }
+                    .onFailure { onConnectionFailure(it, log, cancelReconnection, reconnect) }
+                    .onSuccess { onSuccessfulConnection(it, reconnect) }
                 delay(backoffTime)
             }
         }
     }
 
-    private suspend fun Failure<ConnectWebSocketError>.onConnectionFailure(
+    private suspend fun onConnectionFailure(
+        error: WebSocketConnectionError,
+        log: String,
         cancelReconnection: () -> Unit,
         reconnect: suspend () -> Unit,
     ) {
         logger.logError("WebSocket connection failed. $log")
         when (error) {
-            ConnectWebSocketError.Unauthorized -> {
+            WebSocketConnectionError.Unauthorized -> {
                 logger.logError("WebSocket reconnection canceled")
                 cancelReconnection()
             }
 
-            ConnectWebSocketError.ConnectionError -> {
+            WebSocketConnectionError.ConnectionError -> {
                 logger.logError("Reconnecting WebSocket with backoff time $backoffTime")
                 reconnect()
                 backoffTime = minOf(backoffTime * 2, maxBackoffTime)
@@ -105,8 +106,8 @@ class AlwaysActiveWebSocketSession(
     }
 
     private suspend fun tryConnecting(
-        initializeSession: suspend () -> Outcome<WebSocketSession, ConnectWebSocketError>,
-    ): Outcome<WebSocketSession, ConnectWebSocketError> {
+        initializeSession: suspend () -> Outcome<WebSocketSession, WebSocketConnectionError>,
+    ): Outcome<WebSocketSession, WebSocketConnectionError> {
         return initializeSession().onSuccess { session ->
             collectionJob?.cancel()
             collectionJob?.join()

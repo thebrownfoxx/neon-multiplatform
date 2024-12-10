@@ -6,7 +6,7 @@ kotlinx-serialization = "1.7.3"
 kotlinx-datetime = "0.6.1"
 
 # Common
-outcome = "0.1.0"
+outcome = "0.2.0-alpha03"
 kotlincrypto-hash = "0.5.3"
 kotlincrypto-random = "0.3.2"
 
@@ -14,7 +14,6 @@ kotlincrypto-random = "0.3.2"
 ktor = "3.0.1"
 logback = "1.5.11"
 exposed = "0.56.0"
-h2 = "2.1.214"
 postgresql = "42.7.1"
 auth0-jwt = "4.4.0"
 
@@ -72,7 +71,6 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "k
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 
 # Other Server
-h2 = { module = "com.h2database:h2", version.ref = "h2" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 auth0-jwt = { module = "com.auth0:java-jwt", version.ref = "auth0-jwt" }

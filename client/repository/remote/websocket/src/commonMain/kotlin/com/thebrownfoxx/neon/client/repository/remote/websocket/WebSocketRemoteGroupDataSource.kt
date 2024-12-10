@@ -14,7 +14,7 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupUnexpectedErro
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.map.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

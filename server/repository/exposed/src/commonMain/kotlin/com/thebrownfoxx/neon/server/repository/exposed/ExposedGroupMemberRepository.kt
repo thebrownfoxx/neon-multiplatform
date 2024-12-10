@@ -18,9 +18,8 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onInnerSuccess
-import com.thebrownfoxx.outcome.onOuterFailure
+import com.thebrownfoxx.outcome.map.onInnerSuccess
+import com.thebrownfoxx.outcome.map.onOuterFailure
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -80,9 +79,7 @@ class ExposedGroupMemberRepository(
     ): ReversibleUnitOutcome<AddError> {
         dataTransaction { getMembership(groupId, memberId) }
             .onInnerSuccess { return Failure(AddError.Duplicate).asReversible() }
-            .onOuterFailure {
-                return mapError(error.toAddError()).asReversible()
-            }
+            .onOuterFailure { return Failure(it.toAddError()).asReversible() }
 
         val id = UUID.randomUUID()
         return dataTransaction {

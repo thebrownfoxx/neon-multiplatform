@@ -11,11 +11,11 @@ import com.thebrownfoxx.neon.common.websocket.model.typeOf
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.getOrNull
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.getOrNull
+import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +43,7 @@ abstract class WebSocketSession(private val logger: Logger) {
         message: T,
     ): Outcome<SerializedWebSocketMessage, SendAndWaitError> {
         if (message.requestId != null) return Failure(SendAndWaitError.NoRequestIdError)
-        send(message).onFailure { return mapError(SendAndWaitError.SendError) }
+        send(message).onFailure { return Failure(SendAndWaitError.SendError) }
         return withTimeout(waitTimeout) {
             incomingMessages.first { it.getRequestId().getOrNull() == message.requestId }
         }.mapError { SendAndWaitError.WaitTimeout }

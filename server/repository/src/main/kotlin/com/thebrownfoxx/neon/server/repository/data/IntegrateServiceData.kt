@@ -13,9 +13,8 @@ import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.onFailure
 
 suspend fun ServiceData.integrate(
     configurationRepository: ConfigurationRepository,
@@ -27,7 +26,7 @@ suspend fun ServiceData.integrate(
     messageRepository: MessageRepository,
     hasher: Hasher,
 ): UnitOutcome<Any> {
-    if (configurationRepository.getInitialized().getOrElse { return mapError(error) })
+    if (configurationRepository.getInitialized().getOrElse { return Failure(it) })
         return UnitSuccess
 
     println("Integrating $this")
@@ -36,11 +35,11 @@ suspend fun ServiceData.integrate(
             val (group, memberIds) = groupRecord
 
             groupRepository.add(groupRecord.group).register()
-                .onFailure { return@transaction mapError(error) }
+                .onFailure { return@transaction Failure(it) }
 
             for (memberId in memberIds) {
                 groupMemberRepository.addMember(group.id, memberId).register()
-                    .onFailure { return@transaction mapError(error) }
+                    .onFailure { return@transaction Failure(it) }
             }
 
             if (groupRecord is CommunityRecord) {
@@ -48,25 +47,25 @@ suspend fun ServiceData.integrate(
 
                 if (inviteCode != null) {
                     inviteCodeRepository.set(group.id, inviteCode).register()
-                        .onFailure { return@transaction mapError(error) }
+                        .onFailure { return@transaction Failure(it) }
                 }
             }
         }
 
         for ((member, _, password) in memberRecords) {
             memberRepository.add(member).register()
-                .onFailure { return@transaction mapError(error) }
+                .onFailure { return@transaction Failure(it) }
             passwordRepository.setHash(member.id, hasher.hash(password)).register()
-                .onFailure { return@transaction mapError(error) }
+                .onFailure { return@transaction Failure(it) }
         }
 
         for (message in messages) {
             messageRepository.add(message).register()
-                .onFailure { return@transaction mapError(error) }
+                .onFailure { return@transaction Failure(it) }
         }
 
         configurationRepository.setInitialized(true).register()
-            .onFailure { return@transaction mapError(error) }
+            .onFailure { return@transaction Failure(it) }
 
         UnitSuccess
     }

@@ -13,8 +13,8 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageUnexpected
 import com.thebrownfoxx.neon.server.service.Messenger
 import com.thebrownfoxx.neon.server.service.Messenger.GetConversationPreviewsError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,7 +43,7 @@ class MessageWebSocketMessageManager(
             messenger.getConversationPreviews(session.memberId).collect { conversationsOutcome ->
                 conversationsOutcome.onSuccess { conversations ->
                     session.send(GetConversationPreviewsSuccessful(conversations))
-                }.onFailure {
+                }.onFailure { error ->
                     when (error) {
                         GetConversationPreviewsError.MemberNotFound ->
                             session.send(GetConversationPreviewsMemberNotFound(session.memberId))
@@ -61,7 +61,7 @@ class MessageWebSocketMessageManager(
             messenger.getMessage(session.memberId, id).collect { messageOutcome ->
                 messageOutcome.onSuccess { message ->
                     session.send(GetMessageSuccessful(message))
-                }.onFailure {
+                }.onFailure { error ->
                     when (error) {
                         GetMessageError.Unauthorized ->
                             session.send(GetMessageUnauthorized(id, session.memberId))

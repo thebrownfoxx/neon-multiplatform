@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.common.extension
 
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout

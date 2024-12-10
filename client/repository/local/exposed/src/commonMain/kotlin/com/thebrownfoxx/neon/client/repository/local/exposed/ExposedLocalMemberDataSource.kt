@@ -15,8 +15,8 @@ import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.map
+import com.thebrownfoxx.outcome.map.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

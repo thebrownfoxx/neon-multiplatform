@@ -7,7 +7,7 @@ import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.mapError
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

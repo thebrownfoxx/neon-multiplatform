@@ -17,10 +17,9 @@ import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.transform
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.map
+import com.thebrownfoxx.outcome.map.transform
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -50,7 +49,7 @@ class ExposedInviteCodeRepository(
         groupId: GroupId,
         inviteCode: String,
     ): ReversibleUnitOutcome<SetInviteCodeError> {
-        val exists = inviteCodeExists(inviteCode).getOrElse { return this.asReversible() }
+        val exists = inviteCodeExists(inviteCode).getOrElse { return Failure(it).asReversible() }
         if (exists) return Failure(SetInviteCodeError.DuplicateInviteCode).asReversible()
 
         val id = UUID.randomUUID()
@@ -81,11 +80,11 @@ class ExposedInviteCodeRepository(
     ): Outcome<Boolean, SetInviteCodeError> {
         return getGroup(inviteCode).transform(
             onSuccess = { Success(true) },
-            onFailure = {
+            onFailure = { error ->
                 when (error) {
                     GetError.NotFound -> Success(true)
-                    GetError.ConnectionError -> mapError(SetInviteCodeError.ConnectionError)
-                    GetError.UnexpectedError -> mapError(SetInviteCodeError.UnexpectedError)
+                    GetError.ConnectionError -> Failure(SetInviteCodeError.ConnectionError)
+                    GetError.UnexpectedError -> Failure(SetInviteCodeError.UnexpectedError)
                 }
             }
         )

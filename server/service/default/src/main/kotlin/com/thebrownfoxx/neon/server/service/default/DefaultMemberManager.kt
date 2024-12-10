@@ -16,9 +16,9 @@ import com.thebrownfoxx.neon.server.service.MemberManager.RegisterMemberError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
@@ -47,7 +47,7 @@ class DefaultMemberManager(
         password: String,
     ): Outcome<MemberId, RegisterMemberError> {
             val inviteCodeGroupId = inviteCodeRepository.getGroup(inviteCode)
-                .getOrElse { return mapError(error.getInviteCodeGroupToRegisterMemberError()) }
+                .getOrElse { return Failure(it.getInviteCodeGroupToRegisterMemberError()) }
 
             if (username.length > usernameMaxLength)
                 return Failure(RegisterMemberError.UsernameTooLong(usernameMaxLength))
@@ -65,13 +65,13 @@ class DefaultMemberManager(
 
             return transaction {
                 memberRepository.add(member).register()
-                    .onFailure { return@transaction mapError(error.toRegisterMemberError()) }
+                    .onFailure { return@transaction Failure(it.toRegisterMemberError()) }
 
                 groupMemberRepository.addMember(inviteCodeGroupId, member.id).register()
-                    .onFailure { return@transaction mapError(RegisterMemberError.UnexpectedError) }
+                    .onFailure { return@transaction Failure(RegisterMemberError.UnexpectedError) }
 
                 passwordRepository.setHash(member.id, hasher.hash(password)).register()
-                    .onFailure { return@transaction mapError(RegisterMemberError.UnexpectedError) }
+                    .onFailure { return@transaction Failure(RegisterMemberError.UnexpectedError) }
 
                 Success(member.id)
             }

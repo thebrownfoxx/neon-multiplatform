@@ -20,10 +20,10 @@ import com.thebrownfoxx.neon.server.repository.MemberRepository.AddMemberError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.transform
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.map
+import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.transform
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -60,7 +60,7 @@ class ExposedMemberRepository(
 
     override suspend fun add(member: Member): ReversibleUnitOutcome<AddMemberError> {
         val usernameExists = usernameExists(member.username)
-            .getOrElse { return this.asReversible() }
+            .getOrElse { return Failure(it).asReversible() }
         if (usernameExists) return Failure(AddMemberError.DuplicateUsername).asReversible()
 
         return dataTransaction {
@@ -88,11 +88,11 @@ class ExposedMemberRepository(
     ): Outcome<Boolean, AddMemberError> {
         return getId(username).transform(
             onSuccess = { Success(true) },
-            onFailure = {
+            onFailure = { error ->
                 when (error) {
                     GetError.NotFound -> Success(false)
-                    GetError.ConnectionError -> mapError(AddMemberError.ConnectionError)
-                    GetError.UnexpectedError -> mapError(AddMemberError.UnexpectedError)
+                    GetError.ConnectionError -> Failure(AddMemberError.ConnectionError)
+                    GetError.UnexpectedError -> Failure(AddMemberError.UnexpectedError)
                 }
             }
         )

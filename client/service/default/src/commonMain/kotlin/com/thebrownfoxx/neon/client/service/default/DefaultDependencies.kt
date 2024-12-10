@@ -13,14 +13,13 @@ import com.thebrownfoxx.neon.client.service.Dependencies
 import com.thebrownfoxx.neon.client.service.Dependencies.GetGroupManagerError
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.websocket.AlwaysActiveWebSocketSession
-import com.thebrownfoxx.neon.client.websocket.ConnectWebSocketError
+import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,8 +90,8 @@ class DefaultDependencies(
     override suspend fun getGroupManager(): Outcome<GroupManager, GetGroupManagerError> {
         val localDataSource = ExposedLocalGroupDataSource(database)
 
-        val webSocketSession = webSocketProvider.getSession().getOrElse {
-            return mapError(error.toGetGroupManagerError())
+        val webSocketSession = webSocketProvider.getSession().getOrElse { error ->
+            return Failure(error.toGetGroupManagerError())
         }
 
         val remoteDataSource = WebSocketRemoteGroupDataSource(webSocketSession)
@@ -102,8 +101,8 @@ class DefaultDependencies(
         return Success(DefaultGroupManager(repository))
     }
 
-    private fun ConnectWebSocketError.toGetGroupManagerError() = when (this) {
-        ConnectWebSocketError.Unauthorized -> GetGroupManagerError.Unauthorized
-        ConnectWebSocketError.ConnectionError -> GetGroupManagerError.ConnectionError
+    private fun WebSocketConnectionError.toGetGroupManagerError() = when (this) {
+        WebSocketConnectionError.Unauthorized -> GetGroupManagerError.Unauthorized
+        WebSocketConnectionError.ConnectionError -> GetGroupManagerError.ConnectionError
     }
 }

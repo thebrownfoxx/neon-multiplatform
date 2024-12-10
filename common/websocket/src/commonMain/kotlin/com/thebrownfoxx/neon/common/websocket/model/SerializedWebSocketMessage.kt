@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.common.websocket.model
 
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.flatMapError
-import com.thebrownfoxx.outcome.map
+import com.thebrownfoxx.outcome.map.flatMapError
+import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.runFailing
 
 interface SerializedWebSocketMessage {

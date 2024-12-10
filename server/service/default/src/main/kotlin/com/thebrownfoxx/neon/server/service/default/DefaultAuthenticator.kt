@@ -11,9 +11,8 @@ import com.thebrownfoxx.neon.server.service.Authenticator.UserExistsUnexpectedEr
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.transform
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.transform
 
 class DefaultAuthenticator(
     private val memberRepository: MemberRepository,
@@ -23,11 +22,11 @@ class DefaultAuthenticator(
     override suspend fun exists(memberId: MemberId): Outcome<Boolean, UserExistsUnexpectedError> {
         return memberRepository.get(memberId).transform(
             onSuccess = { Success(true) },
-            onFailure = {
+            onFailure = { error ->
                 when (error) {
                     GetError.NotFound -> Success(false)
                     GetError.ConnectionError, GetError.UnexpectedError ->
-                        mapError(UserExistsUnexpectedError)
+                        Failure(UserExistsUnexpectedError)
                 }
             }
         )
@@ -35,10 +34,10 @@ class DefaultAuthenticator(
 
     override suspend fun login(username: String, password: String): Outcome<MemberId, LoginError> {
         val memberId = memberRepository.getId(username)
-            .getOrElse { return mapError(error.getMemberErrorToLoginError()) }
+            .getOrElse { return Failure(it.getMemberErrorToLoginError()) }
 
         val passwordHash = passwordRepository.getHash(memberId)
-            .getOrElse { return mapError(error.getPasswordHashToLoginError()) }
+            .getOrElse { return Failure(it.getPasswordHashToLoginError()) }
 
         with(hasher) {
             if (password doesNotMatch passwordHash)

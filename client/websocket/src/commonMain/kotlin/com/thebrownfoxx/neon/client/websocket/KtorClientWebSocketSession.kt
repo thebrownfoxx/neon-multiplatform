@@ -5,7 +5,7 @@ import com.thebrownfoxx.neon.common.websocket.ktor.KtorSerializedWebSocketMessag
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
 import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.converter

@@ -9,7 +9,7 @@ import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
 import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.converter

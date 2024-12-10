@@ -19,7 +19,7 @@ import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.model.Group
 import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.outcome.Outcome
-import com.thebrownfoxx.outcome.map
+import com.thebrownfoxx.outcome.map.map
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

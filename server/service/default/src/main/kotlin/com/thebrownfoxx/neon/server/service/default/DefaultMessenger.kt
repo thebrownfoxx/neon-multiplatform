@@ -26,9 +26,9 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -51,7 +51,7 @@ class DefaultMessenger(
             messageRepository.getConversationPreviewsAsFlow(actorId),
         ) { memberOutcome, conversationsOutcome ->
             memberOutcome
-                .onFailure { return@combine mapError(error.toGetConversationPreviewsError()) }
+                .onFailure { return@combine Failure(it.toGetConversationPreviewsError()) }
             conversationsOutcome.mapError { GetConversationPreviewsError.UnexpectedError }
         }
     }
@@ -62,13 +62,13 @@ class DefaultMessenger(
     ): Flow<Outcome<Message, GetMessageError>> {
         return messageRepository.getAsFlow(id).flatMapLatest { messageOutcome ->
             val message = messageOutcome.getOrElse {
-                return@flatMapLatest mapError(error.toGetMessageError()).flow()
+                return@flatMapLatest Failure(it.toGetMessageError()).flow()
             }
 
             groupMemberRepository.getMembersAsFlow(message.groupId)
                 .mapLatest { groupMemberIdsOutcome ->
                     val groupMemberId = groupMemberIdsOutcome
-                        .getOrElse { return@mapLatest mapError(GetMessageError.UnexpectedError) }
+                        .getOrElse { return@mapLatest Failure(GetMessageError.UnexpectedError) }
 
                     if (actorId !in groupMemberId)
                         return@mapLatest Failure(GetMessageError.Unauthorized)
@@ -90,7 +90,7 @@ class DefaultMessenger(
     ): UnitOutcome<NewConversationError> {
         for (memberId in memberIds) {
             memberRepository.get(memberId).onFailure {
-                return mapError(error.getMemberErrorToNewConversationError(memberId))
+                return Failure(it.getMemberErrorToNewConversationError(memberId))
             }
         }
 
@@ -98,7 +98,7 @@ class DefaultMessenger(
 
         return transaction {
             groupRepository.add(chatGroup).register()
-                .onFailure { return@transaction mapError(NewConversationError.UnexpectedError) }
+                .onFailure { return@transaction Failure(NewConversationError.UnexpectedError) }
 
             for (memberId in memberIds) {
                 groupMemberRepository.addMember(
@@ -106,7 +106,7 @@ class DefaultMessenger(
                     memberId = memberId,
                     isAdmin = false,
                 ).register().onFailure {
-                    return@transaction mapError(NewConversationError.UnexpectedError)
+                    return@transaction Failure(NewConversationError.UnexpectedError)
                 }
             }
 
@@ -120,10 +120,10 @@ class DefaultMessenger(
         content: String,
     ): UnitOutcome<SendMessageError> {
         groupRepository.get(groupId)
-            .onFailure { return mapError(error.getGroupErrorToSendMessageError(groupId)) }
+            .onFailure { return Failure(it.getGroupErrorToSendMessageError(groupId)) }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return mapError(SendMessageError.UnexpectedError) }
+            .getOrElse { return Failure(SendMessageError.UnexpectedError) }
 
         if (actorId !in groupMemberIds) return Failure(SendMessageError.Unauthorized(actorId))
 
@@ -136,7 +136,7 @@ class DefaultMessenger(
         )
 
         messageRepository.add(message).result
-            .onFailure { return mapError(SendMessageError.UnexpectedError) }
+            .onFailure { return Failure(SendMessageError.UnexpectedError) }
 
         return UnitSuccess
     }
@@ -146,16 +146,16 @@ class DefaultMessenger(
         groupId: GroupId,
     ): UnitOutcome<MarkConversationAsReadError> {
         groupRepository.get(groupId)
-            .onFailure { return mapError(getGroupErrorToMarkConversationAsReadError(groupId)) }
+            .onFailure { return Failure(it.getGroupErrorToMarkConversationAsReadError(groupId)) }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return mapError(MarkConversationAsReadError.UnexpectedError) }
+            .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
 
         if (actorId !in groupMemberIds)
             return Failure(MarkConversationAsReadError.Unauthorized(actorId))
 
         val unreadMessages = getUnreadMessages(groupId)
-            .getOrElse { return mapError(MarkConversationAsReadError.UnexpectedError) }
+            .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
 
         if (unreadMessages.isEmpty()) return Failure(MarkConversationAsReadError.AlreadyRead)
 
@@ -177,10 +177,10 @@ class DefaultMessenger(
     ): Outcome<List<Message>, UnexpectedError> {
         val unreadMessageIds =
             messageRepository.getUnreadMessages(groupId)
-                .getOrElse { return mapError(UnexpectedError) }
+                .getOrElse { return Failure(UnexpectedError) }
 
         val unreadMessages = unreadMessageIds.map { id ->
-            messageRepository.get(id).getOrElse { return mapError(UnexpectedError) }
+            messageRepository.get(id).getOrElse { return Failure(UnexpectedError) }
         }
 
         return Success(unreadMessages)
@@ -207,8 +207,8 @@ class DefaultMessenger(
         GetError.ConnectionError, GetError.UnexpectedError -> SendMessageError.UnexpectedError
     }
 
-    private fun Failure<GetError>.getGroupErrorToMarkConversationAsReadError(groupId: GroupId) =
-        when (error) {
+    private fun GetError.getGroupErrorToMarkConversationAsReadError(groupId: GroupId) =
+        when (this) {
             GetError.NotFound -> MarkConversationAsReadError.GroupNotFound(groupId)
             GetError.ConnectionError, GetError.UnexpectedError ->
                 MarkConversationAsReadError.UnexpectedError

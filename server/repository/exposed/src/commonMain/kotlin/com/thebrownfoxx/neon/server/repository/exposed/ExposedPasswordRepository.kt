@@ -15,9 +15,8 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.PasswordRepository
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.map
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -45,15 +44,15 @@ class ExposedPasswordRepository(
         memberId: MemberId,
         hash: Hash,
     ): ReversibleUnitOutcome<DataOperationError> {
-        val oldHash = getHash(memberId).getOrElse {
+        val oldHash = getHash(memberId).getOrElse { error ->
             when (error) {
                 GetError.NotFound -> null
 
                 GetError.ConnectionError ->
-                    return mapError(DataOperationError.ConnectionError).asReversible()
+                    return Failure(DataOperationError.ConnectionError).asReversible()
 
                 GetError.UnexpectedError ->
-                    return mapError(DataOperationError.UnexpectedError).asReversible()
+                    return Failure(DataOperationError.UnexpectedError).asReversible()
             }
         }
 

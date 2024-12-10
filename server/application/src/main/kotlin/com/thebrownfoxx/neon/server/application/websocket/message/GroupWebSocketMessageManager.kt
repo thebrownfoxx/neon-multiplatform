@@ -11,8 +11,8 @@ import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulComm
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupUnexpectedError
 import com.thebrownfoxx.neon.server.service.GroupManager
 import com.thebrownfoxx.neon.server.service.GroupManager.GetGroupError
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,7 +40,7 @@ class GroupWebSocketMessageManager(
                         is ChatGroup -> session.send(GetGroupSuccessfulChatGroup(group))
                         is Community -> session.send(GetGroupSuccessfulCommunity(group))
                     }
-                }.onFailure {
+                }.onFailure { error ->
                     when (error) {
                         GetGroupError.NotFound -> session.send(GetGroupNotFound(id))
                         GetGroupError.UnexpectedError ->

@@ -13,9 +13,8 @@ import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -68,7 +67,7 @@ class RemoteAuthenticator(
                 val successfulBody = response.body<LoginResponse.Successful>()
                 _loggedInMember.value = successfulBody.memberId
                 tokenStorage.set(successfulBody.token)
-                    .onFailure { mapError(LoginError.ConnectionError) }
+                    .onFailure { Failure(LoginError.ConnectionError) }
                 UnitSuccess
             }
         }
@@ -76,7 +75,7 @@ class RemoteAuthenticator(
 
     override suspend fun logout(): UnitOutcome<LogoutError> {
         _loggedInMember.value = null
-        tokenStorage.clear().onFailure { mapError(LogoutError.UnknownError) }
+        tokenStorage.clear().onFailure { Failure(LogoutError.UnknownError) }
         return UnitSuccess
     }
 }

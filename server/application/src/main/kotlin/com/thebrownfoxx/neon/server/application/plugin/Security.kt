@@ -7,7 +7,7 @@ import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.service.JwtClaimKey
 import com.thebrownfoxx.neon.server.service.JwtConfig
-import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.map.getOrElse
 import io.ktor.server.application.Application
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.UserIdPrincipal

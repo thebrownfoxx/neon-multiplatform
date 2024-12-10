@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.common.websocket.model
 
-import com.thebrownfoxx.outcome.getOrNull
+import com.thebrownfoxx.outcome.map.getOrNull
 import com.thebrownfoxx.outcome.runFailing
 import kotlin.reflect.KClass
 import kotlin.reflect.KType

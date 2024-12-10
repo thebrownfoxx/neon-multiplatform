@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.websocket
 
-enum class ConnectWebSocketError {
+enum class WebSocketConnectionError {
     Unauthorized,
     ConnectionError,
 }

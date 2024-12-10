@@ -2,16 +2,16 @@ package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.TokenStorage
-import com.thebrownfoxx.neon.client.websocket.ConnectWebSocketError
 import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
+import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.client.websocket.WebSocketProvider
 import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onSuccess
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onSuccess
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSocketException
@@ -31,16 +31,16 @@ class KtorClientWebSocketProvider(
 ) : WebSocketProvider {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
-    private var session: Outcome<KtorClientWebSocketSession, ConnectWebSocketError> =
-        Failure(ConnectWebSocketError.Unauthorized)
+    private var session: Outcome<KtorClientWebSocketSession, WebSocketConnectionError> =
+        Failure(WebSocketConnectionError.Unauthorized)
 
-    override suspend fun getSession(): Outcome<KtorClientWebSocketSession, ConnectWebSocketError> {
+    override suspend fun getSession(): Outcome<KtorClientWebSocketSession, WebSocketConnectionError> {
         val session = session
 
         if (session is Success) return session
 
         val token = tokenStorage.get()
-            .getOrElse { return Failure(ConnectWebSocketError.Unauthorized) }
+            .getOrElse { return Failure(WebSocketConnectionError.Unauthorized) }
 
         return runFailing {
             val actualSession = httpClient.webSocketSession(
@@ -53,8 +53,8 @@ class KtorClientWebSocketProvider(
             KtorClientWebSocketSession(actualSession, logger)
         }.mapError { error ->
             when (error) {
-                is WebSocketException -> ConnectWebSocketError.Unauthorized
-                else -> ConnectWebSocketError.ConnectionError
+                is WebSocketException -> WebSocketConnectionError.Unauthorized
+                else -> WebSocketConnectionError.ConnectionError
             }
         }.also {
             this@KtorClientWebSocketProvider.session = it
@@ -72,6 +72,6 @@ class KtorClientWebSocketProvider(
 
     private suspend fun disconnect() {
         session.onSuccess { it.close() }
-        session = Failure(ConnectWebSocketError.Unauthorized)
+        session = Failure(WebSocketConnectionError.Unauthorized)
     }
 }

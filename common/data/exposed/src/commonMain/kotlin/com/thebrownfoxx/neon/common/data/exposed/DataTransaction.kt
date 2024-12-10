@@ -6,10 +6,10 @@ import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.StackTrace
-import com.thebrownfoxx.outcome.flatMap
-import com.thebrownfoxx.outcome.flatMapError
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.flatMap
+import com.thebrownfoxx.outcome.map.flatMapError
+import com.thebrownfoxx.outcome.map.map
+import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.exceptions.ExposedSQLException
@@ -20,7 +20,7 @@ suspend fun <T> dataTransaction(
     block: () -> T,
 ): Outcome<T, DataTransactionError> =
     runFailing(stackTrace) { newSuspendedTransaction(Dispatchers.IO) { block() } }
-        .mapError { error ->
+        .mapError(stackTrace) { error ->
             when (error) {
                 is ExposedSQLException -> DataTransactionError.SqlError
                 else -> DataTransactionError.ConnectionError

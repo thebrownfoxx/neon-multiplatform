@@ -20,7 +20,8 @@ import com.thebrownfoxx.neon.common.extension.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
-import com.thebrownfoxx.outcome.getOrThrow
+import com.thebrownfoxx.outcome.ThrowingApi
+import com.thebrownfoxx.outcome.map.getOrThrow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +37,7 @@ class ChatViewModel(
     private val messenger: Messenger,
     private val logger: Logger,
 ) : ViewModel() {
+    @OptIn(ThrowingApi::class)
     val chatPreviews = messenger.conversationPreviews.flatMapLatest { conversationPreviewsOutcome ->
         val conversationPreviews = conversationPreviewsOutcome.getOrThrow()
 

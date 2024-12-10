@@ -9,15 +9,14 @@ import com.thebrownfoxx.neon.server.service.PermissionChecker.IsGodUnexpectedErr
 import com.thebrownfoxx.neon.server.service.PermissionChecker.IsGroupAdminUnexpectedError
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.getOrElse
 
 class DefaultPermissionChecker(
     private val groupMemberRepository: GroupMemberRepository,
 ) : PermissionChecker {
     override suspend fun isGod(memberId: MemberId): Outcome<Boolean, IsGodUnexpectedError> {
         val communities = groupMemberRepository.getGroups(memberId).getOrElse {
-            return mapError(IsGodUnexpectedError)
+            return Failure(IsGodUnexpectedError)
         }.filterIsInstance<Community>()
         return Success(communities.any { it.isGod })
     }
@@ -27,7 +26,7 @@ class DefaultPermissionChecker(
         memberId: MemberId,
     ): Outcome<Boolean, IsGroupAdminUnexpectedError> {
         val admins = groupMemberRepository.getAdmins(groupId).getOrElse {
-            return mapError(IsGroupAdminUnexpectedError)
+            return Failure(IsGroupAdminUnexpectedError)
         }
         return Success(memberId in admins)
     }

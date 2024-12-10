@@ -10,10 +10,9 @@ import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.server.repository.ConfigurationRepository
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitSuccess
-import com.thebrownfoxx.outcome.fold
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
+import com.thebrownfoxx.outcome.map.fold
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.onFailure
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -40,14 +39,14 @@ class ExposedConfigurationRepository(
         initialized: Boolean,
     ): ReversibleUnitOutcome<DataOperationError> {
         val oldInitialized = getInitialized()
-            .getOrElse { return mapError(error).asReversible() }
+            .getOrElse { return Failure(it).asReversible() }
 
         dataTransaction {
             ConfigurationTable.upsert {
                 it[key] = INITIALIZED_KEY
                 it[value] = initialized.toString()
             }
-        }.onFailure { return mapError(error.toDataOperationError()).asReversible() }
+        }.onFailure { return Failure(it.toDataOperationError()).asReversible() }
 
         return UnitSuccess.asReversible {
             dataTransaction {

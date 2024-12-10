@@ -20,11 +20,11 @@ import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.map
-import com.thebrownfoxx.outcome.mapError
-import com.thebrownfoxx.outcome.onFailure
-import com.thebrownfoxx.outcome.transform
+import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.map
+import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.transform
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -50,7 +50,7 @@ class DefaultGroupManager(
         isGod: Boolean,
     ): Outcome<GroupId, CreateCommunityError> {
         val isActorGod = permissionChecker.isGod(actorId)
-            .getOrElse { return mapError(CreateCommunityError.UnexpectedError) }
+            .getOrElse { return Failure(CreateCommunityError.UnexpectedError) }
 
         if (!isActorGod) return Failure(CreateCommunityError.Unauthorized)
 
@@ -75,18 +75,18 @@ class DefaultGroupManager(
         inviteCode: String,
     ): UnitOutcome<SetInviteCodeError> {
         val isGod = permissionChecker.isGod(actorId)
-            .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
+            .getOrElse { return Failure(SetInviteCodeError.UnexpectedError) }
 
         val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
-            .getOrElse { return mapError(SetInviteCodeError.UnexpectedError) }
+            .getOrElse { return Failure(SetInviteCodeError.UnexpectedError) }
 
         if (!(isGod) || isGroupAdmin) return Failure(SetInviteCodeError.Unauthorized)
 
-        val inviteCodeExists = inviteCodeExists(inviteCode).getOrElse { return this }
+        val inviteCodeExists = inviteCodeExists(inviteCode).getOrElse { return Failure(it) }
         if (inviteCodeExists) return Failure(SetInviteCodeError.DuplicateInviteCode)
 
         val group = groupRepository.get(groupId)
-            .getOrElse { return mapError(error.getGroupErrorToSetInviteCodeError()) }
+            .getOrElse { return Failure(it.getGroupErrorToSetInviteCodeError()) }
 
         if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
 
@@ -101,21 +101,21 @@ class DefaultGroupManager(
         isAdmin: Boolean,
     ): UnitOutcome<AddGroupMemberError> {
         val isGod = permissionChecker.isGod(actorId)
-            .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+            .getOrElse { return Failure(AddGroupMemberError.UnexpectedError) }
 
         val isGroupAdmin = permissionChecker.isGroupAdmin(groupId, actorId)
-            .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+            .getOrElse { return Failure(AddGroupMemberError.UnexpectedError) }
 
         if (!(isGod) || isGroupAdmin) return Failure(AddGroupMemberError.Unauthorized)
 
         groupRepository.get(groupId)
-            .onFailure { return mapError(error.getGroupErrorToAddGroupMemberError()) }
+            .onFailure { return Failure(it.getGroupErrorToAddGroupMemberError()) }
 
         memberRepository.get(memberId)
-            .onFailure { return mapError(error.getMemberErrorToAddGroupMemberError()) }
+            .onFailure { return Failure(it.getMemberErrorToAddGroupMemberError()) }
 
         val groupMembers = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return mapError(AddGroupMemberError.UnexpectedError) }
+            .getOrElse { return Failure(AddGroupMemberError.UnexpectedError) }
 
         if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
 
@@ -130,11 +130,11 @@ class DefaultGroupManager(
     ): Outcome<Boolean, SetInviteCodeError> {
         return inviteCodeRepository.getGroup(inviteCode).transform(
             onSuccess = { Success(true) },
-            onFailure = {
+            onFailure = { error ->
                 when (error) {
                     GetError.NotFound -> Success(false)
                     GetError.ConnectionError, GetError.UnexpectedError ->
-                        mapError(SetInviteCodeError.UnexpectedError)
+                        Failure(SetInviteCodeError.UnexpectedError )
                 }
             }
         )

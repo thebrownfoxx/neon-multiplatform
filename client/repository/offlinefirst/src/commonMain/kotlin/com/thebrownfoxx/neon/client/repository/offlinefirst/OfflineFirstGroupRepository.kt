@@ -9,8 +9,7 @@ import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.getOrElse
-import com.thebrownfoxx.outcome.mapError
+import com.thebrownfoxx.outcome.map.getOrElse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,11 +32,11 @@ class OfflineFirstGroupRepository(
         //  And this is also a lot of repeated code.
         coroutineScope.launch {
             localDataSource.getAsFlow(id).collect { localGroupOutcome ->
-                val localGroup = localGroupOutcome.getOrElse {
+                val localGroup = localGroupOutcome.getOrElse { error ->
                     when (error) {
                         GetError.NotFound -> {}
                         GetError.ConnectionError, GetError.UnexpectedError ->
-                            sharedFlow.emit(mapError(error))
+                            sharedFlow.emit(Failure(error))
                     }
                     return@collect
                 }
@@ -47,8 +46,8 @@ class OfflineFirstGroupRepository(
 
         coroutineScope.launch {
             remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
-                val remoteGroup = remoteGroupOutcome.getOrElse {
-                    sharedFlow.emit(mapError(error))
+                val remoteGroup = remoteGroupOutcome.getOrElse { error ->
+                    sharedFlow.emit(Failure(error))
                     return@collect
                 }
                 localDataSource.upsert(remoteGroup.toLocalGroup())
