@@ -25,7 +25,7 @@ class KtorClientWebSocketSession(
     private val session: DefaultClientWebSocketSession,
     logger: Logger,
 ) : KtorWebSocketSession(session, logger) {
-    private val _close = MutableSharedFlow<Unit>()
+    private val _close = MutableSharedFlow<Unit>(replay = 1)
     override val close = _close.asSharedFlow()
 
     override val incomingMessages = session.incoming.consumeAsFlow()

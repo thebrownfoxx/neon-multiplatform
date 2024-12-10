@@ -25,7 +25,6 @@ import com.thebrownfoxx.outcome.onSuccess
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
@@ -39,8 +38,8 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
 class ExposedLocalMessageDataSource(
-    private val memberId: MemberId,
     database: Database,
+    private val getMemberId: suspend () -> MemberId, // TODO: This should be bound to authenticator? idk man
 ) : LocalMessageDataSource, ExposedDataSource(database, LocalMessageTable) {
     private val reactiveConversationsCache = SingleReactiveCache(::getConversations)
     private val reactiveMessageCache = ReactiveCache(::get)
@@ -92,6 +91,7 @@ class ExposedLocalMessageDataSource(
     }
 
     private suspend fun getConversations(): Outcome<LocalConversationPreviews, DataOperationError> {
+        val memberId = getMemberId()
         return dataTransaction {
             val groupId = LocalMessageTable.groupId.alias("group_id")
             val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
@@ -130,19 +130,6 @@ class ExposedLocalMessageDataSource(
                 unreadPreviews = unreadPreviews.toSet(),
                 readPreviews = readPreviews.toSet(),
             )
-        }.mapOperationTransaction()
-    }
-
-    private suspend fun getConversationPreview(
-        id: GroupId,
-    ): Outcome<MessageId?, DataOperationError> {
-        return dataTransaction {
-            LocalMessageTable
-                .selectAll()
-                .where(LocalMessageTable.groupId eq id.toJavaUuid())
-                .orderBy(LocalMessageTable.timestamp to SortOrder.DESC)
-                .firstOrNull()
-                ?.let { MessageId(it[LocalMessageTable.id].toCommonUuid()) }
         }.mapOperationTransaction()
     }
 

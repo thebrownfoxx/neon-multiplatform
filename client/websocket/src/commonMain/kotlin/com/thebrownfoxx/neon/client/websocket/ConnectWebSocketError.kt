@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.websocket.model
+package com.thebrownfoxx.neon.client.websocket
 
 enum class ConnectWebSocketError {
     Unauthorized,

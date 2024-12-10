@@ -26,9 +26,6 @@ abstract class KtorServerWebSocketSession(
     private val session: WebSocketServerSession,
     logger: Logger,
 ) : KtorWebSocketSession(session, logger) {
-    private val _close = MutableSharedFlow<Unit>()
-    override val close = _close.asSharedFlow()
-
     override suspend fun send(message: Any?, type: Type) = runFailing {
         withContext(Dispatchers.IO) {
             session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())

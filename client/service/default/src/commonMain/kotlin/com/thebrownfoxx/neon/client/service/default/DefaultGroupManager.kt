@@ -13,14 +13,14 @@ import kotlinx.coroutines.flow.map
 
 class DefaultGroupManager(private val groupRepository: GroupRepository) : GroupManager {
     override fun getGroup(id: GroupId): Flow<Outcome<LocalGroup, GetGroupError>> {
-            return groupRepository.get(id).map { outcome ->
-                outcome.mapError { error ->
-                    when (error) {
-                        GetError.NotFound -> GetGroupError.NotFound
-                        GetError.ConnectionError, GetError.UnexpectedError ->
-                            GetGroupError.UnexpectedError
-                    }
+        return groupRepository.get(id).map { outcome ->
+            outcome.mapError { error ->
+                when (error) {
+                    GetError.NotFound -> GetGroupError.NotFound
+                    GetError.ConnectionError, GetError.UnexpectedError ->
+                        GetGroupError.UnexpectedError
                 }
             }
+        }
     }
 }

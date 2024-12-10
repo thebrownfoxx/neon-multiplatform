@@ -2,9 +2,9 @@ package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.TokenStorage
+import com.thebrownfoxx.neon.client.websocket.ConnectWebSocketError
 import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketProvider
-import com.thebrownfoxx.neon.client.websocket.model.ConnectWebSocketError
 import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome

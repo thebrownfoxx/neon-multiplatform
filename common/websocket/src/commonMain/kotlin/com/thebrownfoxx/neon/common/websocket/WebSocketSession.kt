@@ -29,7 +29,7 @@ abstract class WebSocketSession(private val logger: Logger) {
     internal val waitTimeout = 10.seconds
 
     protected abstract val sessionScope: CoroutineScope
-    abstract val close: Flow<Unit>
+    abstract val close: Flow<Unit> // TODO: Maybe remove this? Just use incomingMessages' completion
     abstract val incomingMessages: Flow<SerializedWebSocketMessage>
 
     abstract suspend fun send(message: Any?, type: Type): UnitOutcome<SendError>
