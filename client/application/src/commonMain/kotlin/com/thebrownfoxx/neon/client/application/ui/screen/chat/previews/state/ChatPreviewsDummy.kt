@@ -131,17 +131,17 @@ object ChatPreviewsDummy {
                 placeholder = "logie_bear",
             ),
         ),
-        ChatPreviewState(
+        LoadedChatPreviewState(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-        ChatPreviewState(
+        LoadedChatPreviewState(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-        ChatPreviewState(
+        LoadedChatPreviewState(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
@@ -233,7 +233,7 @@ object ChatPreviewsDummy {
         delivery: DeliveryState?,
         sender: ChatPreviewSenderState,
         emphasized: Boolean,
-    ) = ChatPreviewState(
+    ) = LoadedChatPreviewState(
         avatar = avatar,
         name = name,
         content = ChatPreviewContentState(

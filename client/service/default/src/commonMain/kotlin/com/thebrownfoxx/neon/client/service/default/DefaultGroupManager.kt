@@ -6,6 +6,7 @@ import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.mapError
 import kotlinx.coroutines.flow.Flow
@@ -22,5 +23,9 @@ class DefaultGroupManager(private val groupRepository: GroupRepository) : GroupM
                 }
             }
         }
+    }
+
+    override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GroupManager.UnexpectedGetMembersError>> {
+        TODO("Not yet implemented")
     }
 }

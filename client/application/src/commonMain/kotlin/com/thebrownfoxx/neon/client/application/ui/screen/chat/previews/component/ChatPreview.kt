@@ -22,12 +22,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.SmallAvatar
+import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewSenderState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
+import com.thebrownfoxx.neon.common.type.Loaded
+import com.thebrownfoxx.neon.common.type.Loading
 import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.deleted_group
@@ -38,6 +43,29 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ChatPreview(
     state: ChatPreviewState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val loadable = when (state) {
+        is LoadedChatPreviewState -> Loaded(state)
+        is LoadingChatPreviewState -> Loading
+    }
+
+    AnimatedLoadableContent(
+        targetState = loadable,
+        loader = { ChatPreviewLoader() },
+        modifier = modifier,
+    ) {
+       LoadedChatPreview(
+           state = it,
+           onClick = onClick,
+       )
+    }
+}
+
+@Composable
+private fun LoadedChatPreview(
+    state: LoadedChatPreviewState,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

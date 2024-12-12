@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class DefaultMemberManager(private val memberRepository: MemberRepository) : MemberManager {
-    override suspend fun getMember(
+    override fun getMember(
         id: MemberId,
     ): Flow<Outcome<LocalMember, GetMemberError>> {
         return memberRepository.get(id).map { outcome ->

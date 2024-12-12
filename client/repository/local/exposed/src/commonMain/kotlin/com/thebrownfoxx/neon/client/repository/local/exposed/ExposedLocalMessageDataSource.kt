@@ -111,9 +111,9 @@ class ExposedLocalMessageDataSource(
             }
 
             LocalConversationPreviews(
-                nudgedPreviews = nudgedPreviews.toSet(),
-                unreadPreviews = unreadPreviews.toSet(),
-                readPreviews = readPreviews.toSet(),
+                nudgedPreviews = nudgedPreviews,
+                unreadPreviews = unreadPreviews,
+                readPreviews = readPreviews,
             )
         }.mapOperationTransaction()
     }

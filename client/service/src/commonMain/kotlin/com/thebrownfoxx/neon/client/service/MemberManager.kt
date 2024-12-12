@@ -6,7 +6,7 @@ import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface MemberManager {
-    suspend fun getMember(id: MemberId): Flow<Outcome<LocalMember, GetMemberError>>
+    fun getMember(id: MemberId): Flow<Outcome<LocalMember, GetMemberError>>
 
     enum class GetMemberError {
         NotFound,

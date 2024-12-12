@@ -33,7 +33,6 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Ch
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
-import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.getOrNull
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.no_conversation_selected
@@ -74,7 +73,7 @@ fun ExpandedChatScreen(
 
 @Composable
 private fun LeftPane(
-    chatPreviews: Loadable<ChatPreviewsState>,
+    chatPreviews: ChatPreviewsState,
     chatPreviewsEventHandler: ChatPreviewsEventHandler,
 ) {
     Pane(roundedCorners = RoundedCorners(Side.Start)) {

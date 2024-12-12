@@ -16,6 +16,7 @@ import neon.client.application.generated.resources.read_conversations
 import neon.client.application.generated.resources.unread_conversations
 import org.jetbrains.compose.resources.stringResource
 
+@Deprecated("Use individual ChatPreview instead")
 @Composable
 fun ChatPreviewsLoader(
     nudgedConversationsCount: Int,

@@ -21,7 +21,7 @@ data object ChatRoute
 fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
     val viewModel = viewModel {
         with(dependencies) {
-            ChatViewModel(groupManager, memberManager, messenger, logger)
+            ChatViewModel(authenticator, groupManager, memberManager, messenger, logger)
         }
     }
     with(viewModel) {
@@ -35,8 +35,8 @@ fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
             ),
             eventHandler = ChatScreenEventHandler(
                 chatPreviewsEventHandler = ChatPreviewsEventHandler(
-                    onLoadMore = {},
-                    onConversationClick = ::onConversationClick
+                    onConversationClick = ::onConversationClick,
+                    onLoadPreview = ::onLoadPreview,
                 ),
                 conversationPaneEventHandler = ConversationPaneEventHandler(
                     onCall = {},
