@@ -18,6 +18,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Se
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
 import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
+import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMember
 import com.thebrownfoxx.neon.client.model.LocalMessage
@@ -42,7 +43,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatViewModel(
@@ -62,18 +62,29 @@ class ChatViewModel(
     // TODO: Change this to index-based so we can preload close items way before they get scrolled to
     private val previewsToLoad = MutableStateFlow(emptySet<GroupId>())
 
+    private val lastVisiblePreview = MutableStateFlow<GroupId?>(null)
+
     val chatPreviews = messenger.conversationPreviews.flatMapLatest { conversationPreviewsOutcome ->
-        previewsToLoad.flatMapLatest { previewsToLoad ->
+        lastVisiblePreview.flatMapLatest { lastVisiblePreview ->
             val conversationPreviews = conversationPreviewsOutcome.getOrThrow()
 
-            val nudgedPreviews = conversationPreviews.nudgedPreviews
-                .map { it.toChatPreviewState(previewsToLoad) }
+            val lastVisiblePreviewIndex =
+                conversationPreviews.getLastVisiblePreviewIndex(lastVisiblePreview)
+            val lastIndexToLoad = lastVisiblePreviewIndex + 20
 
-            val unreadPreviews = conversationPreviews.unreadPreviews
-                .map { it.toChatPreviewState(previewsToLoad) }
+            val nudgedPreviews = conversationPreviews.nudgedPreviews.mapIndexed { index, item ->
+                item.toChatPreviewState(index <= lastIndexToLoad)
+            }
 
-            val readPreviews = conversationPreviews.readPreviews
-                .map { it.toChatPreviewState(previewsToLoad) }
+            val unreadPreviews = conversationPreviews.unreadPreviews.mapIndexed { index, item ->
+                val overallIndex = index + nudgedPreviews.size
+                item.toChatPreviewState(overallIndex <= lastIndexToLoad)
+            }
+
+            val readPreviews = conversationPreviews.readPreviews.mapIndexed { index, item ->
+                val overallIndex = index + nudgedPreviews.size + unreadPreviews.size
+                item.toChatPreviewState(overallIndex <= lastIndexToLoad)
+            }
 
             combine(
                 combineOrEmpty(nudgedPreviews) { it },
@@ -89,6 +100,24 @@ class ChatViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, loadingState)
 
+    private fun LocalConversationPreviews.getLastVisiblePreviewIndex(
+        lastVisiblePreview: GroupId?,
+    ): Int {
+        return when {
+            nudgedPreviews.any { it.groupId == lastVisiblePreview } ->
+                nudgedPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
+
+            unreadPreviews.any { it.groupId == lastVisiblePreview } -> nudgedPreviews.size +
+                    unreadPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
+
+            readPreviews.any { it.groupId == lastVisiblePreview } -> nudgedPreviews.size +
+                    unreadPreviews.size +
+                    readPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
+
+            else -> 0
+        }
+    }
+
     private val _conversation = MutableStateFlow<ConversationPaneState?>(null)
     val conversation = _conversation.asStateFlow()
 
@@ -103,8 +132,8 @@ class ChatViewModel(
         )
     }
 
-    fun onLoadPreview(chatPreviewState: ChatPreviewState) {
-        previewsToLoad.update { it + chatPreviewState.groupId }
+    fun onLastVisiblePreviewChange(groupId: GroupId) {
+        lastVisiblePreview.value = groupId
     }
 
     fun onConversationClose() {
@@ -112,10 +141,10 @@ class ChatViewModel(
     }
 
     private fun LocalMessage.toChatPreviewState(
-        previewsToLoad: Set<GroupId>,
+        mustBeLoaded: Boolean,
     ): Flow<ChatPreviewState> {
         return when {
-            groupId in previewsToLoad -> toChatPreviewState()
+            mustBeLoaded -> toChatPreviewState()
             else -> LoadingChatPreviewState(groupId).flow()
         }
     }

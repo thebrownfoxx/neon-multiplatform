@@ -36,7 +36,7 @@ fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
             eventHandler = ChatScreenEventHandler(
                 chatPreviewsEventHandler = ChatPreviewsEventHandler(
                     onConversationClick = ::onConversationClick,
-                    onLoadPreview = ::onLoadPreview,
+                    onLastVisiblePreviewChange = ::onLastVisiblePreviewChange,
                 ),
                 conversationPaneEventHandler = ConversationPaneEventHandler(
                     onCall = {},
