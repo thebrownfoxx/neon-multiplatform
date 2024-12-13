@@ -9,6 +9,6 @@ import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    val conversationPreviews: Flow<Outcome<LocalConversationPreviews, DataOperationError>>
-    fun get(id: MessageId): Flow<Outcome<LocalMessage, GetError>>
+    val conversationPreviewsFlow: Flow<Outcome<LocalConversationPreviews, DataOperationError>>
+    fun getAsFlow(id: MessageId): Flow<Outcome<LocalMessage, GetError>>
 }

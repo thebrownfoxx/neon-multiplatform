@@ -15,7 +15,7 @@ class DefaultMemberManager(private val memberRepository: MemberRepository) : Mem
     override fun getMember(
         id: MemberId,
     ): Flow<Outcome<LocalMember, GetMemberError>> {
-        return memberRepository.get(id).map { outcome ->
+        return memberRepository.getAsFlow(id).map { outcome ->
             outcome.mapError { error ->
                 when (error) {
                     GetError.NotFound -> GetMemberError.NotFound

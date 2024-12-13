@@ -59,4 +59,4 @@ class MutableKtorServerWebSocketSession(
     }
 }
 
-class WebSocketSessionId(override val uuid: Uuid = Uuid()) : Id
+data class WebSocketSessionId(override val uuid: Uuid = Uuid()) : Id

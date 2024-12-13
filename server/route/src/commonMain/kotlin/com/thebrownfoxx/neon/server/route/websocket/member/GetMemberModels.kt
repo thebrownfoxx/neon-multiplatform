@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GetMemberRequest(
     val id: MemberId,
-) : WebSocketMessage(kClass = this::class) {
+) : WebSocketMessage(kClass = GetMemberRequest::class) {
     override val requestId = null
 }
 

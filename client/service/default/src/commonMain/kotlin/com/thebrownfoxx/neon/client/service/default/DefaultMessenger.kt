@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class DefaultMessenger(private val messageRepository: MessageRepository) : Messenger {
-    override val conversationPreviews = messageRepository.conversationPreviews.map { outcome ->
+    override val conversationPreviews = messageRepository.conversationPreviewsFlow.map { outcome ->
         outcome.mapError { ConversationPreviewsUnexpectedError }
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
-        return messageRepository.get(id).map { outcome ->
+        return messageRepository.getAsFlow(id).map { outcome ->
             outcome.mapError { error ->
                 when (error) {
                     GetError.NotFound -> GetMessageError.NotFound

@@ -7,5 +7,5 @@ import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface GroupRepository {
-    fun get(id: GroupId): Flow<Outcome<LocalGroup, GetError>>
+    fun getAsFlow(id: GroupId): Flow<Outcome<LocalGroup, GetError>>
 }

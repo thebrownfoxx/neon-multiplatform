@@ -23,9 +23,9 @@ class OfflineFirstMemberRepository(
     private val localDataSource: LocalMemberDataSource,
     private val remoteDataSource: RemoteMemberDataSource,
 ) : MemberRepository {
-    private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
+    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
-    override fun get(id: MemberId): Flow<Outcome<LocalMember, GetError>> {
+    override fun getAsFlow(id: MemberId): Flow<Outcome<LocalMember, GetError>> {
         val sharedFlow = MutableSharedFlow<Outcome<LocalMember, GetError>>(replay = 1)
 
         coroutineScope.launch {

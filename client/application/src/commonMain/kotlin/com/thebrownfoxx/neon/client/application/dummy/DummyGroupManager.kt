@@ -5,7 +5,6 @@ import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalGroup
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
-import com.thebrownfoxx.neon.client.service.GroupManager.UnexpectedGetMembersError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
@@ -32,7 +31,7 @@ class DummyGroupManager(
 
     override fun getMembers(
         groupId: GroupId,
-    ): Flow<Outcome<Set<MemberId>, UnexpectedGetMembersError>> {
+    ): Flow<Outcome<Set<MemberId>, GroupManager.GetMembersError>> {
         return flow {
             emit(Success(generatedMembers.getOrPut(groupId) { generateMembers() }))
         }

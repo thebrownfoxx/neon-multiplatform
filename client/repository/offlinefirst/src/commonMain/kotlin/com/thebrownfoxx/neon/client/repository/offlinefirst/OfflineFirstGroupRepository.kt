@@ -23,9 +23,9 @@ class OfflineFirstGroupRepository(
     private val localDataSource: LocalGroupDataSource,
     private val remoteDataSource: RemoteGroupDataSource,
 ) : GroupRepository {
-    private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
+    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
-    override fun get(id: GroupId): Flow<Outcome<LocalGroup, GetError>> {
+    override fun getAsFlow(id: GroupId): Flow<Outcome<LocalGroup, GetError>> {
         val sharedFlow = MutableSharedFlow<Outcome<LocalGroup, GetError>>(replay = 1)
 
         // TODO: Fix this. RemoteDataSource must continuously retry.

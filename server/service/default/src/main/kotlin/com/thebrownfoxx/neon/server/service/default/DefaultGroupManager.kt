@@ -14,6 +14,7 @@ import com.thebrownfoxx.neon.server.service.GroupManager
 import com.thebrownfoxx.neon.server.service.GroupManager.AddGroupMemberError
 import com.thebrownfoxx.neon.server.service.GroupManager.CreateCommunityError
 import com.thebrownfoxx.neon.server.service.GroupManager.GetGroupError
+import com.thebrownfoxx.neon.server.service.GroupManager.GetMembersError
 import com.thebrownfoxx.neon.server.service.GroupManager.SetInviteCodeError
 import com.thebrownfoxx.neon.server.service.PermissionChecker
 import com.thebrownfoxx.outcome.Failure
@@ -26,6 +27,7 @@ import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.transform
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class DefaultGroupManager(
@@ -41,6 +43,25 @@ class DefaultGroupManager(
     override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
         return groupRepository.getAsFlow(id).map { groupOutcome ->
             groupOutcome.mapError { it.toGetGroupError() }
+        }
+    }
+
+    override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>> {
+        return combine(
+            getGroup(groupId),
+            groupMemberRepository.getMembersAsFlow(groupId),
+        ) { groupOutcome, groupMemberOutcome ->
+            groupOutcome.onFailure { error ->
+                when (error) {
+                    GetGroupError.NotFound -> GetMembersError.GroupNotFound
+                    GetGroupError.UnexpectedError -> GetMembersError.UnexpectedError
+                }
+            }
+
+            groupMemberOutcome.map(
+                onSuccess = { it.toSet() },
+                onFailure = { GetMembersError.UnexpectedError },
+            )
         }
     }
 

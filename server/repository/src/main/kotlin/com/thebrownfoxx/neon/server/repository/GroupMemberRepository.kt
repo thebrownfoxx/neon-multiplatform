@@ -9,6 +9,7 @@ import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface GroupMemberRepository {
+    // TODO: Make these use sets instead
     fun getMembersAsFlow(groupId: GroupId): Flow<Outcome<List<MemberId>, DataOperationError>>
     fun getGroupsAsFlow(memberId: MemberId): Flow<Outcome<List<GroupId>, DataOperationError>>
     fun getAdminsAsFlow(groupId: GroupId): Flow<Outcome<List<MemberId>, DataOperationError>>

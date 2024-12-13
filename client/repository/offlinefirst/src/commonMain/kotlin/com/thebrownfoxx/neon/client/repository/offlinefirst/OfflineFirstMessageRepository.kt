@@ -25,9 +25,9 @@ class OfflineFirstMessageRepository(
     private val localDataSource: LocalMessageDataSource,
     private val remoteDataSource: RemoteMessageDataSource,
 ) : MessageRepository {
-    private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
+    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
-    override val conversationPreviews = run {
+    override val conversationPreviewsFlow = run {
         val sharedFlow =
             MutableSharedFlow<Outcome<LocalConversationPreviews, DataOperationError>>(replay = 1)
 
@@ -56,7 +56,7 @@ class OfflineFirstMessageRepository(
         sharedFlow.asSharedFlow()
     }
 
-    override fun get(id: MessageId): Flow<Outcome<LocalMessage, GetError>> {
+    override fun getAsFlow(id: MessageId): Flow<Outcome<LocalMessage, GetError>> {
         val sharedFlow = MutableSharedFlow<Outcome<LocalMessage, GetError>>(replay = 1)
 
         coroutineScope.launch {

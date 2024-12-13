@@ -7,5 +7,5 @@ import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface MemberRepository {
-    fun get(id: MemberId): Flow<Outcome<LocalMember, GetError>>
+    fun getAsFlow(id: MemberId): Flow<Outcome<LocalMember, GetError>>
 }

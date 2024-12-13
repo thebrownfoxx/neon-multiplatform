@@ -112,7 +112,9 @@ class ExposedLocalMessageDataSource(
 
             LocalConversationPreviews(
                 nudgedPreviews = nudgedPreviews,
-                unreadPreviews = unreadPreviews,
+                unreadPreviews = unreadPreviews.filter { unread ->
+                    nudgedPreviews.none { it.groupId != unread.groupId }
+                },
                 readPreviews = readPreviews,
             )
         }.mapOperationTransaction()
@@ -169,4 +171,6 @@ private object LocalMessageTable : Table("local_message") {
     // (at least with Exposed's current implementation)
     // So I'm just gonna save it as a string and parse it later
     val delivery = varchar("delivery", 32)
+
+    override val primaryKey = PrimaryKey(id)
 }

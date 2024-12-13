@@ -4,6 +4,8 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersRequest
+import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupSuccessfulChatGroup
@@ -26,9 +28,15 @@ class GroupWebSocketMessageManager(
 
     private val getGroupJobManager = JobManager<GroupId>(coroutineScope, session.close)
 
+    private val getMembersJobManager = JobManager<GroupId>(coroutineScope, session.close)
+
     init {
         session.subscribe<GetGroupRequest> { request ->
             getGroup(request.id)
+        }
+
+        session.subscribe<GetGroupMembersRequest> { request ->
+            getMembers(request.groupId)
         }
     }
 
@@ -45,6 +53,24 @@ class GroupWebSocketMessageManager(
                         GetGroupError.NotFound -> session.send(GetGroupNotFound(id))
                         GetGroupError.UnexpectedError ->
                             session.send(GetGroupUnexpectedError(id))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getMembers(groupId: GroupId) {
+        getMembersJobManager[groupId] = {
+            groupManager.getMembers(groupId).collect { membersOutcome ->
+                membersOutcome.onSuccess { members ->
+                    session.send(GetGroupMembersSuccessful(groupId, members))
+                }.onFailure { error ->
+                    when (error) {
+                        GroupManager.GetMembersError.GroupNotFound ->
+                            session.send(GetGroupNotFound(groupId))
+
+                        GroupManager.GetMembersError.UnexpectedError ->
+                            session.send(GetGroupUnexpectedError(groupId))
                     }
                 }
             }

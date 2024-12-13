@@ -120,13 +120,17 @@ class AlwaysActiveWebSocketSession(
     }
 
     private suspend fun WebSocketSession.mirrorIncomingMessages() {
-        incomingMessages.collect { _incomingMessages.emit(it) }
+        incomingMessages.collect {
+            _incomingMessages.emit(it)
+            logger.logInfo("Received: ${it.getLabel()}")
+        }
     }
 
     private suspend fun WebSocketSession.sendQueuedMessages() {
         while (sendQueue.isNotEmpty()) {
             val (message, type) = sendQueue.removeFirst()
             send(message, type)
+            logger.logInfo("Sent: $message")
         }
     }
 }

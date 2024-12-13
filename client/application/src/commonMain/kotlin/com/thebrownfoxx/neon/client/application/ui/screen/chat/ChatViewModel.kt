@@ -59,9 +59,6 @@ class ChatViewModel(
         readConversations = List(20) { LoadingChatPreviewState() },
     )
 
-    // TODO: Change this to index-based so we can preload close items way before they get scrolled to
-    private val previewsToLoad = MutableStateFlow(emptySet<GroupId>())
-
     private val lastVisiblePreview = MutableStateFlow<GroupId?>(null)
 
     val chatPreviews = messenger.conversationPreviews.flatMapLatest { conversationPreviewsOutcome ->
@@ -100,24 +97,6 @@ class ChatViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, loadingState)
 
-    private fun LocalConversationPreviews.getLastVisiblePreviewIndex(
-        lastVisiblePreview: GroupId?,
-    ): Int {
-        return when {
-            nudgedPreviews.any { it.groupId == lastVisiblePreview } ->
-                nudgedPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
-
-            unreadPreviews.any { it.groupId == lastVisiblePreview } -> nudgedPreviews.size +
-                    unreadPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
-
-            readPreviews.any { it.groupId == lastVisiblePreview } -> nudgedPreviews.size +
-                    unreadPreviews.size +
-                    readPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
-
-            else -> 0
-        }
-    }
-
     private val _conversation = MutableStateFlow<ConversationPaneState?>(null)
     val conversation = _conversation.asStateFlow()
 
@@ -138,6 +117,24 @@ class ChatViewModel(
 
     fun onConversationClose() {
         _conversation.value = null
+    }
+
+    private fun LocalConversationPreviews.getLastVisiblePreviewIndex(
+        lastVisiblePreview: GroupId?,
+    ): Int {
+        return when {
+            nudgedPreviews.any { it.groupId == lastVisiblePreview } ->
+                nudgedPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
+
+            unreadPreviews.any { it.groupId == lastVisiblePreview } -> nudgedPreviews.size +
+                    unreadPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
+
+            readPreviews.any { it.groupId == lastVisiblePreview } -> nudgedPreviews.size +
+                    unreadPreviews.size +
+                    readPreviews.indexOfFirst { it.groupId == lastVisiblePreview }
+
+            else -> 0
+        }
     }
 
     private fun LocalMessage.toChatPreviewState(

@@ -58,7 +58,9 @@ abstract class WebSocketSession(private val logger: Logger) {
                 .collect { serializedMessage ->
                     serializedMessage.deserialize<T>()
                         .onSuccess { action(it) }
-                        .onFailure { logSerializationFailure(serializedMessage) }
+                        .onFailure {
+                            logSerializationFailure(serializedMessage, log)
+                        }
                 }
         }
     }
@@ -66,9 +68,10 @@ abstract class WebSocketSession(private val logger: Logger) {
     @PublishedApi
     internal fun logSerializationFailure(
         serializedMessage: SerializedWebSocketMessage,
+        log: String,
     ) {
         val string = serializedMessage.serializedValue.getOrElse { serializedMessage.toString() }
-        internalLogger.logError(message = "Failed to deserialize $string")
+        internalLogger.logError(message = "Failed to deserialize $string caused by $log")
     }
 
     @PublishedApi

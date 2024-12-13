@@ -9,12 +9,15 @@ import kotlinx.coroutines.flow.Flow
 interface GroupManager {
     fun getGroup(id: GroupId): Flow<Outcome<LocalGroup, GetGroupError>>
 
-    fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, UnexpectedGetMembersError>>
+    fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>>
 
     enum class GetGroupError {
         NotFound,
         UnexpectedError,
     }
 
-    data object UnexpectedGetMembersError
+    enum class GetMembersError {
+        GroupNotFound,
+        UnexpectedError,
+    }
 }
