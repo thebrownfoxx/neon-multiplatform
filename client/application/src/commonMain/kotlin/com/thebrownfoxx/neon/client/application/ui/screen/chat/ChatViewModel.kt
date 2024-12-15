@@ -6,6 +6,7 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.Avatar
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.GroupAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationInfoState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
@@ -27,6 +28,7 @@ import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
+import com.thebrownfoxx.neon.client.model.LocalGroup
 import com.thebrownfoxx.neon.client.model.LocalMember
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.service.Authenticator
@@ -37,7 +39,7 @@ import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.extension.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
-import com.thebrownfoxx.neon.common.type.Loading
+import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.map.getOrThrow
@@ -259,9 +261,12 @@ class ChatViewModel(
         conversationGroup.flatMapLatest conversationGroup@{ groupId ->
             if (groupId == null) return@conversationGroup flowOf(null)
             groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
-                val direct = groupOutcome.getOrThrow() is LocalChatGroup
+                val group = groupOutcome.getOrThrow()
+                val direct = group is LocalChatGroup
 
-                messenger.getMessages(groupId).flatMapLatest { messagesOutcome ->
+                val conversationInfo = group.getConversationInfoState(loggedInMemberId)
+
+                val entries = messenger.getMessages(groupId).flatMapLatest { messagesOutcome ->
                     val messageIds = messagesOutcome.getOrThrow()
                     val messagesFlows = messageIds.map { messageId ->
                         messenger.getMessage(messageId).flatMapLatest { messageOutcome ->
@@ -270,25 +275,29 @@ class ChatViewModel(
                         }
                     }
 
-                    message.flatMapLatest { message ->
-                        combineOrEmpty(messagesFlows) { messages ->
-                            val entries = messages.mapIndexed { index, message ->
-                                val previous = messages.getOrNull(index - 1)
-                                val next = messages.getOrNull(index + 1)
-                                message.toMessageEntry(previous, next)
-                            }
-
-                            ConversationPaneState(
-                                conversation = ConversationState(
-                                    groupId = groupId,
-                                    info = Loading,
-                                    entries = entries.toList(),
-                                    loading = true,
-                                ),
-                                message = message,
-                            )
+                    combineOrEmpty(messagesFlows) { messages ->
+                        messages.mapIndexed { index, message ->
+                            val previous = messages.getOrNull(index - 1)
+                            val next = messages.getOrNull(index + 1)
+                            message.toMessageEntry(previous, next)
                         }
                     }
+                }
+
+                combine(
+                    conversationInfo,
+                    entries,
+                    message,
+                ) { conversationInfo, entries, message ->
+                    ConversationPaneState(
+                        conversation = ConversationState(
+                            groupId = groupId,
+                            info = Loaded(conversationInfo),
+                            entries = entries,
+                            loading = true,
+                        ),
+                        message = message,
+                    )
                 }
             }
         }
@@ -296,6 +305,37 @@ class ChatViewModel(
 
     fun onMessageChange(message: String) {
         this.message.value = message
+    }
+
+    private fun LocalGroup.getConversationInfoState(
+        loggedInMemberId: MemberId?,
+    ): Flow<ConversationInfoState> {
+        return when (this) {
+            is LocalChatGroup -> getConversationInfoState(loggedInMemberId)
+            is LocalCommunity -> getConversationInfoState(loggedInMemberId)
+        }
+    }
+
+    private fun LocalCommunity.getConversationInfoState(
+        loggedInMemberId: MemberId?,
+    ): Flow<ConversationInfoState> {
+        return getAvatarState(loggedInMemberId).mapLatest {
+            ConversationInfoState(
+                avatar = it,
+                name = name,
+            )
+        }
+    }
+
+    private fun LocalChatGroup.getConversationInfoState(
+        loggedInMemberId: MemberId?,
+    ): Flow<ConversationInfoState> {
+        return getMemberToShow(loggedInMemberId).mapLatest {
+            ConversationInfoState(
+                avatar = it.getAvatarState(),
+                name = it.username,
+            )
+        }
     }
 
     private fun LocalMessage.toLocalMessageWithSenderState(
