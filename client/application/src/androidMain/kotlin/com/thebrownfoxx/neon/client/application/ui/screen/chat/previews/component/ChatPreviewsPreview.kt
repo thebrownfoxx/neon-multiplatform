@@ -5,16 +5,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsDummy
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import com.thebrownfoxx.neon.common.type.Loaded
-import com.thebrownfoxx.neon.common.type.Loading
 
 @Preview
 @Composable
 private fun LoadingPreview() {
     NeonTheme {
         ChatPreviews(
-            state = Loading,
+            state = ChatPreviewsState(
+                nudgedConversations = List(2) { LoadingChatPreviewState() },
+                unreadConversations = List(10) { LoadingChatPreviewState() },
+                readConversations = List(30) { LoadingChatPreviewState() },
+            ),
             eventHandler = ChatPreviewsEventHandler.Blank,
         )
     }
@@ -25,12 +28,10 @@ private fun LoadingPreview() {
 private fun Preview() {
     NeonTheme {
         ChatPreviews(
-            state = Loaded(
-                ChatPreviewsState(
-                    nudgedConversations = ChatPreviewsDummy.NudgedConversations,
-                    unreadConversations = ChatPreviewsDummy.UnreadConversations,
-                    readConversations = ChatPreviewsDummy.ReadConversations,
-                ),
+            state = ChatPreviewsState(
+                nudgedConversations = ChatPreviewsDummy.NudgedConversations,
+                unreadConversations = ChatPreviewsDummy.UnreadConversations,
+                readConversations = ChatPreviewsDummy.ReadConversations,
             ),
             eventHandler = ChatPreviewsEventHandler.Blank,
         )
@@ -42,12 +43,10 @@ private fun Preview() {
 private fun NoNudgedPreview() {
     NeonTheme {
         ChatPreviews(
-            state = Loaded(
-                ChatPreviewsState(
-                    nudgedConversations = emptyList(),
-                    unreadConversations = ChatPreviewsDummy.UnreadConversations,
-                    readConversations = ChatPreviewsDummy.ReadConversations,
-                ),
+            state = ChatPreviewsState(
+                nudgedConversations = emptyList(),
+                unreadConversations = ChatPreviewsDummy.UnreadConversations,
+                readConversations = ChatPreviewsDummy.ReadConversations,
             ),
             eventHandler = ChatPreviewsEventHandler.Blank,
         )
@@ -59,12 +58,10 @@ private fun NoNudgedPreview() {
 private fun NoUnreadMessagesPreview() {
     NeonTheme {
         ChatPreviews(
-            state = Loaded(
-                ChatPreviewsState(
-                    nudgedConversations = emptyList(),
-                    unreadConversations = emptyList(),
-                    readConversations = ChatPreviewsDummy.ReadConversations,
-                ),
+            state = ChatPreviewsState(
+                nudgedConversations = emptyList(),
+                unreadConversations = emptyList(),
+                readConversations = ChatPreviewsDummy.ReadConversations,
             ),
             eventHandler = ChatPreviewsEventHandler.Blank,
         )
@@ -76,12 +73,10 @@ private fun NoUnreadMessagesPreview() {
 private fun NoReadMessagesPreview() {
     NeonTheme {
         ChatPreviews(
-            state = Loaded(
-                ChatPreviewsState(
-                    nudgedConversations = emptyList(),
-                    unreadConversations = ChatPreviewsDummy.UnreadConversations,
-                    readConversations = emptyList(),
-                ),
+            state = ChatPreviewsState(
+                nudgedConversations = emptyList(),
+                unreadConversations = ChatPreviewsDummy.UnreadConversations,
+                readConversations = emptyList(),
             ),
             eventHandler = ChatPreviewsEventHandler.Blank,
         )

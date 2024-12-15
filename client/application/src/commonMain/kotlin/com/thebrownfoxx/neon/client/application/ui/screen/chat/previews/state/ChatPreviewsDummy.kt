@@ -22,6 +22,12 @@ object ChatPreviewsDummy {
         ),
     )
 
+    val LoadingChatPreviewsState = ChatPreviewsState(
+        nudgedConversations = List(2) { LoadingChatPreviewState() },
+        unreadConversations = List(10) { LoadingChatPreviewState() },
+        readConversations = List(30) { LoadingChatPreviewState() },
+    )
+
     val NudgedConversations = listOf(
         receivedDirectChatPreview(
             name = "AndreaStella",

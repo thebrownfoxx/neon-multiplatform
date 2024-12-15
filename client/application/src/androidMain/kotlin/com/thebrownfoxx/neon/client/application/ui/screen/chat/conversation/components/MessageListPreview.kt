@@ -4,15 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import com.thebrownfoxx.neon.common.type.Loaded
-import com.thebrownfoxx.neon.common.type.Loading
 
 @Preview
 @Composable
 private fun LoadingPreview() {
     NeonTheme {
         MessageList(
-            entries = Loading,
+            entries = emptyList(),
             onMarkAsRead = {},
         )
     }
@@ -23,7 +21,7 @@ private fun LoadingPreview() {
 private fun MemberPreview() {
     NeonTheme {
         MessageList(
-            entries = Loaded(ConversationDummy.DirectMessageEntries),
+            entries = ConversationDummy.DirectMessageEntries,
             onMarkAsRead = {},
         )
     }
@@ -34,7 +32,7 @@ private fun MemberPreview() {
 private fun CommunityPreview() {
     NeonTheme {
         MessageList(
-            entries = Loaded(ConversationDummy.CommunityMessageEntries),
+            entries = ConversationDummy.CommunityMessageEntries,
             onMarkAsRead = {},
         )
     }

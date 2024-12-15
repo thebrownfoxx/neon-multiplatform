@@ -17,8 +17,8 @@ private fun LoadingPreview() {
             state = ConversationPaneState(
                 conversation = ConversationState(
                     info = Loading,
-                    entries = Loading,
-                    loading = false,
+                    entries = emptyList(),
+                    loading = true,
                 )
             ),
             eventHandler = ConversationPaneEventHandler.Blank,
