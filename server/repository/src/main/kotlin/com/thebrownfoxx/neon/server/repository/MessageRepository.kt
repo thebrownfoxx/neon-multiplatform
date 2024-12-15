@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Message
+import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
@@ -17,6 +18,10 @@ interface MessageRepository {
         memberId: MemberId,
     ): Flow<Outcome<List<Message>, DataOperationError>>
 
+    fun getMessagesAsFlow(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>>
+
     fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>>
 
     suspend fun get(id: MessageId): Outcome<Message, GetError>
@@ -24,12 +29,6 @@ interface MessageRepository {
     suspend fun add(message: Message): ReversibleUnitOutcome<AddError>
 
     suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
-
-    suspend fun getMessages(
-        groupId: GroupId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<MessageId>, DataOperationError>
 
     suspend fun getUnreadMessages(
         groupId: GroupId,

@@ -7,10 +7,9 @@ import com.thebrownfoxx.neon.server.model.Message
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GetMessageRequest(val id: MessageId) : WebSocketMessage(
-    kClass = GetMessageRequest::class,
-    description = null,
-) {
+data class GetMessageRequest(
+    val id: MessageId,
+) : WebSocketMessage(kClass = GetMessageRequest::class) {
     override val requestId = null
 }
 

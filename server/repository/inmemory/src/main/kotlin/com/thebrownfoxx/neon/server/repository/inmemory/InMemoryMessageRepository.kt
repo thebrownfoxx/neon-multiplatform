@@ -6,12 +6,12 @@ import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
-import com.thebrownfoxx.neon.common.extension.coercedSubList
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
+import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
@@ -30,6 +30,20 @@ class InMemoryMessageRepository : MessageRepository {
 
     override fun getConversationPreviewsAsFlow(memberId: MemberId): Flow<Outcome<List<Message>, DataOperationError>> {
         TODO("Not yet implemented")
+    }
+
+    override fun getMessagesAsFlow(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>> {
+        return messages.mapLatest { messages ->
+            val messageIds = messages.values
+                .filter { it.groupId == groupId }
+                .sortedByDescending { it.timestamp }
+                .map { TimestampedMessageId(it.id, it.timestamp) }
+                .toSet()
+
+            Success(messageIds)
+        }
     }
 
     override fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>> {
@@ -60,23 +74,6 @@ class InMemoryMessageRepository : MessageRepository {
             return Failure(UpdateError.NotFound).asReversible()
         messages.update { it + (message.id to message) }
         return UnitSuccess.asReversible { messages.update { it - message.id } }
-    }
-
-    override suspend fun getMessages(
-        groupId: GroupId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<MessageId>, DataOperationError> {
-        return messages.mapLatest { messages ->
-            val messageIds = messages.values
-                .filter { it.groupId == groupId }
-                .sortedByDescending { it.timestamp }
-                .coercedSubList(offset..<offset + count)
-                .map { it.id }
-                .toSet()
-
-            Success(messageIds)
-        }.first()
     }
 
     override suspend fun getUnreadMessages(

@@ -4,6 +4,7 @@ import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.repository.local.LocalMessageDataSource
+import com.thebrownfoxx.neon.client.repository.local.LocalMessageDataSource.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
@@ -19,13 +20,14 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
-import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.onSuccess
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
@@ -41,14 +43,25 @@ import org.jetbrains.exposed.sql.upsert
 class ExposedLocalMessageDataSource(
     database: Database,
     private val getMemberId: suspend () -> MemberId, // TODO: This should be bound to authenticator? idk man
-) : LocalMessageDataSource, ExposedDataSource(database, LocalMessageTable) {
-    private val reactiveConversationsCache = SingleReactiveCache(::getConversations)
-    private val reactiveMessageCache = ReactiveCache(::get)
+) : LocalMessageDataSource,
+    ExposedDataSource(database, LocalMessageTable, LocalTimestampedMessageIdTable) {
+    private val conversationsCache = SingleReactiveCache(::getConversations) // TODO: remove "reactive" from reactive cache names like this
+    private val messagesCache = ReactiveCache(::getMessages)
+    private val messageCache = ReactiveCache(::get)
 
-    override val conversationPreviews = reactiveConversationsCache.getAsFlow()
+    override val conversationPreviews:
+            Flow<Outcome<LocalConversationPreviews, DataOperationError>> =
+        conversationsCache.getAsFlow() // TODO: Specify complex return types like this
 
-    override fun getMessageAsFlow(id: MessageId) =
-        reactiveMessageCache.getAsFlow(id)
+    override fun getMessagesAsFlow(
+        id: GroupId,
+    ): Flow<Outcome<Set<MessageId>, DataOperationError>> {
+        return messagesCache.getAsFlow(id)
+    }
+
+    override fun getMessageAsFlow(id: MessageId): Flow<Outcome<LocalMessage, GetError>> {
+        return messageCache.getAsFlow(id)
+    }
 
     override suspend fun upsert(message: LocalMessage): UnitOutcome<DataOperationError> {
         return dataTransaction {
@@ -63,8 +76,8 @@ class ExposedLocalMessageDataSource(
         }
             .mapUnitOperationTransaction()
             .onSuccess {
-                reactiveConversationsCache.update()
-                reactiveMessageCache.update(message.id)
+//                conversationsCache.update() // TODO: Review which caches to update
+                messageCache.update(message.id)
             }
     }
 
@@ -83,12 +96,29 @@ class ExposedLocalMessageDataSource(
         }
             .mapUnitOperationTransaction()
             .onSuccess {
-                for (message in messages) {
-                    reactiveMessageCache.update(message.id)
-                }
-                reactiveConversationsCache.update()
-                return UnitSuccess
+                messages.forEach { messageCache.update(it.id) }
+                conversationsCache.update()
             }
+    }
+
+    override suspend fun batchUpsert(
+        messageIds: Set<LocalTimestampedMessageId>,
+    ): UnitOutcome<DataOperationError> {
+        return dataTransaction {
+            LocalTimestampedMessageIdTable.batchUpsert(messageIds) { messageId ->
+                this[LocalTimestampedMessageIdTable.id] = messageId.id.toJavaUuid()
+                this[LocalTimestampedMessageIdTable.groupId] = messageId.groupId.toJavaUuid()
+                this[LocalTimestampedMessageIdTable.timestamp] = messageId.timestamp
+            }
+        }
+            .mapUnitOperationTransaction()
+//            .onSuccess {
+//                messageIds
+//                    .map { it.groupId }
+//                    .toSet()
+//                    .forEach { messagesCache.update(it) }
+//                conversationsCache.update()
+//            }
     }
 
     private suspend fun getConversations(): Outcome<LocalConversationPreviews, DataOperationError> {
@@ -140,6 +170,17 @@ class ExposedLocalMessageDataSource(
         return conversationPreviews
     }
 
+    private suspend fun getMessages(groupId: GroupId): Outcome<Set<MessageId>, DataOperationError> {
+        return dataTransaction {
+            LocalTimestampedMessageIdTable
+                .selectAll()
+                .orderBy(LocalTimestampedMessageIdTable.timestamp to SortOrder.DESC)
+                .where(LocalTimestampedMessageIdTable.groupId eq groupId.toJavaUuid())
+                .map { MessageId(it[LocalTimestampedMessageIdTable.id].toCommonUuid()) }
+                .toSet()
+        }.mapOperationTransaction()
+    }
+
     private suspend fun get(id: MessageId): Outcome<LocalMessage, GetError> {
         return dataTransaction {
             LocalMessageTable
@@ -171,6 +212,14 @@ private object LocalMessageTable : Table("local_message") {
     // (at least with Exposed's current implementation)
     // So I'm just gonna save it as a string and parse it later
     val delivery = varchar("delivery", 32)
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+private object LocalTimestampedMessageIdTable : Table("local_timestamped_message_id") {
+    val id = uuid("id")
+    val groupId = uuid("group_id")
+    val timestamp = timestamp("timestamp")
 
     override val primaryKey = PrimaryKey(id)
 }

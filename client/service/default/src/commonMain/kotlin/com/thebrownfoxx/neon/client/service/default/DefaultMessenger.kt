@@ -5,7 +5,9 @@ import com.thebrownfoxx.neon.client.repository.MessageRepository
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.ConversationPreviewsUnexpectedError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
+import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.mapError
@@ -15,6 +17,14 @@ import kotlinx.coroutines.flow.map
 class DefaultMessenger(private val messageRepository: MessageRepository) : Messenger {
     override val conversationPreviews = messageRepository.conversationPreviewsFlow.map { outcome ->
         outcome.mapError { ConversationPreviewsUnexpectedError }
+    }
+
+    override fun getMessages(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<MessageId>, GetMessagesError>> {
+        return messageRepository.getMessagesAsFlow(groupId).map { outcome ->
+            outcome.mapError { GetMessagesError.Idk }
+        }
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {

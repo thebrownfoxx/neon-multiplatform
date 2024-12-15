@@ -5,9 +5,11 @@ import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.repository.MessageRepository
 import com.thebrownfoxx.neon.client.repository.local.LocalMessageDataSource
+import com.thebrownfoxx.neon.client.repository.local.LocalMessageDataSource.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.repository.remote.RemoteMessageDataSource
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -27,7 +29,8 @@ class OfflineFirstMessageRepository(
 ) : MessageRepository {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
-    override val conversationPreviewsFlow = run {
+    override val conversationPreviewsFlow:
+            Flow<Outcome<LocalConversationPreviews, DataOperationError>> = run {
         val sharedFlow =
             MutableSharedFlow<Outcome<LocalConversationPreviews, DataOperationError>>(replay = 1)
 
@@ -54,6 +57,40 @@ class OfflineFirstMessageRepository(
         }
 
         sharedFlow.asSharedFlow()
+    }
+
+    override fun getMessagesAsFlow(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<MessageId>, DataOperationError>> {
+        val sharedFlow = MutableSharedFlow<Outcome<Set<MessageId>, DataOperationError>>(replay = 1)
+
+        coroutineScope.launch {
+            localDataSource.getMessagesAsFlow(groupId).collect { localMessagesOutcome ->
+                val localMessages = localMessagesOutcome.getOrElse { error ->
+                    sharedFlow.emit(Failure(error))
+                    return@collect
+                }
+                sharedFlow.emit(Success(localMessages))
+            }
+        }
+
+        coroutineScope.launch {
+            remoteDataSource.getMessagesAsFlow(groupId).collect { remoteMessagesOutcome ->
+                val remoteMessages = remoteMessagesOutcome.getOrElse { error ->
+                    sharedFlow.emit(Failure(error))
+                    return@collect
+                }.map {
+                    LocalTimestampedMessageId(
+                        id = it.id,
+                        groupId = groupId,
+                        timestamp = it.timestamp,
+                    )
+                }.toSet()
+                localDataSource.batchUpsert(remoteMessages)
+            }
+        }
+
+        return sharedFlow.asSharedFlow()
     }
 
     override fun getAsFlow(id: MessageId): Flow<Outcome<LocalMessage, GetError>> {

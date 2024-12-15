@@ -13,13 +13,15 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 abstract class ExposedDataSource(
     database: Database,
-    table: Table,
+    vararg tables: Table,
 ) {
     protected val dataSourceScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     init {
         transaction(database) {
-            SchemaUtils.create(table)
+            for (table in tables) {
+                SchemaUtils.create(table)
+            }
         }
     }
 

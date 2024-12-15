@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.server.service.default
 
+import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.extension.flow
@@ -10,6 +11,7 @@ import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
+import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.neon.server.repository.MemberRepository
@@ -56,6 +58,26 @@ class DefaultMessenger(
         }
     }
 
+    override fun getMessages(
+        actorId: MemberId,
+        groupId: GroupId,
+    ): Flow<Outcome<Set<TimestampedMessageId>, GetMessagesError>> {
+        return combine(
+            groupRepository.getAsFlow(groupId),
+            groupMemberRepository.getMembersAsFlow(groupId),
+            messageRepository.getMessagesAsFlow(groupId),
+        ) { groupOutcome, membersOutcome, messagesOutcome ->
+            groupOutcome.getOrElse { return@combine Failure(it.getGroupErrorToGetMessagesError()) }
+
+            val members = membersOutcome
+                .getOrElse { return@combine Failure(it.toGetMessagesError()) }
+
+            if (actorId !in members) return@combine Failure(GetMessagesError.Unauthorized)
+
+            messagesOutcome.mapError { it.toGetMessagesError() }
+        }
+    }
+
     override fun getMessage(
         actorId: MemberId,
         id: MessageId,
@@ -76,13 +98,6 @@ class DefaultMessenger(
                     Success(message)
                 }
         }
-    }
-
-    override suspend fun getMessages(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): Outcome<Set<MessageId>, GetMessagesError> {
-        TODO("Not yet implemented")
     }
 
     override suspend fun newConversation(
@@ -190,6 +205,17 @@ class DefaultMessenger(
         GetError.NotFound -> GetConversationPreviewsError.MemberNotFound
         GetError.ConnectionError, GetError.UnexpectedError ->
             GetConversationPreviewsError.UnexpectedError
+    }
+
+    private fun GetError.getGroupErrorToGetMessagesError() = when (this) {
+        GetError.NotFound -> GetMessagesError.GroupNotFound
+        GetError.ConnectionError, GetError.UnexpectedError ->
+            GetMessagesError.UnexpectedError
+    }
+
+    private fun DataOperationError.toGetMessagesError() = when (this) {
+        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
+            GetMessagesError.UnexpectedError
     }
 
     private fun GetError.toGetMessageError() = when (this) {

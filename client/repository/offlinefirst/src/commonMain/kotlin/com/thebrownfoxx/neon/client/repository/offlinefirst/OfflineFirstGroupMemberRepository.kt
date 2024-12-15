@@ -2,7 +2,7 @@ package com.thebrownfoxx.neon.client.repository.offlinefirst
 
 import com.thebrownfoxx.neon.client.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.client.repository.local.LocalGroupMemberDataSource
-import com.thebrownfoxx.neon.client.repository.local.LocalGroupMemberDataSource.GroupMember
+import com.thebrownfoxx.neon.client.repository.local.LocalGroupMemberDataSource.LocalGroupMember
 import com.thebrownfoxx.neon.client.repository.remote.RemoteGroupMemberDataSource
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -46,7 +46,7 @@ class OfflineFirstGroupMemberRepository(
                     sharedFlow.emit(Failure(DataOperationError.UnexpectedError))
                     return@collect
                 }.map {
-                    GroupMember(
+                    LocalGroupMember(
                         groupId = groupId,
                         memberId = it,
                         isAdmin = false,

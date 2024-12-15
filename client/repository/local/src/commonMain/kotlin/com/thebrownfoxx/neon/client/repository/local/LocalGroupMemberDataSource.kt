@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocalGroupMemberDataSource {
     fun getMembersAsFlow(groupId: GroupId): Flow<Outcome<Set<MemberId>, DataOperationError>>
-    suspend fun batchUpsert(groupMembers: List<GroupMember>): UnitOutcome<DataOperationError>
+    suspend fun batchUpsert(groupMembers: List<LocalGroupMember>): UnitOutcome<DataOperationError>
 
-    data class GroupMember(
+    data class LocalGroupMember(
         val groupId: GroupId,
         val memberId: MemberId,
         val isAdmin: Boolean,

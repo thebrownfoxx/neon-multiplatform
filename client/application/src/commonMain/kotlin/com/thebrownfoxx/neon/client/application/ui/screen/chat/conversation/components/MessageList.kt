@@ -26,17 +26,15 @@ import com.thebrownfoxx.neon.client.application.ui.component.common.Button
 import com.thebrownfoxx.neon.client.application.ui.component.common.ButtonIconText
 import com.thebrownfoxx.neon.client.application.ui.component.common.ExpandAxis
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
-import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntry
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentState
-import com.thebrownfoxx.neon.common.type.Loadable
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
 import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.mark_as_read
@@ -44,22 +42,17 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MessageList(
-    entries: Loadable<List<MessageListEntry>>,
+    entries: List<MessageListEntry>,
     onMarkAsRead: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     Surface(modifier = modifier) {
-        AnimatedLoadableContent(
-            targetState = entries,
-            loader = { DirectMessageListLoader(contentPadding = contentPadding) },
-        ) {
-            LoadedMessageList(
-                entries = it,
-                onMarkAsRead = onMarkAsRead,
-                contentPadding = contentPadding,
-            )
-        }
+        LoadedMessageList(
+            entries = entries,
+            onMarkAsRead = onMarkAsRead,
+            contentPadding = contentPadding,
+        )
     }
 }
 
@@ -75,7 +68,7 @@ private fun LoadedMessageList(
     val lastEntry = remember(entries) { entries.lastOrNull() }
 
     val read = remember(lastEntry) {
-        lastEntry is MessageEntry && lastEntry.message.deliveryState == DeliveryState.Read
+        lastEntry is MessageEntry && lastEntry.message.delivery == DeliveryState.Read
     }
 
     LazyColumn(
@@ -109,22 +102,22 @@ private fun LazyListScope.entries(entries: List<MessageListEntry>) {
             when (entry) {
                 is ChunkTimestamp -> ChunkTimestampLabel(timestamp = entry.timestamp)
                 is MessageEntry -> when (val sender = entry.message.sender) {
-                    SentState -> SentMessageListBubble(
+                    SentMessageState -> SentMessageListBubble(
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
                     )
 
-                    ReceivedDirectState -> ReceivedDirectMessageListBubble(
+                    ReceivedDirectMessageState -> ReceivedDirectMessageListBubble(
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
-                        read = entry.message.deliveryState == DeliveryState.Read,
+                        read = entry.message.delivery == DeliveryState.Read,
                     )
 
-                    is ReceivedCommunityState -> ReceivedCommunityMessageListBubble(
+                    is ReceivedCommunityMessageState -> ReceivedCommunityMessageListBubble(
                         senderAvatar = sender.senderAvatar,
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,
-                        read = entry.message.deliveryState == DeliveryState.Read,
+                        read = entry.message.delivery == DeliveryState.Read,
                     )
                 }
             }

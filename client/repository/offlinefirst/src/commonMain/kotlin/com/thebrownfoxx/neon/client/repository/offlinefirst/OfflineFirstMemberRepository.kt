@@ -29,8 +29,8 @@ class OfflineFirstMemberRepository(
         val sharedFlow = MutableSharedFlow<Outcome<LocalMember, GetError>>(replay = 1)
 
         coroutineScope.launch {
-            localDataSource.getAsFlow(id).collect { localGroupOutcome ->
-                val localMember = localGroupOutcome.getOrElse { error ->
+            localDataSource.getAsFlow(id).collect { localMemberOutcome ->
+                val localMember = localMemberOutcome.getOrElse { error ->
                     when (error) {
                         GetError.NotFound -> {}
                         GetError.ConnectionError, GetError.UnexpectedError ->
@@ -43,8 +43,8 @@ class OfflineFirstMemberRepository(
         }
 
         coroutineScope.launch {
-            remoteDataSource.getAsFlow(id).collect { remoteGroupOutcome ->
-                val remoteGroup = remoteGroupOutcome.getOrElse { error ->
+            remoteDataSource.getAsFlow(id).collect { remoteMemberOutcome ->
+                val remoteGroup = remoteMemberOutcome.getOrElse { error ->
                     sharedFlow.emit(Failure(error))
                     return@collect
                 }

@@ -169,7 +169,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = delivery,
-        sender = SentState,
+        sender = SentChatPreviewState,
         emphasized = emphasized,
     )
 
@@ -187,7 +187,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = null,
-        sender = ReceivedDirectState,
+        sender = ReceivedDirectChatPreviewState,
         emphasized = emphasized,
     )
 
@@ -204,7 +204,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = delivery,
-        sender = SentState,
+        sender = SentChatPreviewState,
         emphasized = emphasized,
     )
 
@@ -221,7 +221,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = null,
-        sender = ReceivedCommunityState(sender),
+        sender = ReceivedCommunityChatPreviewState(sender),
         emphasized = emphasized,
     )
 

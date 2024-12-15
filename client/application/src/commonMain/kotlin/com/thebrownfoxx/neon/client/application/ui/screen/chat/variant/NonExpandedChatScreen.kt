@@ -14,7 +14,6 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.Conv
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.ChatPreviewsPane
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
-import com.thebrownfoxx.neon.common.type.getOrNull
 
 @Composable
 fun NonExpandedChatScreen(
@@ -30,7 +29,7 @@ fun NonExpandedChatScreen(
                     val reversed = targetState == null
                     sharedZAxisEnter(reversed) togetherWith sharedZAxisExit(reversed)
                 },
-                contentKey = { it?.conversation?.info?.getOrNull()?.groupId },
+                contentKey = { it?.conversation?.groupId },
                 modifier = Modifier.consumeWindowInsets(WindowInsets.safeDrawing)
             ) {
                 when (it) {

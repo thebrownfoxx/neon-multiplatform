@@ -22,14 +22,17 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
+import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.map
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
@@ -42,13 +45,25 @@ import org.jetbrains.exposed.sql.selectAll
 class ExposedMessageRepository(
     database: Database,
 ) : MessageRepository, ExposedDataSource(database, MessageTable) {
-    private val reactiveConversationPreviewsCache = ReactiveCache(::getConversationPreviews)
-    private val reactiveMessageCache = ReactiveCache(::get)
+    private val conversationPreviewsCache = ReactiveCache(::getConversationPreviews)
+    private val messagesCache = ReactiveCache(::getMessages)
+    private val messageCache = ReactiveCache(::get)
 
-    override fun getConversationPreviewsAsFlow(memberId: MemberId): Flow<Outcome<List<Message>, DataOperationError>> =
-        reactiveConversationPreviewsCache.getAsFlow(memberId)
+    override fun getConversationPreviewsAsFlow(
+        memberId: MemberId,
+    ): Flow<Outcome<List<Message>, DataOperationError>> {
+        return conversationPreviewsCache.getAsFlow(memberId)
+    }
 
-    override fun getAsFlow(id: MessageId) = reactiveMessageCache.getAsFlow(id)
+    override fun getMessagesAsFlow(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>> {
+        return messagesCache.getAsFlow(groupId)
+    }
+
+    override fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>> {
+        return messageCache.getAsFlow(id)
+    }
 
     override suspend fun get(id: MessageId): Outcome<Message, GetError> {
         return dataTransaction {
@@ -62,7 +77,7 @@ class ExposedMessageRepository(
 
     override suspend fun add(message: Message): ReversibleUnitOutcome<AddError> {
         return dataTransaction {
-            MessageTable.tryAdd() {
+            MessageTable.tryAdd {
                 it[id] = message.id.toJavaUuid()
                 it[groupId] = message.groupId.toJavaUuid()
                 it[senderId] = message.senderId.toJavaUuid()
@@ -72,8 +87,14 @@ class ExposedMessageRepository(
             }
         }
             .mapAddTransaction()
+            .onSuccess {
+                // TODO: Must update conversation previews cache
+                messagesCache.update(message.groupId)
+            }
             .asReversible {
                 dataTransaction { MessageTable.deleteWhere { id eq message.id.toJavaUuid() } }
+                // TODO: Must update conversation previews cache
+                messagesCache.update(message.groupId)
             }
     }
 
@@ -81,26 +102,15 @@ class ExposedMessageRepository(
         val oldMessage = get(message.id)
             .getOrElse { return Failure(it.toUpdateError()).asReversible() }
 
-        return dataTransaction { updateMessage(message) }
+        return dataTransaction {
+            updateMessage(message)
+        }
             .mapUpdateTransaction()
-            .asReversible { dataTransaction { updateMessage(oldMessage) } }
-    }
-
-    private fun updateMessage(message: Message) = MessageTable.tryUpdate {
-        it[id] = message.id.toJavaUuid()
-        it[groupId] = message.groupId.toJavaUuid()
-        it[senderId] = message.senderId.toJavaUuid()
-        it[content] = message.content
-        it[timestamp] = message.timestamp
-        it[delivery] = message.delivery.name
-    }
-
-    override suspend fun getMessages(
-        groupId: GroupId,
-        count: Int,
-        offset: Int,
-    ): Outcome<Set<MessageId>, DataOperationError> {
-        TODO("Not yet implemented")
+            .onSuccess { messageCache.update(message.id) }
+            .asReversible {
+                dataTransaction { updateMessage(oldMessage) }
+                messageCache.update(message.id)
+            }
     }
 
     override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, DataOperationError> {
@@ -146,6 +156,33 @@ class ExposedMessageRepository(
         timestamp = this[MessageTable.timestamp],
         delivery = Delivery.valueOf(this[MessageTable.delivery])
     )
+
+    private suspend fun getMessages(
+        groupId: GroupId,
+    ): Outcome<Set<TimestampedMessageId>, DataOperationError> {
+        return dataTransaction {
+            MessageTable
+                .selectAll()
+                .orderBy(MessageTable.timestamp to SortOrder.DESC)
+                .where(MessageTable.groupId eq groupId.toJavaUuid())
+                .map { it.toTimestampedMessageId() }
+                .toSet()
+        }.mapOperationTransaction()
+    }
+
+    private fun ResultRow.toTimestampedMessageId() = TimestampedMessageId(
+        id = MessageId(this[MessageTable.id].toCommonUuid()),
+        timestamp = this[MessageTable.timestamp],
+    )
+
+    private fun updateMessage(message: Message) = MessageTable.tryUpdate {
+        it[id] = message.id.toJavaUuid()
+        it[groupId] = message.groupId.toJavaUuid()
+        it[senderId] = message.senderId.toJavaUuid()
+        it[content] = message.content
+        it[timestamp] = message.timestamp
+        it[delivery] = message.delivery.name
+    }
 }
 
 private object MessageTable : Table("message") {

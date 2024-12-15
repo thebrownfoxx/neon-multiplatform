@@ -8,7 +8,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 class GetConversationPreviewsRequest : WebSocketMessage(
     kClass = GetConversationPreviewsRequest::class,
-    description = null,
 ) {
     override val requestId = null
 }

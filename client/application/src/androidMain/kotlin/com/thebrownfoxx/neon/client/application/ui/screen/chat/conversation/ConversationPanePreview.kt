@@ -18,6 +18,7 @@ private fun LoadingPreview() {
                 conversation = ConversationState(
                     info = Loading,
                     entries = Loading,
+                    loading = false,
                 )
             ),
             eventHandler = ConversationPaneEventHandler.Blank,

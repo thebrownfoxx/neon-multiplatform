@@ -33,7 +33,6 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Ch
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
-import com.thebrownfoxx.neon.common.type.getOrNull
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.no_conversation_selected
 import org.jetbrains.compose.resources.stringResource
@@ -97,7 +96,7 @@ private fun RightPane(
                 val reversed = targetState != null
                 with(density) { sharedXAxisEnter(reversed) togetherWith sharedXAxisExit(reversed) }
             },
-            contentKey = { it?.conversation?.info?.getOrNull()?.groupId },
+            contentKey = { it?.conversation?.groupId },
         ) {
             when (it) {
                 null -> RightPanePlaceholder()

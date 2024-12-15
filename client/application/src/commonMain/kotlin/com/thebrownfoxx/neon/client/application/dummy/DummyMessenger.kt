@@ -35,6 +35,10 @@ class DummyMessenger(
             emit(Success(LocalConversationPreviews(nudged, unread, read)))
         }
 
+    override fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, Messenger.GetMessagesError>> {
+        TODO("Not yet implemented")
+    }
+
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
         return flow {
             delay(getMessageDelay)

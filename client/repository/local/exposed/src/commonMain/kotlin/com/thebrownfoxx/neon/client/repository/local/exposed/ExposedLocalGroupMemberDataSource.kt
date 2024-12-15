@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.repository.local.exposed
 
 import com.thebrownfoxx.neon.client.repository.local.LocalGroupMemberDataSource
-import com.thebrownfoxx.neon.client.repository.local.LocalGroupMemberDataSource.GroupMember
+import com.thebrownfoxx.neon.client.repository.local.LocalGroupMemberDataSource.LocalGroupMember
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
@@ -27,7 +27,7 @@ class ExposedLocalGroupMemberDataSource(
     override fun getMembersAsFlow(groupId: GroupId) = reactiveCache.getAsFlow(groupId)
 
     override suspend fun batchUpsert(
-        groupMembers: List<GroupMember>,
+        groupMembers: List<LocalGroupMember>,
     ): UnitOutcome<DataOperationError> {
         return dataTransaction {
             LocalGroupMemberTable.batchUpsert(groupMembers) { groupMember ->

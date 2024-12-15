@@ -29,8 +29,8 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Ch
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentChatPreviewState
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
 import kotlinx.datetime.LocalDateTime
@@ -189,13 +189,13 @@ private fun PreviewContent(
 
 @Composable
 private fun SenderIcon(sender: ChatPreviewSenderState?) {
-    if (sender is SentState) {
+    if (sender is SentChatPreviewState) {
         Icon(
             imageVector = Icons.AutoMirrored.TwoTone.Reply,
             contentDescription = "From you: ",
             modifier = Modifier.size(16.dp),
         )
-    } else if (sender is ReceivedCommunityState) {
+    } else if (sender is ReceivedCommunityChatPreviewState) {
         SmallAvatar(
             avatar = sender.senderAvatar,
             contentDescription = stringResource(

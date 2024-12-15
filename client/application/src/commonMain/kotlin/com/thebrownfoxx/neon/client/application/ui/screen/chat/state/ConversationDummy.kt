@@ -9,9 +9,9 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
 import com.thebrownfoxx.neon.common.extension.ago
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
 import com.thebrownfoxx.neon.common.type.Loaded
@@ -109,7 +109,8 @@ object ConversationDummy {
                 name = "SharlLeclerc",
             )
         ),
-        entries = Loaded(DirectMessageEntries),
+        entries = DirectMessageEntries,
+        loading = false,
     )
 
     val ConversationPaneState = ConversationPaneState(
@@ -182,9 +183,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = deliveryState,
+            delivery = deliveryState,
             groupPosition = groupPosition,
-            sender = SentState,
+            sender = SentMessageState,
         ),
         mustSpace = mustSpace,
     )
@@ -199,9 +200,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = if (read) DeliveryState.Read else DeliveryState.Delivered,
+            delivery = if (read) DeliveryState.Read else DeliveryState.Delivered,
             groupPosition = groupPosition,
-            sender = ReceivedDirectState,
+            sender = ReceivedDirectMessageState,
         ),
         mustSpace = mustSpace,
     )
@@ -216,9 +217,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = deliveryState,
+            delivery = deliveryState,
             groupPosition = groupPosition,
-            sender = SentState,
+            sender = SentMessageState,
         ),
         mustSpace = mustSpace,
     )
@@ -234,9 +235,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = if (read) DeliveryState.Read else DeliveryState.Delivered,
+            delivery = if (read) DeliveryState.Read else DeliveryState.Delivered,
             groupPosition = groupPosition,
-            sender = ReceivedCommunityState(senderAvatar),
+            sender = ReceivedCommunityMessageState(senderAvatar),
         ),
         mustSpace = mustSpace,
     )

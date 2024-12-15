@@ -7,6 +7,7 @@ import com.thebrownfoxx.neon.common.websocket.model.Type
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
+import com.thebrownfoxx.outcome.map.getOrNull
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -16,9 +17,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlin.time.Duration.Companion.seconds
@@ -32,8 +35,9 @@ class AlwaysActiveWebSocketSession(
     override val sessionScope: CoroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
     private var session: WebSocketSession? = null
     private var collectionJob: Job? = null
-    private var sendQueue = ArrayDeque<Message>()
     private var backoffTime = minBackoffTime
+
+    private val sendQueue = MutableStateFlow(listOf<Message>())
 
     /**
      * AlwaysActiveWebSocketSession will never close so this Flow will never emit anything.
@@ -44,7 +48,7 @@ class AlwaysActiveWebSocketSession(
     override val incomingMessages = _incomingMessages.asSharedFlow()
 
     override suspend fun send(message: Any?, type: Type): UnitOutcome<SendError> {
-        sendQueue.addLast(Message(message, type))
+        sendQueue.update { it + Message(message, type) }
         return UnitSuccess
     }
 
@@ -122,15 +126,18 @@ class AlwaysActiveWebSocketSession(
     private suspend fun WebSocketSession.mirrorIncomingMessages() {
         incomingMessages.collect {
             _incomingMessages.emit(it)
-            logger.logInfo("Received: ${it.getLabel()}")
+            val label = it.getLabel().getOrNull()?.value ?: "<unknown message>"
+            logger.logInfo("Received: $label")
         }
     }
 
     private suspend fun WebSocketSession.sendQueuedMessages() {
-        while (sendQueue.isNotEmpty()) {
-            val (message, type) = sendQueue.removeFirst()
-            send(message, type)
-            logger.logInfo("Sent: $message")
+        sendQueue.collect { queue ->
+            val message = queue.firstOrNull() ?: return@collect
+            send(message.value, message.type).onSuccess {
+                sendQueue.update { queue - message }
+                logger.logInfo("Sent: ${message.value}")
+            }
         }
     }
 }

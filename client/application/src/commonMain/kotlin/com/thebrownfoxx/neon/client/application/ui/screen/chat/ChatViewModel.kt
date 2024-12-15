@@ -7,14 +7,21 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.GroupA
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
 import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
@@ -30,6 +37,7 @@ import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.extension.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
+import com.thebrownfoxx.neon.common.type.Loading
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.map.getOrThrow
@@ -37,9 +45,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -97,18 +105,9 @@ class ChatViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, loadingState)
 
-    private val _conversation = MutableStateFlow<ConversationPaneState?>(null)
-    val conversation = _conversation.asStateFlow()
-
     fun onConversationClick(chatPreviewState: ChatPreviewState) {
         val dummy = ConversationDummy.ConversationPaneState
-        _conversation.value = dummy.copy(
-            conversation = dummy.conversation.copy(
-                info = dummy.conversation.info.map {
-                    it.copy(groupId = chatPreviewState.groupId)
-                }
-            )
-        )
+        conversationGroup.value = chatPreviewState.groupId
     }
 
     fun onLastVisiblePreviewChange(groupId: GroupId) {
@@ -116,7 +115,7 @@ class ChatViewModel(
     }
 
     fun onConversationClose() {
-        _conversation.value = null
+        conversationGroup.value = null
     }
 
     private fun LocalConversationPreviews.getLastVisiblePreviewIndex(
@@ -162,8 +161,8 @@ class ChatViewModel(
         chatGroup: LocalChatGroup,
     ): Flow<LoadedChatPreviewState> {
         val senderState = when (senderId) {
-            loggedInMemberId -> SentState
-            else -> ReceivedDirectState
+            loggedInMemberId -> SentChatPreviewState
+            else -> ReceivedDirectChatPreviewState
         }
 
         return chatGroup.getMemberToShow(loggedInMemberId).mapLatest { member ->
@@ -194,9 +193,9 @@ class ChatViewModel(
     ): Flow<LoadedChatPreviewState> {
         return community.getAvatarState(loggedInMemberId).flatMapLatest { communityAvatarState ->
             val senderState = when (senderId) {
-                loggedInMemberId -> SentState.flow()
+                loggedInMemberId -> SentChatPreviewState.flow()
                 else -> memberManager.getMember(senderId).mapLatest {
-                    ReceivedCommunityState(it.getOrThrow().getAvatarState())
+                    ReceivedCommunityChatPreviewState(it.getOrThrow().getAvatarState())
                 }
             }
 
@@ -252,4 +251,66 @@ class ChatViewModel(
         LocalDelivery.Read -> DeliveryState.Read
         LocalDelivery.Failed -> DeliveryState.Failed
     }
+
+    private val conversationGroup = MutableStateFlow<GroupId?>(null)
+
+    val conversation = authenticator.loggedInMember.flatMapLatest { loggedInMemberId ->
+        conversationGroup.flatMapLatest conversationGroup@{ groupId ->
+            if (groupId == null) return@conversationGroup flowOf(null)
+
+            groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
+                val direct = groupOutcome.getOrThrow() is LocalChatGroup
+
+                messenger.getMessages(groupId).flatMapLatest { messagesOutcome ->
+                    val messageIds = messagesOutcome.getOrThrow()
+                    val messagesFlows = messageIds.map { messageId ->
+                        messenger.getMessage(messageId).flatMapLatest { messageOutcome ->
+                            messageOutcome.getOrThrow().toMessageEntry(loggedInMemberId, direct)
+                        }
+                    }
+                    combineOrEmpty(messagesFlows) { entries ->
+                        ConversationPaneState(
+                            conversation = ConversationState(
+                                groupId = groupId,
+                                info = Loading,
+                                entries = entries.toList(),
+                                loading = true,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private fun LocalMessage.toMessageEntry(
+        loggedInMemberId: MemberId?,
+        direct: Boolean,
+        mustSpace: Boolean = false,
+    ): Flow<MessageEntry> {
+        val senderState = when {
+            loggedInMemberId == senderId -> SentMessageState.flow()
+            direct -> ReceivedDirectMessageState.flow()
+            else -> memberManager.getMember(senderId).mapLatest { memberOutcome ->
+                val member = memberOutcome.getOrThrow()
+                ReceivedCommunityMessageState(member.getAvatarState())
+            }
+        }
+
+        return senderState.mapLatest {
+            MessageState(
+                id = id,
+                content = content,
+                timestamp = timestamp.toLocalDateTime(),
+                delivery =  delivery.toDeliveryState(),
+                groupPosition = GroupPosition.Middle,
+                sender = it,
+            ).toMessageEntry(mustSpace)
+        }
+    }
+
+    private fun MessageState.toMessageEntry(mustSpace: Boolean = false) = MessageEntry(
+        message = this,
+        mustSpace = mustSpace,
+    )
 }
