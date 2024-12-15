@@ -24,13 +24,13 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Hey, man. Are you okay?",
             timestamp = 10.minutes.ago,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         sentDirectMessage(
             content = "are you kidding me?",
             timestamp = 9.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
         ),
         sentDirectMessage(
             content = "what do you think?",
@@ -44,13 +44,13 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Come, on, mate.",
             timestamp = 8.minutes.ago,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         sentDirectMessage(
             content = "i was not informed the rollercoasters here require kissing",
             timestamp = 7.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         receivedDirectMessage(
@@ -72,14 +72,14 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Come on, now, mate.",
             timestamp = 6.minutes.ago,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         timestamp(5.minutes.ago),
         sentDirectMessage(
             content = "just",
             timestamp = 5.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
         ),
         sentDirectMessage(
             content = "GET TF AWAY FROM CARLOS",
@@ -95,7 +95,7 @@ object ConversationDummy {
             content = "I'm sorry.",
             timestamp = 3.minutes.ago,
             read = false,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
         ),
     ).reversed()
 
@@ -133,7 +133,7 @@ object ConversationDummy {
         sentCommunityMessage(
             content = "What the fuck just happened?",
             timestamp = 10.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         sentCommunityMessage(
@@ -147,13 +147,13 @@ object ConversationDummy {
             content = "I'm sorry, Lando",
             timestamp = 8.minutes.ago,
             senderAvatar = oscar,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
         ),
         sentCommunityMessage(
             content = "really sorry",
             timestamp = 8.minutes.ago,
             senderAvatar = oscar,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
         ),
     ).reversed()
 

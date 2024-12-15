@@ -46,7 +46,7 @@ private fun Avatar(
         SubcomposeAsyncImage(
             loading = { loading() },
             error = { error() },
-            model = url?.value,
+            model = url,
             contentDescription = contentDescription,
             contentScale = ContentScale.Crop,
         )

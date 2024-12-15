@@ -29,9 +29,9 @@ fun DirectMessageListLoader(
     ) {
         Spacer(height = totalContentPadding.topDp)
 
-        SentMessageLoader(text = "The quick brown foxx!!", groupPosition = GroupPosition.First)
+        SentMessageLoader(text = "The quick brown foxx!!", groupPosition = GroupPosition.Last)
         Spacer(height = 4.dp)
-        SentMessageLoader(text = "Skibidi skibidi", groupPosition = GroupPosition.Last)
+        SentMessageLoader(text = "Skibidi skibidi", groupPosition = GroupPosition.First)
 
         Spacer(height = 16.dp)
 
@@ -39,13 +39,13 @@ fun DirectMessageListLoader(
 
         Spacer(height = 16.dp)
 
-        SentMessageLoader(text = "fax", groupPosition = GroupPosition.First)
+        SentMessageLoader(text = "fax", groupPosition = GroupPosition.Last)
 
         Spacer(height = 16.dp)
 
-        ReceivedMessageLoader(text = "What the sigma?", groupPosition = GroupPosition.First)
+        ReceivedMessageLoader(text = "What the sigma?", groupPosition = GroupPosition.Last)
         Spacer(height = 4.dp)
-        ReceivedMessageLoader(text = "sigma?", groupPosition = GroupPosition.Last)
+        ReceivedMessageLoader(text = "sigma?", groupPosition = GroupPosition.First)
 
         Spacer(height = totalContentPadding.bottomDp)
     }

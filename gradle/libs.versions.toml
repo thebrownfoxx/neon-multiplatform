@@ -20,7 +20,7 @@ auth0-jwt = "4.4.0"
 # Client
 jetbrains-compose = "1.7.0"
 navigationCompose = "2.8.0-alpha10"
-coil = "3.0.0-rc01"
+coil = "3.0.4"
 
 # Android
 agp = "8.5.2"

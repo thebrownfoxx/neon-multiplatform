@@ -18,7 +18,7 @@ private fun SinglePreview() {
     NeonTheme {
         SentMessageBubble(
             content = "What the sigma?",
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -35,7 +35,7 @@ private fun TwoPreview() {
         ) {
             SentMessageBubble(
                 content = "Skibidi skibidi",
-                groupPosition = GroupPosition.First,
+                groupPosition = GroupPosition.Last,
             )
             SentMessageBubble(
                 content = "What the sigma?",
@@ -56,7 +56,7 @@ private fun ThreePreview() {
         ) {
             SentMessageBubble(
                 content = "Skibidi skibidi",
-                groupPosition = GroupPosition.First,
+                groupPosition = GroupPosition.Last,
             )
             SentMessageBubble(
                 content = "What the sigma?",
@@ -76,7 +76,7 @@ private fun LongPreview() {
     NeonTheme {
         SentMessageBubble(
             content = LoremIpsum(50).values.first(),
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -93,7 +93,7 @@ private fun MixedLengthPreview() {
         ) {
             SentMessageBubble(
                 content = LoremIpsum(20).values.first(),
-                groupPosition = GroupPosition.First,
+                groupPosition = GroupPosition.Last,
             )
             SentMessageBubble(
                 content = "What the sigma?",

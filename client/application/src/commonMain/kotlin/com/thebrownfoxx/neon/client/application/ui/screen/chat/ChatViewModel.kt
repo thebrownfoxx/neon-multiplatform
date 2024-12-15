@@ -10,6 +10,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageSenderState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
@@ -22,7 +23,6 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Lo
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentChatPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
 import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
@@ -106,7 +106,6 @@ class ChatViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, loadingState)
 
     fun onConversationClick(chatPreviewState: ChatPreviewState) {
-        val dummy = ConversationDummy.ConversationPaneState
         conversationGroup.value = chatPreviewState.groupId
     }
 
@@ -254,10 +253,11 @@ class ChatViewModel(
 
     private val conversationGroup = MutableStateFlow<GroupId?>(null)
 
+    private val message = MutableStateFlow("")
+
     val conversation = authenticator.loggedInMember.flatMapLatest { loggedInMemberId ->
         conversationGroup.flatMapLatest conversationGroup@{ groupId ->
             if (groupId == null) return@conversationGroup flowOf(null)
-
             groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
                 val direct = groupOutcome.getOrThrow() is LocalChatGroup
 
@@ -265,30 +265,44 @@ class ChatViewModel(
                     val messageIds = messagesOutcome.getOrThrow()
                     val messagesFlows = messageIds.map { messageId ->
                         messenger.getMessage(messageId).flatMapLatest { messageOutcome ->
-                            messageOutcome.getOrThrow().toMessageEntry(loggedInMemberId, direct)
+                            messageOutcome.getOrThrow()
+                                .toLocalMessageWithSenderState(loggedInMemberId, direct)
                         }
                     }
-                    combineOrEmpty(messagesFlows) { entries ->
-                        ConversationPaneState(
-                            conversation = ConversationState(
-                                groupId = groupId,
-                                info = Loading,
-                                entries = entries.toList(),
-                                loading = true,
-                            ),
-                        )
+
+                    message.flatMapLatest { message ->
+                        combineOrEmpty(messagesFlows) { messages ->
+                            val entries = messages.mapIndexed { index, message ->
+                                val previous = messages.getOrNull(index - 1)
+                                val next = messages.getOrNull(index + 1)
+                                message.toMessageEntry(previous, next)
+                            }
+
+                            ConversationPaneState(
+                                conversation = ConversationState(
+                                    groupId = groupId,
+                                    info = Loading,
+                                    entries = entries.toList(),
+                                    loading = true,
+                                ),
+                                message = message,
+                            )
+                        }
                     }
                 }
             }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    private fun LocalMessage.toMessageEntry(
+    fun onMessageChange(message: String) {
+        this.message.value = message
+    }
+
+    private fun LocalMessage.toLocalMessageWithSenderState(
         loggedInMemberId: MemberId?,
         direct: Boolean,
-        mustSpace: Boolean = false,
-    ): Flow<MessageEntry> {
-        val senderState = when {
+    ): Flow<LocalMessageWithSenderState> {
+        val sender = when {
             loggedInMemberId == senderId -> SentMessageState.flow()
             direct -> ReceivedDirectMessageState.flow()
             else -> memberManager.getMember(senderId).mapLatest { memberOutcome ->
@@ -296,16 +310,37 @@ class ChatViewModel(
                 ReceivedCommunityMessageState(member.getAvatarState())
             }
         }
+        return sender.mapLatest {
+            LocalMessageWithSenderState(
+                message = this,
+                sender = it,
+            )
+        }
+    }
 
-        return senderState.mapLatest {
+    private fun LocalMessageWithSenderState.toMessageEntry(
+        previous: LocalMessageWithSenderState?,
+        next: LocalMessageWithSenderState?,
+    ): MessageEntry {
+        val previousDifferent = previous == null || previous.sender::class != sender::class
+        val nextDifferent = next == null || next.sender::class != sender::class
+
+        val groupPosition = when {
+            previousDifferent && nextDifferent -> GroupPosition.Alone
+            previousDifferent -> GroupPosition.First
+            nextDifferent -> GroupPosition.Last
+            else -> GroupPosition.Middle
+        }
+
+        return with(message) {
             MessageState(
                 id = id,
                 content = content,
                 timestamp = timestamp.toLocalDateTime(),
-                delivery =  delivery.toDeliveryState(),
-                groupPosition = GroupPosition.Middle,
-                sender = it,
-            ).toMessageEntry(mustSpace)
+                delivery = delivery.toDeliveryState(),
+                groupPosition = groupPosition,
+                sender = sender,
+            ).toMessageEntry(mustSpace = previousDifferent)
         }
     }
 
@@ -314,3 +349,8 @@ class ChatViewModel(
         mustSpace = mustSpace,
     )
 }
+
+private data class LocalMessageWithSenderState(
+    val message: LocalMessage,
+    val sender: MessageSenderState,
+)
