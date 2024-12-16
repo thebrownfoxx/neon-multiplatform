@@ -11,6 +11,7 @@ kotlin {
             implementation(libs.outcome)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.serialization)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.exposed.core)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.resources)

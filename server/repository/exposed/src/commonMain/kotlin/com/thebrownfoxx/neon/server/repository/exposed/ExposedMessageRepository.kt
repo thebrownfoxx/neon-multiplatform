@@ -196,4 +196,6 @@ private object MessageTable : Table("message") {
     // (at least with Exposed's current implementation)
     // So I'm just gonna save it as a string and parse it later
     val delivery = varchar("delivery", 32)
+
+    override val primaryKey = PrimaryKey(id)
 }

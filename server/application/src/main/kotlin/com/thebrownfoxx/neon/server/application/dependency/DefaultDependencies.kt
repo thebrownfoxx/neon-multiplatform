@@ -21,6 +21,7 @@ import com.thebrownfoxx.neon.server.service.default.DefaultJwtProcessor
 import com.thebrownfoxx.neon.server.service.default.DefaultMemberManager
 import com.thebrownfoxx.neon.server.service.default.DefaultMessenger
 import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
+import com.thebrownfoxx.outcome.map.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -97,7 +98,7 @@ class DefaultDependencies : Dependencies {
                 passwordRepository,
                 messageRepository,
                 hasher,
-            )
+            ).onFailure { logger.logError(it) }
         }
     }
 }

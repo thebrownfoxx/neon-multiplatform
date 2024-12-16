@@ -11,6 +11,7 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -44,6 +45,10 @@ class DummyMessenger(
             delay(getMessageDelay)
             emit(Success(generatedMessages.getOrPut(id) { generateMessage(id) }))
         }
+    }
+
+    override suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<Unit> {
+        TODO("Not yet implemented")
     }
 
     private fun generateConversationPreviews(count: Int): List<LocalMessage> {

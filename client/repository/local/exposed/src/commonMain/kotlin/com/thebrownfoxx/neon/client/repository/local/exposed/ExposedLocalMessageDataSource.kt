@@ -48,6 +48,7 @@ class ExposedLocalMessageDataSource(
     private val conversationsCache = SingleReactiveCache(::getConversations) // TODO: remove "reactive" from reactive cache names like this
     private val messagesCache = ReactiveCache(::getMessages)
     private val messageCache = ReactiveCache(::get)
+    private val outgoingMessagesCache = SingleReactiveCache(::getOutgoingMessages)
 
     override val conversationPreviews:
             Flow<Outcome<LocalConversationPreviews, DataOperationError>> =
@@ -63,6 +64,10 @@ class ExposedLocalMessageDataSource(
         return messageCache.getAsFlow(id)
     }
 
+    override fun getOutgoingMessagesAsFlow(): Flow<Outcome<List<LocalMessage>, DataOperationError>> {
+        return outgoingMessagesCache.getAsFlow()
+    }
+
     override suspend fun upsert(message: LocalMessage): UnitOutcome<DataOperationError> {
         return dataTransaction {
             LocalMessageTable.upsert {
@@ -73,11 +78,20 @@ class ExposedLocalMessageDataSource(
                 it[timestamp] = message.timestamp
                 it[delivery] = message.delivery.name
             }
+            LocalTimestampedMessageIdTable.upsert {
+                it[id] = message.id.toJavaUuid()
+                it[groupId] = message.groupId.toJavaUuid()
+                it[timestamp] = message.timestamp
+            }
         }
             .mapUnitOperationTransaction()
             .onSuccess {
-//                conversationsCache.update() // TODO: Review which caches to update
                 messageCache.update(message.id)
+                if (message.delivery == LocalDelivery.Sending) {
+                    outgoingMessagesCache.update()
+                    conversationsCache.update()
+                    messagesCache.update(message.groupId)
+                }
             }
     }
 
@@ -191,6 +205,15 @@ class ExposedLocalMessageDataSource(
         }.mapGetTransaction()
     }
 
+    private suspend fun getOutgoingMessages(): Outcome<List<LocalMessage>, DataOperationError> {
+        return dataTransaction {
+            LocalMessageTable
+                .selectAll()
+                .where(LocalMessageTable.delivery eq LocalDelivery.Sending.name)
+                .map { it.toLocalMessage() }
+        }.mapOperationTransaction()
+    }
+
     private fun ResultRow.toLocalMessage() = LocalMessage(
         id = MessageId(this[LocalMessageTable.id].toCommonUuid()),
         groupId = GroupId(this[LocalMessageTable.groupId].toCommonUuid()),
@@ -222,4 +245,4 @@ private object LocalTimestampedMessageIdTable : Table("local_timestamped_message
     val timestamp = timestamp("timestamp")
 
     override val primaryKey = PrimaryKey(id)
-}
+} // TODO: Merge this with LocalMessageTable and just make things nullable

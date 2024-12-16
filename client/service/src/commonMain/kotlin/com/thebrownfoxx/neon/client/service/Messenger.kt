@@ -5,6 +5,7 @@ import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
@@ -14,6 +15,8 @@ interface Messenger {
     fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, GetMessagesError>>
 
     fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>>
+
+    suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<Unit>
 
     data object ConversationPreviewsUnexpectedError
 

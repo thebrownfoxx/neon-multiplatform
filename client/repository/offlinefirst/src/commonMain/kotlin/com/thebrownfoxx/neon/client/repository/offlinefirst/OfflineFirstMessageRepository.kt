@@ -13,6 +13,7 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map.getOrElse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -113,7 +114,7 @@ class OfflineFirstMessageRepository(
         coroutineScope.launch {
             remoteDataSource.getMessageAsFlow(id).collect { remoteMessageOutcome ->
                 val remoteMessage = remoteMessageOutcome.getOrElse { error ->
-                    sharedFlow.emit(Failure(error))
+//                    sharedFlow.emit(Failure(error))
                     return@collect
                 }
                 localDataSource.upsert(remoteMessage.toLocalMessage())
@@ -121,5 +122,16 @@ class OfflineFirstMessageRepository(
         }
 
         return sharedFlow.asSharedFlow()
+    }
+
+    override fun getOutgoingMessagesAsFlow():
+            Flow<Outcome<List<LocalMessage>, DataOperationError>> {
+        return localDataSource.getOutgoingMessagesAsFlow()
+    }
+
+    override suspend fun upsert(
+        message: LocalMessage,
+    ): UnitOutcome<DataOperationError> {
+        return localDataSource.upsert(message)
     }
 }

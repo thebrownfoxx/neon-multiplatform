@@ -28,6 +28,7 @@ interface Messenger {
     suspend fun newConversation(memberIds: Set<MemberId>): UnitOutcome<NewConversationError>
 
     suspend fun sendMessage(
+        id: MessageId,
         actorId: MemberId,
         groupId: GroupId,
         content: String,
@@ -55,21 +56,21 @@ interface Messenger {
         UnexpectedError,
     }
 
-    sealed interface NewConversationError {
-        data class MemberNotFound(val memberId: MemberId) : NewConversationError
-        data object UnexpectedError : NewConversationError
+    enum class NewConversationError {
+        MemberNotFound,
+        UnexpectedError,
     }
 
-    sealed interface SendMessageError {
-        data class Unauthorized(val memberId: MemberId) : SendMessageError
-        data class GroupNotFound(val groupId: GroupId) : SendMessageError
-        data object UnexpectedError : SendMessageError
+    enum class SendMessageError {
+        Unauthorized,
+        GroupNotFound,
+        UnexpectedError,
     }
 
-    sealed interface MarkConversationAsReadError {
-        data class Unauthorized(val memberId: MemberId) : MarkConversationAsReadError
-        data object AlreadyRead : MarkConversationAsReadError
-        data class GroupNotFound(val groupId: GroupId) : MarkConversationAsReadError
-        data object UnexpectedError : MarkConversationAsReadError
+    enum class MarkConversationAsReadError {
+        Unauthorized,
+        AlreadyRead,
+        GroupNotFound,
+        UnexpectedError,
     }
 }

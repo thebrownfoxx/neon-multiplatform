@@ -15,6 +15,7 @@ interface LocalMessageDataSource {
     val conversationPreviews: Flow<Outcome<LocalConversationPreviews, DataOperationError>>
     fun getMessagesAsFlow(id: GroupId): Flow<Outcome<Set<MessageId>, DataOperationError>>
     fun getMessageAsFlow(id: MessageId): Flow<Outcome<LocalMessage, GetError>>
+    fun getOutgoingMessagesAsFlow(): Flow<Outcome<List<LocalMessage>, DataOperationError>>
     suspend fun upsert(message: LocalMessage): UnitOutcome<DataOperationError>
     suspend fun batchUpsert(messages: List<LocalMessage>): UnitOutcome<DataOperationError>
     suspend fun batchUpsert(

@@ -82,7 +82,7 @@ class ExposedInviteCodeRepository(
             onSuccess = { Success(true) },
             onFailure = { error ->
                 when (error) {
-                    GetError.NotFound -> Success(true)
+                    GetError.NotFound -> Success(false)
                     GetError.ConnectionError -> Failure(SetInviteCodeError.ConnectionError)
                     GetError.UnexpectedError -> Failure(SetInviteCodeError.UnexpectedError)
                 }

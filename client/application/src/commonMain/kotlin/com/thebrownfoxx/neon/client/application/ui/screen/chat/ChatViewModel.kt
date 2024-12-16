@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatViewModel(
@@ -388,6 +389,13 @@ class ChatViewModel(
         message = this,
         mustSpace = mustSpace,
     )
+
+    fun onSendMessage() {
+        viewModelScope.launch {
+            messenger.sendMessage(conversationGroup.value!!, message.value)
+            message.value = ""
+        }
+    }
 }
 
 private data class LocalMessageWithSenderState(

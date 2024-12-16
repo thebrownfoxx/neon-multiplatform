@@ -41,7 +41,7 @@ fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
                 conversationPaneEventHandler = ConversationPaneEventHandler(
                     onCall = {},
                     onMessageChange = ::onMessageChange,
-                    onSend = {},
+                    onSend = ::onSendMessage,
                     onMarkAsRead = {},
                     onClose = ::onConversationClose,
                 )

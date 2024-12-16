@@ -130,6 +130,7 @@ class DefaultMessenger(
     }
 
     override suspend fun sendMessage(
+        id: MessageId,
         actorId: MemberId,
         groupId: GroupId,
         content: String,
@@ -140,9 +141,11 @@ class DefaultMessenger(
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
             .getOrElse { return Failure(SendMessageError.UnexpectedError) }
 
-        if (actorId !in groupMemberIds) return Failure(SendMessageError.Unauthorized(actorId))
+        if (actorId !in groupMemberIds)
+            return Failure(SendMessageError.Unauthorized)
 
         val message = Message(
+            id = id,
             groupId = groupId,
             senderId = actorId,
             content = content,
@@ -167,7 +170,7 @@ class DefaultMessenger(
             .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
 
         if (actorId !in groupMemberIds)
-            return Failure(MarkConversationAsReadError.Unauthorized(actorId))
+            return Failure(MarkConversationAsReadError.Unauthorized)
 
         val unreadMessages = getUnreadMessages(groupId)
             .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
@@ -224,18 +227,18 @@ class DefaultMessenger(
     }
 
     private fun GetError.getMemberErrorToNewConversationError(memberId: MemberId) = when (this) {
-        GetError.NotFound -> NewConversationError.MemberNotFound(memberId)
+        GetError.NotFound -> NewConversationError.MemberNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> NewConversationError.UnexpectedError
     }
 
     private fun GetError.getGroupErrorToSendMessageError(groupId: GroupId) = when (this) {
-        GetError.NotFound -> SendMessageError.GroupNotFound(groupId)
+        GetError.NotFound -> SendMessageError.GroupNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> SendMessageError.UnexpectedError
     }
 
     private fun GetError.getGroupErrorToMarkConversationAsReadError(groupId: GroupId) =
         when (this) {
-            GetError.NotFound -> MarkConversationAsReadError.GroupNotFound(groupId)
+            GetError.NotFound -> MarkConversationAsReadError.GroupNotFound
             GetError.ConnectionError, GetError.UnexpectedError ->
                 MarkConversationAsReadError.UnexpectedError
         }

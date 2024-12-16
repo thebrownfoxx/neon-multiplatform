@@ -24,7 +24,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
-import java.util.UUID
 
 @OptIn(ExperimentalStdlibApi::class)
 class ExposedPasswordRepository(
@@ -56,14 +55,14 @@ class ExposedPasswordRepository(
             }
         }
 
-        val id = UUID.randomUUID()
         dataTransaction {
             updateHash(memberId, hash)
         }.mapOperationTransaction()
 
         return UnitSuccess.asReversible {
             dataTransaction {
-                if (oldHash == null) PasswordTable.deleteWhere { PasswordTable.id eq id }
+                if (oldHash == null)
+                    PasswordTable.deleteWhere { PasswordTable.memberId eq memberId.toJavaUuid() }
                 else updateHash(memberId, oldHash)
             }
         }
@@ -85,10 +84,9 @@ class ExposedPasswordRepository(
 }
 
 private object PasswordTable : Table("password") {
-    val id = uuid("id")
-    val memberId = uuid("member_id").uniqueIndex()
+    val memberId = uuid("member_id")
     val passwordHash = varchar("password_hash", 128)
     val passwordSalt = varchar("password_salt", 32)
 
-    override val primaryKey = PrimaryKey(id)
+    override val primaryKey = PrimaryKey(memberId)
 }

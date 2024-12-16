@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.server.application.websocket.message
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.common.websocket.model.RequestId
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
@@ -16,6 +17,11 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnexpectedError
 import com.thebrownfoxx.neon.server.service.Messenger
 import com.thebrownfoxx.neon.server.service.Messenger.GetConversationPreviewsError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
@@ -35,6 +41,7 @@ class MessageWebSocketMessageManager(
     private val getConversationPreviewsJobManager = SingleJobManager(coroutineScope, session.close)
     private val getMessagesJobManager = JobManager<GroupId>(coroutineScope, session.close)
     private val getMessageJobManager = JobManager<MessageId>(coroutineScope, session.close)
+    private val sendMessageJobManager = JobManager<RequestId>(coroutineScope, session.close)
 
     init {
         session.subscribe<GetConversationPreviewsRequest> {
@@ -47,6 +54,10 @@ class MessageWebSocketMessageManager(
 
         session.subscribe<GetMessageRequest> { request ->
             getMessage(request.id)
+        }
+
+        session.subscribe<SendMessageRequest> { request ->
+            sendMessage(request.requestId, request.id, request.groupId, request.content)
         }
     }
 
@@ -104,6 +115,30 @@ class MessageWebSocketMessageManager(
                         GetMessageError.UnexpectedError ->
                             session.send(GetMessageUnexpectedError(id))
                     }
+                }
+            }
+        }
+    }
+
+    private fun sendMessage(
+        requestId: RequestId,
+        id: MessageId,
+        groupId: GroupId,
+        content: String,
+    ) {
+        sendMessageJobManager[requestId] = {
+            messenger.sendMessage(id, session.memberId, groupId, content).onSuccess {
+                session.send(SendMessageSuccessful(requestId, id))
+            }.onFailure { error ->
+                when (error) {
+                    Messenger.SendMessageError.Unauthorized ->
+                        session.send(SendMessageUnauthorized(requestId, id, session.memberId))
+
+                    Messenger.SendMessageError.GroupNotFound ->
+                        session.send(SendMessageGroupNotFound(requestId, id, groupId))
+
+                    Messenger.SendMessageError.UnexpectedError ->
+                        session.send(SendMessageUnexpectedError(requestId, id))
                 }
             }
         }

@@ -88,7 +88,7 @@ class DefaultDependencies(
         )
         val remoteDataSource = WebSocketRemoteMessageDataSource(webSocketSession, logger)
         val repository = OfflineFirstMessageRepository(localDataSource, remoteDataSource)
-        DefaultMessenger(repository)
+        DefaultMessenger(authenticator, repository, webSocketSession)
     }
 
     private fun WebSocketConnectionError.toGetGroupManagerError() = when (this) {
