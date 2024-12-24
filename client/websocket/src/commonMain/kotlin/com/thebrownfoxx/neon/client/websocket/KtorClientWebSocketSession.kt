@@ -1,45 +1,61 @@
 package com.thebrownfoxx.neon.client.websocket
 
-import com.thebrownfoxx.neon.common.Logger
+import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.WebSocketSession.SendError
 import com.thebrownfoxx.neon.common.websocket.ktor.KtorSerializedWebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.ktor.KtorWebSocketSession
 import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
+import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
 import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.converter
 import io.ktor.client.plugins.websocket.sendSerialized
+import io.ktor.websocket.close
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
-class KtorClientWebSocketSession(
+class KtorClientWebSocketSession private constructor(
     private val session: DefaultClientWebSocketSession,
-    logger: Logger,
-) : KtorWebSocketSession(session, logger) {
-    private val _close = MutableSharedFlow<Unit>(replay = 1)
-    override val close = _close.asSharedFlow()
+) : WebSocketSession {
+    companion object {
+        suspend fun start(session: DefaultClientWebSocketSession) =
+            KtorClientWebSocketSession(session).apply { start() }
+    }
 
-    override val incomingMessages = session.incoming.consumeAsFlow()
-        .map { KtorSerializedWebSocketMessage(session.converter!!, it) }
-        .onCompletion {
-            sessionScope.launch {
-                _close.emit(Unit)
-            }
+    private suspend fun start() {
+        var closed = false
+        while (!closed) {
+            runFailing { session.incoming.receive() }
+                .onSuccess { frame ->
+                    val message = KtorSerializedWebSocketMessage(session.converter!!, frame)
+                    _incomingMessages.emit(message)
+                }.onFailure {
+                    closed = true
+                    _closed.value = true
+                }
         }
-        .shareIn(scope = sessionScope, started = SharingStarted.Eagerly)
+    }
+
+    private val _closed = MutableStateFlow(false)
+    override val closed = _closed.asStateFlow()
+
+    private val _incomingMessages = MutableSharedFlow<SerializedWebSocketMessage>()
+    override val incomingMessages = _incomingMessages.asSharedFlow()
 
     override suspend fun send(message: Any?, type: Type) = runFailing {
         withContext(Dispatchers.IO) {
             session.sendSerialized(message, type.toKtorTypeInfo())
         }
     }.mapError { SendError }
+
+    override suspend fun close() {
+        session.close()
+    }
 }

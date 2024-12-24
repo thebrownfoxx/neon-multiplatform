@@ -5,7 +5,7 @@ import com.thebrownfoxx.neon.client.repository.remote.RemoteGroupMemberDataSourc
 import com.thebrownfoxx.neon.common.data.Cache
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.OldWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersRequest
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersSuccessful
@@ -20,7 +20,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.plus
 
 class WebSocketRemoteGroupMemberDataSource(
-    private val session: WebSocketSession,
+    private val session: OldWebSocketSession,
 ) : RemoteGroupMemberDataSource {
     private val dataSourceScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
     private val cache = Cache<GroupId, Outcome<Set<MemberId>, GetMembersError>>(dataSourceScope)

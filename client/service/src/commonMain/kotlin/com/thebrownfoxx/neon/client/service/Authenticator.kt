@@ -13,11 +13,11 @@ interface Authenticator {
     enum class LoginError {
         InvalidCredentials,
         ConnectionError,
-        UnknownError,
+        UnexpectedError,
     }
 
     enum class LogoutError {
         ConnectionError,
-        UnknownError,
+        UnexpectedError,
     }
 }

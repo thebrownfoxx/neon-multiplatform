@@ -66,7 +66,7 @@ class LoginViewModel(private val authenticator: Authenticator) : ViewModel() {
                     LoginError.ConnectionError ->
                         _state.update { it.copy(loginState = LoginState.ConnectionError) }
 
-                    LoginError.UnknownError ->
+                    LoginError.UnexpectedError ->
                         _state.update { it.copy(loginState = LoginState.UnknownError) }
                 }
             }

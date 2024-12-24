@@ -5,10 +5,8 @@ import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
-import kotlin.contracts.ExperimentalContracts
 import kotlin.time.Duration
 
-@OptIn(ExperimentalContracts::class)
 suspend fun <T> withTimeout(
     timeout: Duration,
     block: suspend CoroutineScope.() -> T,

@@ -1,17 +1,18 @@
 package com.thebrownfoxx.neon.client.service.default
 
+import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.repository.MessageRepository
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.client.service.Messenger.ConversationPreviewsUnexpectedError
+import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.OldWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
@@ -32,7 +33,7 @@ import kotlinx.datetime.Clock
 class DefaultMessenger(
     private val authenticator: Authenticator,
     private val messageRepository: MessageRepository,
-    private val webSocketSession: WebSocketSession,
+    private val webSocketSession: OldWebSocketSession,
 ) : Messenger {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
     private val outgoingMessages = mutableListOf<MessageId>()
@@ -55,15 +56,17 @@ class DefaultMessenger(
         }
     }
 
-    override val conversationPreviews = messageRepository.conversationPreviewsFlow.map { outcome ->
-        outcome.mapError { ConversationPreviewsUnexpectedError }
+    override val conversationPreviews:
+            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> =
+        messageRepository.conversationPreviewsFlow.map { outcome ->
+        outcome.mapError { GetConversationPreviewsError.UnexpectedError }
     }
 
     override fun getMessages(
         groupId: GroupId,
     ): Flow<Outcome<Set<MessageId>, GetMessagesError>> {
         return messageRepository.getMessagesAsFlow(groupId).map { outcome ->
-            outcome.mapError { GetMessagesError.Idk }
+            outcome.mapError { GetMessagesError.UnexpectedError }
         }
     }
 

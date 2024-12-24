@@ -1,14 +1,13 @@
 package com.thebrownfoxx.neon.client.repository.remote.websocket
 
 import com.thebrownfoxx.neon.client.repository.remote.RemoteMessageDataSource
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.Cache
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.OldWebSocketSession
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
@@ -36,8 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.plus
 
 class WebSocketRemoteMessageDataSource(
-    private val session: WebSocketSession,
-    private val logger: Logger,
+    private val session: OldWebSocketSession,
 ) : RemoteMessageDataSource {
     private val dataSourceScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 

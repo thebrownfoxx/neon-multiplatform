@@ -59,10 +59,10 @@ class RemoteAuthenticator(
             )
 
             LoginResponse.Status.InternalConnectionError -> Failure(
-                LoginError.UnknownError
+                LoginError.UnexpectedError
             )
 
-            null -> Failure(LoginError.UnknownError)
+            null -> Failure(LoginError.UnexpectedError)
             LoginResponse.Status.Successful -> {
                 val successfulBody = response.body<LoginResponse.Successful>()
                 _loggedInMember.value = successfulBody.memberId
@@ -75,7 +75,7 @@ class RemoteAuthenticator(
 
     override suspend fun logout(): UnitOutcome<LogoutError> {
         _loggedInMember.value = null
-        tokenStorage.clear().onFailure { Failure(LogoutError.UnknownError) }
+        tokenStorage.clear().onFailure { Failure(LogoutError.UnexpectedError) }
         return UnitSuccess
     }
 }

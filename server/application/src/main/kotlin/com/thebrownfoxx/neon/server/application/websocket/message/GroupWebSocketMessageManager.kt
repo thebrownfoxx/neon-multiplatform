@@ -2,6 +2,8 @@ package com.thebrownfoxx.neon.server.application.websocket.message
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.websocket.listen
+import com.thebrownfoxx.neon.common.websocket.send
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersRequest
@@ -15,28 +17,33 @@ import com.thebrownfoxx.neon.server.service.GroupManager
 import com.thebrownfoxx.neon.server.service.GroupManager.GetGroupError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.supervisorScope
 
-class GroupWebSocketMessageManager(
+class GroupWebSocketMessageManager private constructor(
     private val session: WebSocketSession,
     private val groupManager: GroupManager,
 ) {
-    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
+    companion object {
+        suspend fun startListening(
+            session: WebSocketSession,
+            groupManager: GroupManager,
+        ) = GroupWebSocketMessageManager(session, groupManager).apply { startListening() }
+    }
 
-    private val getGroupJobManager = JobManager<GroupId>(coroutineScope, session.close)
+    private lateinit var getGroupJobManager: JobManager<GroupId>
+    private lateinit var getMembersJobManager: JobManager<GroupId>
 
-    private val getMembersJobManager = JobManager<GroupId>(coroutineScope, session.close)
+    private suspend fun startListening() {
+        supervisorScope {
+            getGroupJobManager = JobManager(this)
+            getMembersJobManager = JobManager(this)
 
-    init {
-        session.subscribe<GetGroupRequest> { request ->
-            getGroup(request.id)
-        }
-
-        session.subscribe<GetGroupMembersRequest> { request ->
-            getMembers(request.groupId)
+            session.listen<GetGroupRequest>(this) { request ->
+                getGroup(request.id)
+            }
+            session.listen<GetGroupMembersRequest>(this) { request ->
+                getMembers(request.groupId)
+            }
         }
     }
 

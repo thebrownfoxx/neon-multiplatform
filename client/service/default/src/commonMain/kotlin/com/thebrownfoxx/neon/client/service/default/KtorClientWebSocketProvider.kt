@@ -5,7 +5,6 @@ import com.thebrownfoxx.neon.client.service.TokenStorage
 import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.client.websocket.WebSocketProvider
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -27,7 +26,6 @@ class KtorClientWebSocketProvider(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
     private val authenticator: Authenticator,
-    private val logger: Logger,
 ) : WebSocketProvider {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
@@ -50,7 +48,7 @@ class KtorClientWebSocketProvider(
             ) {
                 bearerAuth(token.value)
             }
-            KtorClientWebSocketSession(actualSession, logger)
+            KtorClientWebSocketSession.start(actualSession)
         }.mapError { error ->
             when (error) {
                 is WebSocketException -> WebSocketConnectionError.Unauthorized

@@ -17,6 +17,7 @@ import com.thebrownfoxx.neon.client.service.Dependencies.GetGroupManagerError
 import com.thebrownfoxx.neon.client.websocket.AlwaysActiveWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.common.PrintLogger
+import com.thebrownfoxx.neon.common.websocket.asOldWebSocketSession
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
 import io.ktor.client.HttpClient
@@ -42,7 +43,6 @@ class DefaultDependencies(
         httpClient,
         tokenStorage,
         authenticator,
-        logger,
     )
 
     private val webSocketSession = AlwaysActiveWebSocketSession(logger)
@@ -63,10 +63,13 @@ class DefaultDependencies(
 
     override val groupManager = run {
         val localGroupDataSource = ExposedLocalGroupDataSource(database)
-        val remoteGroupDataSource = WebSocketRemoteGroupDataSource(webSocketSession)
-        val groupRepository = OfflineFirstGroupRepository(localGroupDataSource, remoteGroupDataSource)
+        val remoteGroupDataSource =
+            WebSocketRemoteGroupDataSource(webSocketSession.asOldWebSocketSession(logger))
+        val groupRepository =
+            OfflineFirstGroupRepository(localGroupDataSource, remoteGroupDataSource)
         val groupMemberLocalDataSource = ExposedLocalGroupMemberDataSource(database)
-        val groupMemberRemoteDataSource = WebSocketRemoteGroupMemberDataSource(webSocketSession)
+        val groupMemberRemoteDataSource =
+            WebSocketRemoteGroupMemberDataSource(webSocketSession.asOldWebSocketSession(logger))
         val groupMemberRepository = OfflineFirstGroupMemberRepository(
             groupMemberLocalDataSource,
             groupMemberRemoteDataSource,
@@ -76,7 +79,8 @@ class DefaultDependencies(
 
     override val memberManager = run {
         val localDataSource = ExposedLocalMemberDataSource(database)
-        val remoteDataSource = WebSocketRemoteMemberDataSource(webSocketSession)
+        val remoteDataSource =
+            WebSocketRemoteMemberDataSource(webSocketSession.asOldWebSocketSession(logger))
         val repository = OfflineFirstMemberRepository(localDataSource, remoteDataSource)
         DefaultMemberManager(repository)
     }
@@ -86,9 +90,10 @@ class DefaultDependencies(
             database,
             getMemberId = { authenticator.loggedInMember.first { it != null }!! }, // TODO: T-T
         )
-        val remoteDataSource = WebSocketRemoteMessageDataSource(webSocketSession, logger)
+        val remoteDataSource =
+            WebSocketRemoteMessageDataSource(webSocketSession.asOldWebSocketSession(logger))
         val repository = OfflineFirstMessageRepository(localDataSource, remoteDataSource)
-        DefaultMessenger(authenticator, repository, webSocketSession)
+        DefaultMessenger(authenticator, repository, webSocketSession.asOldWebSocketSession(logger))
     }
 
     private fun WebSocketConnectionError.toGetGroupManagerError() = when (this) {

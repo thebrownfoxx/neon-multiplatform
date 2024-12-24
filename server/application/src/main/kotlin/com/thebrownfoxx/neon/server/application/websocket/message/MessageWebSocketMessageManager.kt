@@ -2,7 +2,9 @@ package com.thebrownfoxx.neon.server.application.websocket.message
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.common.websocket.listen
 import com.thebrownfoxx.neon.common.websocket.model.RequestId
+import com.thebrownfoxx.neon.common.websocket.send
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
@@ -27,37 +29,46 @@ import com.thebrownfoxx.neon.server.service.Messenger.GetConversationPreviewsErr
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.supervisorScope
 
-class MessageWebSocketMessageManager(
+class MessageWebSocketMessageManager private constructor(
     private val session: KtorServerWebSocketSession,
     private val messenger: Messenger,
 ) {
-    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
+    companion object {
+        suspend fun startListening(
+            session: KtorServerWebSocketSession,
+            messenger: Messenger,
+        ) = MessageWebSocketMessageManager(session, messenger).apply { startListening() }
+    }
 
-    private val getConversationPreviewsJobManager = SingleJobManager(coroutineScope, session.close)
-    private val getMessagesJobManager = JobManager<GroupId>(coroutineScope, session.close)
-    private val getMessageJobManager = JobManager<MessageId>(coroutineScope, session.close)
-    private val sendMessageJobManager = JobManager<RequestId>(coroutineScope, session.close)
+    private lateinit var getConversationPreviewsJobManager: SingleJobManager
+    private lateinit var getMessagesJobManager: JobManager<GroupId>
+    private lateinit var getMessageJobManager: JobManager<MessageId>
+    private lateinit var sendMessageJobManager: JobManager<RequestId>
 
-    init {
-        session.subscribe<GetConversationPreviewsRequest> {
-            getConversationPreviews()
-        }
+    private suspend fun startListening() {
+        supervisorScope {
+            getConversationPreviewsJobManager = SingleJobManager(this)
+            getMessagesJobManager = JobManager(this)
+            getMessageJobManager = JobManager(this)
+            sendMessageJobManager = JobManager(this)
 
-        session.subscribe<GetMessagesRequest> { request ->
-            getMessages(request.groupId)
-        }
+            session.listen<GetConversationPreviewsRequest>(this) {
+                getConversationPreviews()
+            }
 
-        session.subscribe<GetMessageRequest> { request ->
-            getMessage(request.id)
-        }
+            session.listen<GetMessagesRequest>(this) { request ->
+                getMessages(request.groupId)
+            }
 
-        session.subscribe<SendMessageRequest> { request ->
-            sendMessage(request.requestId, request.id, request.groupId, request.content)
+            session.listen<GetMessageRequest>(this) { request ->
+                getMessage(request.id)
+            }
+
+            session.listen<SendMessageRequest>(this) { request ->
+                sendMessage(request.requestId, request.id, request.groupId, request.content)
+            }
         }
     }
 

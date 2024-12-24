@@ -4,7 +4,6 @@ import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.client.service.Messenger.ConversationPreviewsUnexpectedError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -26,8 +25,7 @@ class DummyMessenger(
 ) : Messenger {
     private val generatedMessages = mutableMapOf<MessageId, LocalMessage>()
 
-    override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, ConversationPreviewsUnexpectedError>> =
+    override val conversationPreviews =
         flow {
             delay(conversationPreviewsDelay)
             val nudged = generateConversationPreviews(2)

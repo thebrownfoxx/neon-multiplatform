@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
     val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, ConversationPreviewsUnexpectedError>>
+            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>>
 
     fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, GetMessagesError>>
 
@@ -18,13 +18,19 @@ interface Messenger {
 
     suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<Unit>
 
-    data object ConversationPreviewsUnexpectedError
+    enum class GetConversationPreviewsError {
+        MemberNotFound,
+        UnexpectedError,
+    }
 
     enum class GetMessagesError {
-        Idk,
+        Unauthorized,
+        GroupNotFound,
+        UnexpectedError,
     }
 
     enum class GetMessageError {
+        Unauthorized,
         NotFound,
         UnexpectedError,
     }
