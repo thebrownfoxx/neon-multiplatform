@@ -12,28 +12,18 @@ import com.thebrownfoxx.neon.server.service.MemberManager
 import com.thebrownfoxx.neon.server.service.MemberManager.GetMemberError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.CoroutineScope
 
-class MemberWebSocketMessageManager private constructor(
+class MemberWebSocketMessageManager(
     private val session: WebSocketSession,
     private val memberManager: MemberManager,
+    externalScope: CoroutineScope,
 ) {
-    companion object {
-        suspend fun startListening(
-            session: WebSocketSession,
-            memberManager: MemberManager,
-        ) = MemberWebSocketMessageManager(session, memberManager).apply { startListening() }
-    }
+    private val getMemberJobManager = JobManager<MemberId>(externalScope)
 
-    private lateinit var getMemberJobManager: JobManager<MemberId>
-
-    private suspend fun startListening() {
-        supervisorScope {
-            getMemberJobManager = JobManager(this)
-
-            session.listen<GetMemberRequest>(this) { request ->
-                getMember(request.id)
-            }
+    init {
+        session.listen<GetMemberRequest>(externalScope) { request ->
+            getMember(request.id)
         }
     }
 

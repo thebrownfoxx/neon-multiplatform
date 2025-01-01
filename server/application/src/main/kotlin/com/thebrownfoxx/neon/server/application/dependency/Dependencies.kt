@@ -7,8 +7,10 @@ import com.thebrownfoxx.neon.server.service.GroupManager
 import com.thebrownfoxx.neon.server.service.JwtProcessor
 import com.thebrownfoxx.neon.server.service.MemberManager
 import com.thebrownfoxx.neon.server.service.Messenger
+import kotlinx.coroutines.CoroutineScope
 
 interface Dependencies {
+    val applicationScope: CoroutineScope
     val webSocketManager: WebSocketManager
     val jwtProcessor: JwtProcessor
     val authenticator: Authenticator

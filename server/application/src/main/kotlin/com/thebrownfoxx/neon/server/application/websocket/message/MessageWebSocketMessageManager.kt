@@ -29,44 +29,31 @@ import com.thebrownfoxx.neon.server.service.Messenger.GetConversationPreviewsErr
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-class MessageWebSocketMessageManager private constructor(
+class MessageWebSocketMessageManager(
     private val session: KtorServerWebSocketSession,
     private val messenger: Messenger,
+    externalScope: CoroutineScope,
 ) {
-    companion object {
-        suspend fun startListening(
-            session: KtorServerWebSocketSession,
-            messenger: Messenger,
-        ) = MessageWebSocketMessageManager(session, messenger).apply { startListening() }
-    }
+    private val getConversationPreviewsJobManager = SingleJobManager(externalScope)
+    private val getMessagesJobManager = JobManager<GroupId>(externalScope)
+    private val getMessageJobManager = JobManager<MessageId>(externalScope)
+    private val sendMessageJobManager = JobManager<RequestId>(externalScope)
 
-    private lateinit var getConversationPreviewsJobManager: SingleJobManager
-    private lateinit var getMessagesJobManager: JobManager<GroupId>
-    private lateinit var getMessageJobManager: JobManager<MessageId>
-    private lateinit var sendMessageJobManager: JobManager<RequestId>
-
-    private suspend fun startListening() {
-        supervisorScope {
-            getConversationPreviewsJobManager = SingleJobManager(this)
-            getMessagesJobManager = JobManager(this)
-            getMessageJobManager = JobManager(this)
-            sendMessageJobManager = JobManager(this)
-
-            session.listen<GetConversationPreviewsRequest>(this) {
+    init {
+        externalScope.launch {
+            session.listen<GetConversationPreviewsRequest>(externalScope) {
                 getConversationPreviews()
             }
-
-            session.listen<GetMessagesRequest>(this) { request ->
+            session.listen<GetMessagesRequest>(externalScope) { request ->
                 getMessages(request.groupId)
             }
-
-            session.listen<GetMessageRequest>(this) { request ->
+            session.listen<GetMessageRequest>(externalScope) { request ->
                 getMessage(request.id)
             }
-
-            session.listen<SendMessageRequest>(this) { request ->
+            session.listen<SendMessageRequest>(externalScope) { request ->
                 sendMessage(request.requestId, request.id, request.groupId, request.content)
             }
         }

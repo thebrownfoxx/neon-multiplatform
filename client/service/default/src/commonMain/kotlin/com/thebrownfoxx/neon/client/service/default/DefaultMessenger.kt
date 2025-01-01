@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
+import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -82,8 +83,12 @@ class DefaultMessenger(
         }
     }
 
-    override suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<Unit> {
-        val sender = authenticator.loggedInMember.value ?: return Failure(Unit)
+    override suspend fun sendMessage(
+        groupId: GroupId,
+        content: String,
+    ): UnitOutcome<SendMessageError> {
+        val sender = authenticator.loggedInMemberId.value ?:
+        return Failure(SendMessageError.Unauthorized)
 
         val message = LocalMessage(
             groupId = groupId,
@@ -92,7 +97,7 @@ class DefaultMessenger(
             senderId = sender,
             timestamp = Clock.System.now()
         )
-        return messageRepository.upsert(message).mapError {}
+        return messageRepository.upsert(message).mapError { SendMessageError.UnexpectedError }
     }
 
     private suspend fun uploadMessage(

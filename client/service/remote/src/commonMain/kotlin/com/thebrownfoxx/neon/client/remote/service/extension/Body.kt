@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.service.default.extension
+package com.thebrownfoxx.neon.client.remote.service.extension
 
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse

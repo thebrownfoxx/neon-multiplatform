@@ -1,11 +1,11 @@
-package com.thebrownfoxx.neon.client.service.default
+package com.thebrownfoxx.neon.client.remote.service
 
+import com.thebrownfoxx.neon.client.remote.service.extension.bodyOrNull
+import com.thebrownfoxx.neon.client.remote.service.extension.enumValueOfOrNull
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Authenticator.LoginError
 import com.thebrownfoxx.neon.client.service.Authenticator.LogoutError
 import com.thebrownfoxx.neon.client.service.TokenStorage
-import com.thebrownfoxx.neon.client.service.default.extension.bodyOrNull
-import com.thebrownfoxx.neon.client.service.default.extension.enumValueOfOrNull
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.Response
 import com.thebrownfoxx.neon.server.route.authentication.LoginBody
@@ -38,9 +38,9 @@ class RemoteAuthenticator(
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private val _loggedInMember = MutableStateFlow<MemberId?>(null)
-    override val loggedInMember = _loggedInMember.asStateFlow()
+    override val loggedInMemberId = _loggedInMember.asStateFlow()
 
-    override val loggedIn = loggedInMember.map { it != null }
+    override val loggedIn = loggedInMemberId.map { it != null }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
     override suspend fun login(username: String, password: String): UnitOutcome<LoginError> {

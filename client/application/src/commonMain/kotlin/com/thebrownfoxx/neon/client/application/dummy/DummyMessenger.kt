@@ -5,6 +5,8 @@ import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
+import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
+import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -34,7 +36,7 @@ class DummyMessenger(
             emit(Success(LocalConversationPreviews(nudged, unread, read)))
         }
 
-    override fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, Messenger.GetMessagesError>> {
+    override fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, GetMessagesError>> {
         TODO("Not yet implemented")
     }
 
@@ -45,7 +47,10 @@ class DummyMessenger(
         }
     }
 
-    override suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<Unit> {
+    override suspend fun sendMessage(
+        groupId: GroupId,
+        content: String,
+    ): UnitOutcome<SendMessageError> {
         TODO("Not yet implemented")
     }
 

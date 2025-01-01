@@ -29,7 +29,9 @@ data class GetConversationPreviewsUnexpectedError(val memberId: MemberId) : WebS
 }
 
 @Serializable
-data class GetConversationPreviewsSuccessful(val conversations: List<Message>) : WebSocketMessage(
+data class GetConversationPreviewsSuccessful(
+    val conversationPreviews: List<Message>,
+) : WebSocketMessage(
     kClass = GetConversationPreviewsSuccessful::class,
     description = "Successfully retrieved the conversations",
 ) {

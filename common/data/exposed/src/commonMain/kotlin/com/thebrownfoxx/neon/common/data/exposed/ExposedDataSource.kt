@@ -15,6 +15,7 @@ abstract class ExposedDataSource(
     database: Database,
     vararg tables: Table,
 ) {
+    // TODO: Remove this dataSourceScope. it must be injected
     protected val dataSourceScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     init {

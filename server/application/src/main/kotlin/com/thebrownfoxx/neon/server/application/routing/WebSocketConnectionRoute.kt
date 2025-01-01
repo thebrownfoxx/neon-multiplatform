@@ -32,11 +32,12 @@ fun Route.webSocketConnectionRoute() {
                 )
                 webSocketManager.addSession(session)
                 session.send(WebSocketConnectionResponse.ConnectionSuccessful())
-                WebSocketMessageManagers.startListening(
+                WebSocketMessageManagers(
                     session = session,
                     groupManager = groupManager,
                     memberManager = memberManager,
                     messenger = messenger,
+                    externalScope = applicationScope,
                 )
                 var closed = false
                 while (!closed) {

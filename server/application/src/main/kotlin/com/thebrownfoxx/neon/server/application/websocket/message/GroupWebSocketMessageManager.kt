@@ -17,33 +17,22 @@ import com.thebrownfoxx.neon.server.service.GroupManager
 import com.thebrownfoxx.neon.server.service.GroupManager.GetGroupError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.CoroutineScope
 
-class GroupWebSocketMessageManager private constructor(
+class GroupWebSocketMessageManager(
     private val session: WebSocketSession,
     private val groupManager: GroupManager,
+    externalScope: CoroutineScope,
 ) {
-    companion object {
-        suspend fun startListening(
-            session: WebSocketSession,
-            groupManager: GroupManager,
-        ) = GroupWebSocketMessageManager(session, groupManager).apply { startListening() }
-    }
+    private val getGroupJobManager = JobManager<GroupId>(externalScope)
+    private val getMembersJobManager = JobManager<GroupId>(externalScope)
 
-    private lateinit var getGroupJobManager: JobManager<GroupId>
-    private lateinit var getMembersJobManager: JobManager<GroupId>
-
-    private suspend fun startListening() {
-        supervisorScope {
-            getGroupJobManager = JobManager(this)
-            getMembersJobManager = JobManager(this)
-
-            session.listen<GetGroupRequest>(this) { request ->
-                getGroup(request.id)
-            }
-            session.listen<GetGroupMembersRequest>(this) { request ->
-                getMembers(request.groupId)
-            }
+    init {
+        session.listen<GetGroupRequest>(externalScope) { request ->
+            getGroup(request.id)
+        }
+        session.listen<GetGroupMembersRequest>(externalScope) { request ->
+            getMembers(request.groupId)
         }
     }
 

@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface Authenticator {
     val loggedIn: StateFlow<Boolean>
-    val loggedInMember: StateFlow<MemberId?>
+    val loggedInMemberId: StateFlow<MemberId?>
     suspend fun login(username: String, password: String): UnitOutcome<LoginError>
     suspend fun logout(): UnitOutcome<LogoutError>
 

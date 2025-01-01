@@ -9,9 +9,4 @@ interface Dependencies {
     val groupManager: GroupManager
     val memberManager: MemberManager
     val messenger: Messenger
-
-    enum class GetGroupManagerError {
-        Unauthorized,
-        ConnectionError,
-    }
 }

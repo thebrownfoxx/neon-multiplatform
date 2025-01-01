@@ -9,21 +9,21 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class InMemoryTokenStorage : TokenStorage {
-    private var token: Jwt? = null
-
-    override suspend fun get(): Outcome<Jwt, GetTokenError> {
-        return token?.let { Success(it) } ?: Failure(GetTokenError.NoTokenSaved)
-    }
+    private val _token =
+        MutableStateFlow<Outcome<Jwt, GetTokenError>>(Failure(GetTokenError.NoTokenSaved))
+    override val token = _token.asStateFlow()
 
     override suspend fun set(token: Jwt): UnitOutcome<SetTokenUnexpectedError> {
-        this.token = token
+        _token.value = Success(token)
         return UnitSuccess
     }
 
     override suspend fun clear(): UnitOutcome<SetTokenUnexpectedError> {
-        this.token = null
+        _token.value = Failure(GetTokenError.NoTokenSaved)
         return UnitSuccess
     }
 }

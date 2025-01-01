@@ -8,6 +8,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class NavHostViewModel(authenticator: Authenticator) : ViewModel() {
-    val loggedIn = authenticator.loggedInMember.map { it != null }
+    val loggedIn = authenticator.loggedInMemberId.map { it != null }
         .stateIn(scope = viewModelScope, started = SharingStarted.Lazily, initialValue = false)
 }

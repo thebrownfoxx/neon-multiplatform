@@ -20,7 +20,7 @@ class DummyAuthenticator : Authenticator {
     private val coroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
 
     private val _loggedInMember = MutableStateFlow<MemberId?>(MemberId())
-    override val loggedInMember = _loggedInMember.asStateFlow()
+    override val loggedInMemberId = _loggedInMember.asStateFlow()
 
     override val loggedIn = _loggedInMember.map { it != null }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)

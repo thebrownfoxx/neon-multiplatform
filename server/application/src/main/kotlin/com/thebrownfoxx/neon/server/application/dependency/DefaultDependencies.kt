@@ -24,12 +24,15 @@ import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
 import com.thebrownfoxx.outcome.map.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Database
 import kotlin.time.Duration.Companion.days
 
 class DefaultDependencies : Dependencies {
+    override val applicationScope = CoroutineScope(SupervisorJob())
+
     override val webSocketManager = WebSocketManager()
 
     private val jwtConfig =

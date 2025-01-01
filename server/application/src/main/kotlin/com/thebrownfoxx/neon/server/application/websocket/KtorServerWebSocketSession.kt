@@ -11,6 +11,7 @@ import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
 import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.server.websocket.WebSocketServerSession
@@ -60,7 +61,8 @@ class MutableKtorServerWebSocketSession(
 
     suspend fun emitFrame(frame: Frame) {
         val message = KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame)
-        logger.logInfo("Received: ${message.serializedValue}")
+        val serializedValue = message.serializedValue.getOrElse { "<unknown message>" }
+        logger.logInfo("Received: $serializedValue")
         _incomingMessages.emit(message)
     }
 

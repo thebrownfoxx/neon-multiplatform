@@ -148,7 +148,7 @@ class ChatViewModel(
     }
 
     private fun LocalMessage.toChatPreviewState(): Flow<ChatPreviewState> {
-        return authenticator.loggedInMember.flatMapLatest { loggedInMemberId ->
+        return authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
             groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
                 when (val group = groupOutcome.getOrThrow()) {
                     is LocalChatGroup -> toLoadedChatPreviewState(loggedInMemberId, group)
@@ -258,7 +258,7 @@ class ChatViewModel(
 
     private val message = MutableStateFlow("")
 
-    val conversation = authenticator.loggedInMember.flatMapLatest { loggedInMemberId ->
+    val conversation = authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
         conversationGroup.flatMapLatest conversationGroup@{ groupId ->
             if (groupId == null) return@conversationGroup flowOf(null)
             groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->

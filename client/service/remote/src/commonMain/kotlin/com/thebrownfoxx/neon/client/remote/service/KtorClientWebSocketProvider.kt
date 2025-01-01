@@ -1,10 +1,11 @@
-package com.thebrownfoxx.neon.client.service.default
+package com.thebrownfoxx.neon.client.remote.service
 
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.TokenStorage
 import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.client.websocket.WebSocketProvider
+import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -26,18 +27,21 @@ class KtorClientWebSocketProvider(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
     private val authenticator: Authenticator,
+    private val externalScope: CoroutineScope,
+    private val logger: Logger,
 ) : WebSocketProvider {
     private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
 
     private var session: Outcome<KtorClientWebSocketSession, WebSocketConnectionError> =
         Failure(WebSocketConnectionError.Unauthorized)
 
-    override suspend fun getSession(): Outcome<KtorClientWebSocketSession, WebSocketConnectionError> {
+    override suspend fun getSession():
+            Outcome<KtorClientWebSocketSession, WebSocketConnectionError> {
         val session = session
 
         if (session is Success) return session
 
-        val token = tokenStorage.get()
+        val token = tokenStorage.token.value
             .getOrElse { return Failure(WebSocketConnectionError.Unauthorized) }
 
         return runFailing {
@@ -48,7 +52,7 @@ class KtorClientWebSocketProvider(
             ) {
                 bearerAuth(token.value)
             }
-            KtorClientWebSocketSession.start(actualSession)
+            KtorClientWebSocketSession(actualSession, logger, externalScope)
         }.mapError { error ->
             when (error) {
                 is WebSocketException -> WebSocketConnectionError.Unauthorized

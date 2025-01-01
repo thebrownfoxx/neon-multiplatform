@@ -55,7 +55,7 @@ class WebSocketRemoteMessageDataSource(
             conversationPreviewsCache.emit(Failure(DataOperationError.UnexpectedError))
         }
         session.subscribe<GetConversationPreviewsSuccessful> { response ->
-            conversationPreviewsCache.emit(Success(response.conversations))
+            conversationPreviewsCache.emit(Success(response.conversationPreviews))
         }
 
         session.subscribe<GetMessagesUnauthorized> { response ->
