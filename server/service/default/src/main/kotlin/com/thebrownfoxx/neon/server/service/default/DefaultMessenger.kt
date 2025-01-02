@@ -153,7 +153,7 @@ class DefaultMessenger(
             delivery = Delivery.Sent,
         )
 
-        messageRepository.add(message).result
+        messageRepository.add(message).finalize()
             .onFailure { return Failure(SendMessageError.UnexpectedError) }
 
         return UnitSuccess

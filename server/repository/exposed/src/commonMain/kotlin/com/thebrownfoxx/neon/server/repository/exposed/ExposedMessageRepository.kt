@@ -17,6 +17,7 @@ import com.thebrownfoxx.neon.common.data.exposed.tryAdd
 import com.thebrownfoxx.neon.common.data.exposed.tryUpdate
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
+import com.thebrownfoxx.neon.common.data.transaction.onFinalize
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -87,13 +88,17 @@ class ExposedMessageRepository(
             }
         }
             .mapAddTransaction()
-            .onSuccess {
-                // TODO: Must update conversation previews cache
-                messagesCache.update(message.groupId)
-            }
             .asReversible {
                 dataTransaction { MessageTable.deleteWhere { id eq message.id.toJavaUuid() } }
-                // TODO: Must update conversation previews cache
+            }.onFinalize {
+                dataTransaction {
+                    GroupMemberTable
+                        .selectAll()
+                        .where(GroupMemberTable.groupId eq message.groupId.toJavaUuid())
+                        .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
+                }.onSuccess { members ->
+                    members.forEach { conversationPreviewsCache.update(it) }
+                }
                 messagesCache.update(message.groupId)
             }
     }
@@ -106,9 +111,10 @@ class ExposedMessageRepository(
             updateMessage(message)
         }
             .mapUpdateTransaction()
-            .onSuccess { messageCache.update(message.id) }
             .asReversible {
                 dataTransaction { updateMessage(oldMessage) }
+                messageCache.update(message.id)
+            }.onFinalize {
                 messageCache.update(message.id)
             }
     }

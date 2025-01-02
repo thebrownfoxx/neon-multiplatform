@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
+import com.thebrownfoxx.neon.common.data.transaction.onFinalize
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.server.repository.InviteCode
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
@@ -60,9 +61,9 @@ class ExposedInviteCodeRepository(
                 it[this.inviteCode] = inviteCode
             }
         }
-        return UnitSuccess.asReversible(finalize = { reactiveCache.update(groupId) }) {
+        return UnitSuccess.asReversible {
             dataTransaction { InviteCodeTable.deleteWhere { InviteCodeTable.id eq id } }
-        }
+        }.onFinalize { reactiveCache.update(groupId) }
     }
 
     private suspend fun get(groupId: GroupId): Outcome<InviteCode, GetError> {

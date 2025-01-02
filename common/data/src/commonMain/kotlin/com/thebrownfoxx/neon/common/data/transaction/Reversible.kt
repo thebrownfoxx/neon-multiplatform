@@ -1,17 +1,14 @@
 package com.thebrownfoxx.neon.common.data.transaction
 
-interface Reversible<out T> {
-    val result: T
-    suspend fun finalize()
-    suspend fun reverse()
+class Reversible<out T>(
+    internal val result: T,
+    private val onFinalize: suspend () -> Unit = {},
+    val reverse: suspend () -> Unit,
+) {
+    suspend fun finalize(): T {
+        onFinalize()
+        return result
+    }
 }
 
-fun <T> Reversible(
-    result: T,
-    finalize: suspend () -> Unit = {},
-    reverse: suspend () -> Unit,
-) = object : Reversible<T> {
-    override val result = result
-    override suspend fun finalize() = finalize()
-    override suspend fun reverse() = reverse()
-}
+fun <T> Reversible<T>.onFinalize(block: suspend () -> Unit) = Reversible(result, block, reverse)

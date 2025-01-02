@@ -13,6 +13,7 @@ import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.exposed.tryAdd
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
+import com.thebrownfoxx.neon.common.data.transaction.onFinalize
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
@@ -91,14 +92,12 @@ class ExposedGroupMemberRepository(
             }
         }
             .mapAddTransaction()
-            .asReversible(
-                finalize = {
-                    reactiveMembersCache.update(groupId)
-                    reactiveGroupsCache.update(memberId)
-                    reactiveAdminsCache.update(groupId)
-                }
-            ) {
+            .asReversible {
                 dataTransaction { GroupMemberTable.deleteWhere { GroupMemberTable.id eq id } }
+            }.onFinalize {
+                reactiveMembersCache.update(groupId)
+                reactiveGroupsCache.update(memberId)
+                reactiveAdminsCache.update(groupId)
             }
     }
 

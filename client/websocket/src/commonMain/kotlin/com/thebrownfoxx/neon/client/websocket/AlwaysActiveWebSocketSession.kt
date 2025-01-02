@@ -185,7 +185,7 @@ class AlwaysActiveWebSocketSession(
 
     private suspend fun WebSocketSession.mirrorIncomingMessages() {
         _incomingMessages.mirror(incomingMessages) {
-            val label = it.getLabel().getOrNull()?.value ?: "<unknown message>"
+            val label = it.serializedValue.getOrNull() ?: "<unknown message>"
             logger.logInfo("Received: $label")
             it
         }

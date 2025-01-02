@@ -9,13 +9,9 @@ typealias ReversibleOutcome<T, E> = Reversible<Outcome<T, E>>
 
 typealias ReversibleUnitOutcome<E> = Reversible<UnitOutcome<E>>
 
-fun <T, E> Outcome<T, E>.asReversible(
-    finalize: suspend () -> Unit = {},
-    reverse: suspend () -> Unit,
-) =
-    when (this) {
-        is Success -> Reversible(this, finalize, reverse)
-        is Failure -> asReversible()
-    }
+fun <T, E> Outcome<T, E>.asReversible(reverse: suspend () -> Unit) = when (this) {
+    is Success -> Reversible(result = this, reverse = reverse)
+    is Failure -> asReversible()
+}
 
 fun <E> Failure<E>.asReversible() = Reversible(this) {}
