@@ -4,7 +4,9 @@ import com.thebrownfoxx.neon.client.websocket.WebSocketRequester.RequestTimeout
 import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
+import com.thebrownfoxx.neon.common.extension.coroutineScope
 import com.thebrownfoxx.neon.common.extension.mirror
+import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.extension.withTimeout
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession.SendError
@@ -23,7 +25,6 @@ import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlin.time.Duration.Companion.seconds
 
 class AlwaysActiveWebSocketSession(
@@ -132,6 +132,7 @@ class AlwaysActiveWebSocketSession(
     ): Outcome<R, RequestTimeout> {
         val session = session.filterNotNull().first()
         var response: R? = null
+        logger.logDebug("Coroutine started")
         supervisorScope {
             val requestHandler = RequestHandler
                 .create(webSocketSession = session, externalScope = this) { handleResponse() }
@@ -140,7 +141,8 @@ class AlwaysActiveWebSocketSession(
                 response = requestHandler.await()
             }
             cancel()
-        } // TODO: This isn't completing for some reason
+        }
+        logger.logDebug("Coroutine completed")  // This is not being reached
         return when (val finalResponse = response) {
             null -> Failure(RequestTimeout)
             else -> Success(finalResponse)
@@ -173,9 +175,11 @@ class AlwaysActiveWebSocketSession(
         collectionJob?.join()
         this.session.value = session
         collectionJob = coroutineScope {
-            launch { session.mirrorIncomingMessages() }
-            launch { session.sendQueuedMessages() }
-        }
+            launch {
+                launch { session.mirrorIncomingMessages() }
+                launch { session.sendQueuedMessages() }
+            }
+        }.getOrNull()
         exponentialBackoff.reset()
         session.awaitClose()
         logger.logInfo("WebSocket finished. Reconnecting...")
