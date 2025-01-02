@@ -62,9 +62,12 @@ kotlin {
             implementation(projects.server.route)
             implementation(projects.client.model)
             implementation(projects.client.websocket)
+            implementation(projects.client.repository)
+            implementation(projects.client.repository.exposed)
             implementation(projects.client.service)
             implementation(projects.client.service.default)
             implementation(projects.client.service.remote)
+            implementation(projects.client.service.offlinefirst)
         }
 
         androidMain.dependencies {

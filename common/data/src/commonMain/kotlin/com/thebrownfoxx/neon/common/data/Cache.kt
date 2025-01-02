@@ -49,7 +49,6 @@ class SingleCache<V>(private val externalScope: CoroutineScope) {
         }
         return flow.asSharedFlow()
     }
-
     fun emit(value: V) {
         flow?.let { externalScope.launch { it.emit(value) } }
     }

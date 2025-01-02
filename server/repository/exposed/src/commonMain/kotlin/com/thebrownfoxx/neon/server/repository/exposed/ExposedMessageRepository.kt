@@ -58,7 +58,7 @@ class ExposedMessageRepository(
 
     override fun getMessagesAsFlow(
         groupId: GroupId,
-    ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>> {
+    ): Flow<Outcome<List<TimestampedMessageId>, DataOperationError>> {
         return messagesCache.getAsFlow(groupId)
     }
 
@@ -165,14 +165,13 @@ class ExposedMessageRepository(
 
     private suspend fun getMessages(
         groupId: GroupId,
-    ): Outcome<Set<TimestampedMessageId>, DataOperationError> {
+    ): Outcome<List<TimestampedMessageId>, DataOperationError> {
         return dataTransaction {
             MessageTable
                 .selectAll()
                 .orderBy(MessageTable.timestamp to SortOrder.DESC)
                 .where(MessageTable.groupId eq groupId.toJavaUuid())
                 .map { it.toTimestampedMessageId() }
-                .toSet()
         }.mapOperationTransaction()
     }
 

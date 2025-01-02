@@ -25,11 +25,8 @@ kotlin {
             implementation(projects.client.websocket)
             implementation(projects.client.model)
             implementation(projects.client.repository)
-            implementation(projects.client.repository.local)
-            implementation(projects.client.repository.local.exposed)
-            implementation(projects.client.repository.remote)
-            implementation(projects.client.repository.remote.websocket)
-            implementation(projects.client.repository.offlinefirst)
+            implementation(projects.client.repository)
+            implementation(projects.client.repository.exposed)
             implementation(projects.client.service)
         }
         commonTest.dependencies {

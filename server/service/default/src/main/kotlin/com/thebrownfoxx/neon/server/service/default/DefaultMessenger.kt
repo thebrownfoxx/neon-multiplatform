@@ -61,7 +61,7 @@ class DefaultMessenger(
     override fun getMessages(
         actorId: MemberId,
         groupId: GroupId,
-    ): Flow<Outcome<Set<TimestampedMessageId>, GetMessagesError>> {
+    ): Flow<Outcome<List<TimestampedMessageId>, GetMessagesError>> {
         return combine(
             groupRepository.getAsFlow(groupId),
             groupMemberRepository.getMembersAsFlow(groupId),
@@ -105,7 +105,7 @@ class DefaultMessenger(
     ): UnitOutcome<NewConversationError> {
         for (memberId in memberIds) {
             memberRepository.get(memberId).onFailure {
-                return Failure(it.getMemberErrorToNewConversationError(memberId))
+                return Failure(it.getMemberErrorToNewConversationError())
             }
         }
 
@@ -136,7 +136,7 @@ class DefaultMessenger(
         content: String,
     ): UnitOutcome<SendMessageError> {
         groupRepository.get(groupId)
-            .onFailure { return Failure(it.getGroupErrorToSendMessageError(groupId)) }
+            .onFailure { return Failure(it.getGroupErrorToSendMessageError()) }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
             .getOrElse { return Failure(SendMessageError.UnexpectedError) }
@@ -164,7 +164,7 @@ class DefaultMessenger(
         groupId: GroupId,
     ): UnitOutcome<MarkConversationAsReadError> {
         groupRepository.get(groupId)
-            .onFailure { return Failure(it.getGroupErrorToMarkConversationAsReadError(groupId)) }
+            .onFailure { return Failure(it.getGroupErrorToMarkConversationAsReadError()) }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
             .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
@@ -226,17 +226,17 @@ class DefaultMessenger(
         GetError.ConnectionError, GetError.UnexpectedError -> GetMessageError.UnexpectedError
     }
 
-    private fun GetError.getMemberErrorToNewConversationError(memberId: MemberId) = when (this) {
+    private fun GetError.getMemberErrorToNewConversationError() = when (this) {
         GetError.NotFound -> NewConversationError.MemberNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> NewConversationError.UnexpectedError
     }
 
-    private fun GetError.getGroupErrorToSendMessageError(groupId: GroupId) = when (this) {
+    private fun GetError.getGroupErrorToSendMessageError() = when (this) {
         GetError.NotFound -> SendMessageError.GroupNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> SendMessageError.UnexpectedError
     }
 
-    private fun GetError.getGroupErrorToMarkConversationAsReadError(groupId: GroupId) =
+    private fun GetError.getGroupErrorToMarkConversationAsReadError() =
         when (this) {
             GetError.NotFound -> MarkConversationAsReadError.GroupNotFound
             GetError.ConnectionError, GetError.UnexpectedError ->

@@ -269,11 +269,12 @@ class ChatViewModel(
 
                 val entries = messenger.getMessages(groupId).flatMapLatest { messagesOutcome ->
                     val messageIds = messagesOutcome.getOrThrow()
-                    val messagesFlows = messageIds.map { messageId ->
-                        messenger.getMessage(messageId).flatMapLatest { messageOutcome ->
-                            messageOutcome.getOrThrow()
-                                .toLocalMessageWithSenderState(loggedInMemberId, direct)
-                        }
+                    val messagesFlows = messageIds.map { timestampedMessageId ->
+                        messenger.getMessage(timestampedMessageId.id)
+                            .flatMapLatest { messageOutcome ->
+                                messageOutcome.getOrThrow()
+                                    .toLocalMessageWithSenderState(loggedInMemberId, direct)
+                            }
                     }
 
                     combineOrEmpty(messagesFlows) { messages ->

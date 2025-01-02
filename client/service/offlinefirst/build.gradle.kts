@@ -13,12 +13,12 @@ kotlin {
             implementation(libs.kotlinx.serialization)
             implementation(libs.kotlinx.datetime)
             implementation(projects.common)
+            implementation(projects.common.data)
             implementation(projects.common.websocket)
             implementation(projects.client.model)
+            implementation(projects.client.repository)
             implementation(projects.client.service)
             implementation(projects.client.converter)
-            implementation(projects.server.model)
-            implementation(projects.server.route)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

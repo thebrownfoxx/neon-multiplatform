@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.client.application.dummy
 import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
+import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
@@ -36,7 +37,7 @@ class DummyMessenger(
             emit(Success(LocalConversationPreviews(nudged, unread, read)))
         }
 
-    override fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, GetMessagesError>> {
+    override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
         TODO("Not yet implemented")
     }
 

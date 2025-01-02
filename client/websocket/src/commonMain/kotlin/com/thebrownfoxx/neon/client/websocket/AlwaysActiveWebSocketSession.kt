@@ -20,8 +20,8 @@ import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.getOrNull
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +39,6 @@ import kotlin.time.Duration.Companion.seconds
 
 class AlwaysActiveWebSocketSession(
     private val logger: Logger,
-    private val externalScope: CoroutineScope,
 ) : WebSocketSession, WebSocketSubscriber, WebSocketRequester {
     private val requestTimeout = 5.seconds
 
@@ -106,23 +105,21 @@ class AlwaysActiveWebSocketSession(
                     ExponentialBackoff(responseExponentialBackoffValues)
                 while (true) {
                     val subscriptionHandler = SubscriptionHandler.create(
-                        request?.requestId,
-                        session,
-                        externalScope,
-                        handleResponse,
+                        requestId = request?.requestId,
+                        session = session,
+                        externalScope = this,
+                        handleResponse = handleResponse,
                     )
-                    coroutineScope {
-                        val mirrorJob = launch { mirror(subscriptionHandler.response) }
-                        if (request != null) session.send(request, requestType)
-                        responseExponentialBackoff.withTimeout {
-                            subscriptionHandler.awaitFirst()
-                            runAfterTimeout {
-                                responseExponentialBackoff.reset()
-                                session.awaitClose()
-                            }
+                    val mirrorJob = launch { mirror(subscriptionHandler.response) }
+                    if (request != null) session.send(request, requestType)
+                    responseExponentialBackoff.withTimeout {
+                        subscriptionHandler.awaitFirst()
+                        runAfterTimeout {
+                            responseExponentialBackoff.reset()
+                            session.awaitClose()
                         }
-                        mirrorJob.cancel()
                     }
+                    mirrorJob.cancel()
                 }
             }
         }
@@ -137,12 +134,13 @@ class AlwaysActiveWebSocketSession(
         var response: R? = null
         supervisorScope {
             val requestHandler = RequestHandler
-                .create(session, this) { handleResponse() }
+                .create(webSocketSession = session, externalScope = this) { handleResponse() }
             session.send(request, requestType)
             withTimeout(requestTimeout) {
                 response = requestHandler.await()
             }
-        }
+            cancel()
+        } // TODO: This isn't completing for some reason
         return when (val finalResponse = response) {
             null -> Failure(RequestTimeout)
             else -> Success(finalResponse)

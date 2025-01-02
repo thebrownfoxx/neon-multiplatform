@@ -16,6 +16,7 @@ kotlin {
             implementation(projects.common.websocket)
             implementation(projects.server.model)
             implementation(projects.client.model)
+            implementation(projects.client.converter)
             implementation(projects.client.websocket)
         }
         commonTest.dependencies {

@@ -18,7 +18,7 @@ interface Messenger {
     fun getMessages(
         actorId: MemberId,
         groupId: GroupId,
-    ): Flow<Outcome<Set<TimestampedMessageId>, GetMessagesError>>
+    ): Flow<Outcome<List<TimestampedMessageId>, GetMessagesError>>
 
     fun getMessage(
         actorId: MemberId,

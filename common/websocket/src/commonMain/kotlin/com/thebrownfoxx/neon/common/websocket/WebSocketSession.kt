@@ -33,7 +33,7 @@ suspend inline fun <reified T : WebSocketMessage> WebSocketSession.send(
     return send(message, typeOf<T>())
 }
 
-suspend inline fun <reified T : WebSocketMessage> WebSocketSession.incomingInstancesOf(): Flow<T> {
+inline fun <reified T : WebSocketMessage> WebSocketSession.incomingInstancesOf(): Flow<T> {
     return incomingMessages.transform { serializedMessage ->
         if (serializedMessage.getLabel().getOrNull() == WebSocketMessageLabel(T::class)) {
             val message = serializedMessage.deserialize<T>().getOrElse { return@transform }

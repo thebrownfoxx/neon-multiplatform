@@ -11,7 +11,7 @@ suspend fun <T> withTimeout(
     block: suspend WithTimeoutScope.() -> T,
 ): Outcome<T, Timeout> {
     val scope = WithTimeoutScope()
-    return runFailing { withTimeout(timeout.inWholeMilliseconds) { scope.block() } }
+    return runFailing { withTimeout(timeout) { scope.block() } }
         .mapError { Timeout }
         .also { scope.afterTimeout.forEach { it() } }
 }

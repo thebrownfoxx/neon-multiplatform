@@ -45,7 +45,7 @@ data class GetMessagesUnexpectedError(
 data class GetMessagesSuccessful(
     override val requestId: RequestId,
     val groupId: GroupId,
-    val messages: Set<TimestampedMessageId>,
+    val messages: List<TimestampedMessageId>,
 ) : WebSocketMessage(
     kClass = GetMessagesSuccessful::class,
     description = "Successfully retrieved the messages",

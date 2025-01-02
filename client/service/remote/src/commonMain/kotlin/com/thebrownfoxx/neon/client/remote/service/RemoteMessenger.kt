@@ -1,22 +1,22 @@
 package com.thebrownfoxx.neon.client.remote.service
 
 import com.thebrownfoxx.neon.client.converter.toLocalMessage
+import com.thebrownfoxx.neon.client.converter.toLocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
-import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
+import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
+import com.thebrownfoxx.neon.client.service.toConversationPreviews
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.extension.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -45,49 +45,39 @@ import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.flatMapError
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class RemoteMessenger(
-    private val authenticator: Authenticator,
+    authenticator: Authenticator,
     private val subscriber: WebSocketSubscriber,
     private val requester: WebSocketRequester,
     externalScope: CoroutineScope,
-    private val logger: Logger,
 ) : Messenger {
-    private val conversationPreviewCache =
-        SingleCache<Outcome<LocalConversationPreviews, GetConversationPreviewsError>>(externalScope)
     private val messagesCache =
-        Cache<GroupId, Outcome<Set<MessageId>, GetMessagesError>>(externalScope)
+        Cache<GroupId, Outcome<List<LocalTimestampedMessageId>, GetMessagesError>>(externalScope)
     private val messageCache =
         Cache<MessageId, Outcome<LocalMessage, GetMessageError>>(externalScope)
 
     override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>>
-        get() =
-            conversationPreviewCache.getAsFlow {
-                subscriber.subscribeAsFlow(GetConversationPreviewsRequest()) {
-                    map<GetConversationPreviewsMemberNotFound> {
-                        Failure(GetConversationPreviewsError.MemberNotFound)
-                    }
-                    map<GetConversationPreviewsUnexpectedError> {
-                        Failure(GetConversationPreviewsError.UnexpectedError)
-                    }
-                    map<GetConversationPreviewsSuccessful> { response ->
-                        val loggedInMemberId = authenticator.loggedInMemberId.value
-                            ?: return@map Failure(GetConversationPreviewsError.MemberNotFound)
-                        Success(response.toLocalConversationPreviews(loggedInMemberId))
-                    }
-                }.mirrorTo(this)
-            }
+            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> =
+        authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
+            if (loggedInMemberId == null)
+                return@flatMapLatest flowOf(Failure(GetConversationPreviewsError.MemberNotFound))
+            getConversationPreviews(loggedInMemberId)
+        }
 
-    override fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, GetMessagesError>> {
+    override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
         return messagesCache.getAsFlow(groupId) {
             subscriber.subscribeAsFlow(GetMessagesRequest(groupId = groupId)) {
                 map<GetMessagesUnauthorized> { Failure(GetMessagesError.Unauthorized) }
                 map<GetMessagesGroupNotFound> { Failure(GetMessagesError.GroupNotFound) }
                 map<GetMessagesUnexpectedError> { Failure(GetMessagesError.UnexpectedError) }
                 map<GetMessagesSuccessful> { response ->
-                    Success(response.messages.map { it.id }.toSet())
+                    Success(response.messages.map { it.toLocalTimestampedMessageId(groupId) })
                 }
             }.mirrorTo(this)
         }
@@ -120,28 +110,26 @@ class RemoteMessenger(
         )
     }
 
+    private fun getConversationPreviews(
+        loggedInMemberId: MemberId,
+    ): Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> {
+        return subscriber.subscribeAsFlow(GetConversationPreviewsRequest()) {
+            map<GetConversationPreviewsMemberNotFound> {
+                Failure(GetConversationPreviewsError.MemberNotFound)
+            }
+            map<GetConversationPreviewsUnexpectedError> {
+                Failure(GetConversationPreviewsError.UnexpectedError)
+            }
+            map<GetConversationPreviewsSuccessful> { response ->
+                Success(response.toLocalConversationPreviews(loggedInMemberId))
+            }
+        }
+    }
+
     private fun GetConversationPreviewsSuccessful.toLocalConversationPreviews(
         loggedInMemberId: MemberId,
     ): LocalConversationPreviews {
-        val localPreviews = conversationPreviews.map { it.toLocalMessage() }
-
-        val (allUnreadPreviews, readPreviews) = localPreviews.partition { message ->
-            message.senderId != loggedInMemberId || message.delivery != LocalDelivery.Delivered
-        }
-        val unreadLarge = allUnreadPreviews.size > 10
-        val nudgedPreviews = when {
-            unreadLarge -> allUnreadPreviews.takeLast(2)
-            else -> emptyList()
-        }
-        val unreadPreviews = when {
-            unreadLarge -> allUnreadPreviews.dropLast(2)
-            else -> allUnreadPreviews
-        }
-
-        return LocalConversationPreviews(
-            nudgedPreviews = nudgedPreviews,
-            unreadPreviews = unreadPreviews,
-            readPreviews = readPreviews,
-        )
+        return conversationPreviews.map { it.toLocalMessage() }
+            .toConversationPreviews(loggedInMemberId)
     }
 }

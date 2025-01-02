@@ -6,16 +6,22 @@ import com.thebrownfoxx.neon.client.remote.service.RemoteAuthenticator
 import com.thebrownfoxx.neon.client.remote.service.RemoteGroupManager
 import com.thebrownfoxx.neon.client.remote.service.RemoteMemberManager
 import com.thebrownfoxx.neon.client.remote.service.RemoteMessenger
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedGroupMemberRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedGroupRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedMemberRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedMessageRepository
 import com.thebrownfoxx.neon.client.service.Dependencies
-import com.thebrownfoxx.neon.client.service.GroupManager
-import com.thebrownfoxx.neon.client.service.MemberManager
-import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.default.InMemoryTokenStorage
+import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstGroupManager
+import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMemberManager
+import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMessenger
 import com.thebrownfoxx.neon.client.websocket.AlwaysActiveWebSocketSession
 import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.outcome.map.onSuccess
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Database
 
@@ -37,25 +43,53 @@ class AppDependencies(
         externalScope = externalScope,
         logger = logger,
     )
-    private val webSocketSession = AlwaysActiveWebSocketSession(logger, externalScope)
+    private val webSocketSession = AlwaysActiveWebSocketSession(logger)
 
-    override val groupManager: GroupManager = RemoteGroupManager(
-        subscriber = webSocketSession,
-        externalScope = externalScope,
-    )
+    override val groupManager = run {
+        val remoteGroupManager = RemoteGroupManager(
+            subscriber = webSocketSession,
+            externalScope = externalScope,
+        )
+        val localGroupRepository = ExposedGroupRepository(database)
+        val localGroupMemberRepository = ExposedGroupMemberRepository(database)
+        OfflineFirstGroupManager(
+            remoteGroupManager = remoteGroupManager,
+            localGroupRepository = localGroupRepository,
+            localGroupMemberRepository = localGroupMemberRepository,
+            externalScope = externalScope,
+        )
+    }
 
-    override val memberManager: MemberManager = RemoteMemberManager(
-        subscriber = webSocketSession,
-        externalScope = externalScope,
-    )
+    override val memberManager = run {
+        val remoteMemberManager = RemoteMemberManager(
+            subscriber = webSocketSession,
+            externalScope = externalScope,
+        )
+        val localMemberRepository = ExposedMemberRepository(database)
+        OfflineFirstMemberManager(
+            remoteMemberManager = remoteMemberManager,
+            localMemberRepository = localMemberRepository,
+            externalScope = externalScope,
+        )
+    }
 
-    override val messenger: Messenger = RemoteMessenger(
-        authenticator = authenticator,
-        subscriber = webSocketSession,
-        requester = webSocketSession,
-        externalScope = externalScope,
-        logger = logger,
-    )
+    override val messenger = run {
+        val remoteMessenger = RemoteMessenger(
+            authenticator = authenticator,
+            subscriber = webSocketSession,
+            requester = webSocketSession,
+            externalScope = externalScope,
+        )
+        val localMessageRepository = ExposedMessageRepository(
+            database = database,
+            getMemberId = { authenticator.loggedInMemberId.filterNotNull().first() },
+        )
+        OfflineFirstMessenger(
+            remoteMessenger = remoteMessenger,
+            localMessageRepository = localMessageRepository,
+            externalScope = externalScope,
+        )
+    }
 
     init {
         externalScope.launch {
