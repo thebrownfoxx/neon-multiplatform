@@ -11,6 +11,7 @@ import com.thebrownfoxx.neon.common.websocket.WebSocketSession.SendError
 import com.thebrownfoxx.neon.common.websocket.awaitClose
 import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.Type
+import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -93,38 +95,37 @@ class AlwaysActiveWebSocketSession(
     }
 
     override fun <R> subscribeAsFlow(
-        request: Any?,
+        request: WebSocketMessage?,
         requestType: Type,
         handleResponse: SubscriptionHandler<R>.() -> Unit,
     ): Flow<R> {
-        val flow = MutableSharedFlow<R>()
-        externalScope.launch {
+        return channelFlow {
             session.collectLatest { session ->
                 if (session == null) return@collectLatest
                 val responseExponentialBackoff =
                     ExponentialBackoff(responseExponentialBackoffValues)
                 while (true) {
-                    val subscriptionHandler =
-                        SubscriptionHandler.create(session, externalScope, handleResponse)
-
-                    val mirrorJob = externalScope.launch {
-                        flow.mirror(subscriptionHandler.response)
-                    }
-
-                    session.send(request, requestType)
-                    responseExponentialBackoff.withTimeout {
-                        subscriptionHandler.awaitFirst()
-                        runAfterTimeout {
-                            responseExponentialBackoff.reset()
-                            session.awaitClose()
+                    val subscriptionHandler = SubscriptionHandler.create(
+                        request?.requestId,
+                        session,
+                        externalScope,
+                        handleResponse,
+                    )
+                    coroutineScope {
+                        val mirrorJob = launch { mirror(subscriptionHandler.response) }
+                        if (request != null) session.send(request, requestType)
+                        responseExponentialBackoff.withTimeout {
+                            subscriptionHandler.awaitFirst()
+                            runAfterTimeout {
+                                responseExponentialBackoff.reset()
+                                session.awaitClose()
+                            }
                         }
+                        mirrorJob.cancel()
                     }
-
-                    mirrorJob.cancel()
                 }
             }
         }
-        return flow.asSharedFlow()
     }
 
     override suspend fun <R> request(
@@ -136,7 +137,7 @@ class AlwaysActiveWebSocketSession(
         var response: R? = null
         supervisorScope {
             val requestHandler = RequestHandler
-                .create(this, session) { handleResponse() }
+                .create(session, this) { handleResponse() }
             session.send(request, requestType)
             withTimeout(requestTimeout) {
                 response = requestHandler.await()

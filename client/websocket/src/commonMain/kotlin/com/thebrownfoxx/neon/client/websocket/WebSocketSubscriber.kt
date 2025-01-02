@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.client.websocket
 
 import com.thebrownfoxx.neon.common.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.websocket.incomingInstancesOf
+import com.thebrownfoxx.neon.common.websocket.model.RequestId
 import com.thebrownfoxx.neon.common.websocket.model.Type
 import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.websocket.model.typeOf
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
 
 interface WebSocketSubscriber {
     fun <R> subscribeAsFlow(
-        request: Any?,
+        request: WebSocketMessage?,
         requestType: Type,
         handleResponse: SubscriptionHandler<R>.() -> Unit,
     ): Flow<R>
@@ -31,15 +32,17 @@ inline fun <reified T : WebSocketMessage, R> WebSocketSubscriber.subscribeAsFlow
 }
 
 class SubscriptionHandler<R> private constructor(
+    @PublishedApi internal val requestId: RequestId?,
     @PublishedApi internal val session: WebSocketSession,
     @PublishedApi internal val externalScope: CoroutineScope,
 ) {
     companion object {
         fun <R> create(
+            requestId: RequestId?,
             session: WebSocketSession,
             externalScope: CoroutineScope,
             handleResponse: SubscriptionHandler<R>.() -> Unit,
-        ) = SubscriptionHandler<R>(session, externalScope).apply { handleResponse() }
+        ) = SubscriptionHandler<R>(requestId, session, externalScope).apply { handleResponse() }
     }
 
     @PublishedApi
@@ -55,6 +58,7 @@ class SubscriptionHandler<R> private constructor(
     ) {
         externalScope.launch {
             session.incomingInstancesOf<T>().collectIndexed { index, message ->
+                if (requestId != message.requestId) return@collectIndexed
                 mutableResponse.emit(function(message))
                 if (index == 0) mutableReceivedFirst.value = true
             }

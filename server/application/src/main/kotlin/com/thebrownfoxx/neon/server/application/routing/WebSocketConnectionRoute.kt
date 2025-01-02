@@ -17,6 +17,9 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.routing.Route
 import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 fun Route.webSocketConnectionRoute() {
     with(DependencyProvider.dependencies) {
@@ -32,12 +35,13 @@ fun Route.webSocketConnectionRoute() {
                 )
                 webSocketManager.addSession(session)
                 session.send(WebSocketConnectionResponse.ConnectionSuccessful())
+                val scope = CoroutineScope(SupervisorJob())
                 WebSocketMessageManagers(
                     session = session,
                     groupManager = groupManager,
                     memberManager = memberManager,
                     messenger = messenger,
-                    externalScope = applicationScope,
+                    externalScope = scope,
                 )
                 var closed = false
                 while (!closed) {
@@ -49,6 +53,7 @@ fun Route.webSocketConnectionRoute() {
                         }
                 }
                 webSocketManager.removeSession(session.id)
+                scope.cancel()
             }
         }
     }

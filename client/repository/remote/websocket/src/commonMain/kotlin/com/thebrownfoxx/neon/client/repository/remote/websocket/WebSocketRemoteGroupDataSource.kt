@@ -42,7 +42,7 @@ class WebSocketRemoteGroupDataSource(
     }
 
     override fun getAsFlow(id: GroupId) = cache.getAsFlow(id) {
-        session.send(GetGroupRequest(id))
+        session.send(GetGroupRequest(id = id))
             .onFailure { cache.emit(id, Failure(GetError.ConnectionError)) }
     }
 }

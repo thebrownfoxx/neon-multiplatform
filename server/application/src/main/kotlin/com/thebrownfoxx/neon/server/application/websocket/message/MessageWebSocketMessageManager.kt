@@ -44,86 +44,77 @@ class MessageWebSocketMessageManager(
 
     init {
         externalScope.launch {
-            session.listen<GetConversationPreviewsRequest>(externalScope) {
-                getConversationPreviews()
-            }
-            session.listen<GetMessagesRequest>(externalScope) { request ->
-                getMessages(request.groupId)
-            }
-            session.listen<GetMessageRequest>(externalScope) { request ->
-                getMessage(request.id)
-            }
-            session.listen<SendMessageRequest>(externalScope) { request ->
-                sendMessage(request.requestId, request.id, request.groupId, request.content)
-            }
+            session.listen<GetConversationPreviewsRequest>(externalScope) { it.fulfill() }
+            session.listen<GetMessagesRequest>(externalScope) { it.fulfill() }
+            session.listen<GetMessageRequest>(externalScope) { it.fulfill() }
+            session.listen<SendMessageRequest>(externalScope) { it.fulfill() }
         }
     }
 
-    private fun getConversationPreviews() {
+    private fun GetConversationPreviewsRequest.fulfill() {
         getConversationPreviewsJobManager.set {
             messenger.getConversationPreviews(session.memberId).collect { conversationsOutcome ->
                 conversationsOutcome.onSuccess { conversations ->
-                    session.send(GetConversationPreviewsSuccessful(conversations))
+                    session.send(GetConversationPreviewsSuccessful(requestId, conversations))
                 }.onFailure { error ->
                     when (error) {
-                        GetConversationPreviewsError.MemberNotFound ->
-                            session.send(GetConversationPreviewsMemberNotFound(session.memberId))
+                        GetConversationPreviewsError.MemberNotFound -> session.send(
+                            GetConversationPreviewsMemberNotFound(requestId, session.memberId)
+                        )
 
-                        GetConversationPreviewsError.UnexpectedError ->
-                            session.send(GetConversationPreviewsMemberNotFound(session.memberId))
+                        GetConversationPreviewsError.UnexpectedError -> session.send(
+                            GetConversationPreviewsMemberNotFound(requestId, session.memberId)
+                        )
                     }
                 }
             }
         }
     }
 
-    private fun getMessages(groupId: GroupId) {
+    private fun GetMessagesRequest.fulfill() {
         getMessagesJobManager[groupId] = {
             messenger.getMessages(session.memberId, groupId).collect { messagesOutcome ->
                 messagesOutcome.onSuccess { messages ->
-                    session.send(GetMessagesSuccessful(groupId, messages))
+                    session.send(GetMessagesSuccessful(requestId, groupId, messages))
                 }.onFailure { error ->
                     when (error) {
-                        Messenger.GetMessagesError.Unauthorized ->
-                            session.send(GetMessagesUnauthorized(groupId, session.memberId))
+                        Messenger.GetMessagesError.Unauthorized -> session.send(
+                            GetMessagesUnauthorized(requestId, groupId, session.memberId)
+                        )
 
-                        Messenger.GetMessagesError.GroupNotFound ->
-                            session.send(GetMessagesGroupNotFound(groupId))
+                        Messenger.GetMessagesError.GroupNotFound -> session.send(
+                            GetMessagesGroupNotFound(requestId, groupId)
+                        )
 
                         Messenger.GetMessagesError.UnexpectedError ->
-                            session.send(GetMessagesUnexpectedError(groupId))
+                            session.send(GetMessagesUnexpectedError(requestId, groupId))
                     }
                 }
             }
         }
     }
 
-    private fun getMessage(id: MessageId) {
+    private fun GetMessageRequest.fulfill() {
         getMessageJobManager[id] = {
             messenger.getMessage(session.memberId, id).collect { messageOutcome ->
                 messageOutcome.onSuccess { message ->
-                    session.send(GetMessageSuccessful(message))
+                    session.send(GetMessageSuccessful(requestId, message))
                 }.onFailure { error ->
                     when (error) {
                         GetMessageError.Unauthorized ->
-                            session.send(GetMessageUnauthorized(id, session.memberId))
+                            session.send(GetMessageUnauthorized(requestId, id, session.memberId))
 
-                        GetMessageError.NotFound -> session.send(GetMessageNotFound(id))
+                        GetMessageError.NotFound -> session.send(GetMessageNotFound(requestId, id))
 
                         GetMessageError.UnexpectedError ->
-                            session.send(GetMessageUnexpectedError(id))
+                            session.send(GetMessageUnexpectedError(requestId, id))
                     }
                 }
             }
         }
     }
 
-    private fun sendMessage(
-        requestId: RequestId,
-        id: MessageId,
-        groupId: GroupId,
-        content: String,
-    ) {
+    private fun SendMessageRequest.fulfill() {
         sendMessageJobManager[requestId] = {
             messenger.sendMessage(id, session.memberId, groupId, content).onSuccess {
                 session.send(SendMessageSuccessful(requestId, id))

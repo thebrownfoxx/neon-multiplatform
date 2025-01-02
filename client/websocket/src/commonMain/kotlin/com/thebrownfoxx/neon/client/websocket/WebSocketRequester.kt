@@ -31,18 +31,18 @@ suspend inline fun <reified T : WebSocketMessage, R> WebSocketRequester.request(
 }
 
 class RequestHandler<R> private constructor(
-    @PublishedApi internal val coroutineScope: CoroutineScope,
     @PublishedApi internal val session: WebSocketSession,
+    @PublishedApi internal val externalScope: CoroutineScope,
 ) {
     @PublishedApi
     internal val jobs = mutableListOf<Job>()
 
     companion object {
         fun <R> create(
-            coroutineScope: CoroutineScope,
             webSocketSession: WebSocketSession,
+            externalScope: CoroutineScope,
             handleResponse: RequestHandler<R>.() -> Unit,
-        ) = RequestHandler<R>(coroutineScope, webSocketSession).apply { handleResponse() }
+        ) = RequestHandler<R>(webSocketSession, externalScope).apply { handleResponse() }
     }
 
     @PublishedApi
@@ -51,7 +51,7 @@ class RequestHandler<R> private constructor(
     inline fun <reified T : WebSocketMessage> map(
         crossinline function: suspend (T) -> R,
     ) {
-        val job = coroutineScope.launch {
+        val job = externalScope.launch {
             session.incomingInstancesOf<T>().collect { message ->
                 value.emit(function(message))
                 jobs.forEach { it.cancel() }

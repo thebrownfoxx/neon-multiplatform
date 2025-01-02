@@ -37,7 +37,7 @@ class RemoteGroupManager(
 
     override fun getGroup(id: GroupId): Flow<Outcome<LocalGroup, GetGroupError>> {
         return groupCache.getAsFlow(id) {
-            subscriber.subscribeAsFlow(GetGroupRequest(id)) {
+            subscriber.subscribeAsFlow(GetGroupRequest(id = id)) {
                 map<GetGroupNotFound> { Failure(GetGroupError.NotFound) }
                 map<GetGroupUnexpectedError> { Failure(GetGroupError.UnexpectedError) }
                 map<GetGroupSuccessfulChatGroup> { Success(it.chatGroup.toLocalChatGroup()) }
@@ -48,7 +48,7 @@ class RemoteGroupManager(
 
     override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>> {
         return membersCache.getAsFlow(groupId) {
-            subscriber.subscribeAsFlow(GetGroupMembersRequest(groupId)) {
+            subscriber.subscribeAsFlow(GetGroupMembersRequest(groupId = groupId)) {
                 map<GetGroupMembersGroupNotFound> { Failure(GetMembersError.GroupNotFound) }
                 map<GetGroupMembersUnexpectedError> { Failure(GetMembersError.UnexpectedError) }
                 map<GetGroupMembersSuccessful> { Success(it.members) }

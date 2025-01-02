@@ -38,7 +38,7 @@ class WebSocketRemoteMemberDataSource(
     }
 
     override fun getAsFlow(id: MemberId) = cache.getAsFlow(id) {
-        session.send(GetMemberRequest(id))
+        session.send(GetMemberRequest(id = id))
             .onFailure { cache.emit(id, Failure(GetError.ConnectionError)) }
     }
 }

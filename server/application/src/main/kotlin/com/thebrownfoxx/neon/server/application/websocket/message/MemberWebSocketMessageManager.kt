@@ -22,20 +22,19 @@ class MemberWebSocketMessageManager(
     private val getMemberJobManager = JobManager<MemberId>(externalScope)
 
     init {
-        session.listen<GetMemberRequest>(externalScope) { request ->
-            getMember(request.id)
-        }
+        session.listen<GetMemberRequest>(externalScope) { it.fulfill() }
     }
 
-    private fun getMember(id: MemberId) {
+    private fun GetMemberRequest.fulfill() {
         getMemberJobManager[id] = {
             memberManager.getMember(id).collect { memberOutcome ->
                 memberOutcome.onSuccess { member ->
-                    session.send(GetMemberSuccessful(member))
+                    session.send(GetMemberSuccessful(requestId, member))
                 }.onFailure { error ->
                     when (error) {
-                        GetMemberError.NotFound -> session.send(GetMemberNotFound(id))
-                        GetMemberError.UnexpectedError -> session.send(GetMemberUnexpectedError(id))
+                        GetMemberError.NotFound -> session.send(GetMemberNotFound(requestId, id))
+                        GetMemberError.UnexpectedError ->
+                            session.send(GetMemberUnexpectedError(requestId, id))
                     }
                 }
             }

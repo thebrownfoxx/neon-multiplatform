@@ -14,11 +14,11 @@ import kotlin.reflect.KClass
 // Careful. Because of some weirdness with Kotlin Serialization, we are deserializing the
 // WebSocketMessageHeader from JSON that are WebSocketMessage instances as a workaround.
 // Since there is currently nothing linking WebSocketMessageHeader and WebSocketMessage,
-// Be sure that the two are always in sync.
+// be sure that their property names are always in sync.
 
 @Serializable
 abstract class WebSocketMessage(
-    @Suppress("unused") val label: WebSocketMessageLabel,
+    val label: WebSocketMessageLabel,
     val description: String? = null,
 ) {
     abstract val requestId: RequestId?

@@ -13,15 +13,15 @@ suspend fun <T> withTimeout(
     val scope = WithTimeoutScope()
     return runFailing { withTimeout(timeout.inWholeMilliseconds) { scope.block() } }
         .mapError { Timeout }
-        .also { scope.afterTimeout?.invoke() }
+        .also { scope.afterTimeout.forEach { it() } }
 }
 
 data object Timeout
 
 class WithTimeoutScope internal constructor() {
-    internal var afterTimeout: (suspend () -> Unit)? = null
+    internal var afterTimeout = mutableListOf<suspend () -> Unit>()
 
     fun runAfterTimeout(function: suspend () -> Unit) {
-        afterTimeout = function
+        afterTimeout.add(function)
     }
 }

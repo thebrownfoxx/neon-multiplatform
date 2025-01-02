@@ -27,7 +27,7 @@ class RemoteMemberManager(
 
     override fun getMember(id: MemberId): Flow<Outcome<LocalMember, GetMemberError>> {
         return memberCache.getAsFlow(id) {
-            subscriber.subscribeAsFlow(GetMemberRequest(id)) {
+            subscriber.subscribeAsFlow(GetMemberRequest(id = id)) {
                 map<GetMemberNotFound> { Failure(GetMemberError.NotFound) }
                 map<GetMemberUnexpectedError> { Failure(GetMemberError.UnexpectedError) }
                 map<GetMemberSuccessful> { Success(it.member.toLocalMember()) }

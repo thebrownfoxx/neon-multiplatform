@@ -96,7 +96,7 @@ class WebSocketRemoteMessageDataSource(
         groupId: GroupId,
     ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>> {
         return messagesCache.getAsFlow(groupId) {
-            session.send(GetMessagesRequest(groupId)).onFailure {
+            session.send(GetMessagesRequest(groupId = groupId)).onFailure {
                 messagesCache.emit(groupId, Failure(DataOperationError.ConnectionError))
             }
         }
@@ -104,7 +104,7 @@ class WebSocketRemoteMessageDataSource(
 
     override fun getMessageAsFlow(id: MessageId): Flow<Outcome<Message, GetError>> {
         return messageCache.getAsFlow(id) {
-            session.send(GetMessageRequest(id)).onFailure {
+            session.send(GetMessageRequest(id = id)).onFailure {
                 conversationPreviewsCache.emit(Failure(DataOperationError.ConnectionError))
             }
         }
