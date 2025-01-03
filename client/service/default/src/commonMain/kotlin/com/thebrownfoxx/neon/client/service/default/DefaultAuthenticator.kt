@@ -1,15 +1,16 @@
-package com.thebrownfoxx.neon.client.remote.service
+package com.thebrownfoxx.neon.client.service.default
 
-import com.thebrownfoxx.neon.client.remote.service.extension.bodyOrNull
-import com.thebrownfoxx.neon.client.remote.service.extension.enumValueOfOrNull
+import com.thebrownfoxx.neon.client.repository.TokenRepository
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Authenticator.LoginError
 import com.thebrownfoxx.neon.client.service.Authenticator.LogoutError
-import com.thebrownfoxx.neon.client.service.TokenStorage
+import com.thebrownfoxx.neon.client.service.default.extension.bodyOrNull
+import com.thebrownfoxx.neon.client.service.default.extension.enumValueOfOrNull
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.Response
 import com.thebrownfoxx.neon.server.route.authentication.LoginBody
 import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
+import com.thebrownfoxx.neon.server.route.authentication.LoginRoute
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
@@ -22,7 +23,6 @@ import io.ktor.client.plugins.resources.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.resources.Resource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,9 +30,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class RemoteAuthenticator(
+class DefaultAuthenticator(
     private val httpClient: HttpClient,
-    private val tokenStorage: TokenStorage,
+    private val tokenRepository: TokenRepository,
     externalScope: CoroutineScope,
 ) : Authenticator {
     private val _loggedInMember = MutableStateFlow<MemberId?>(null)
@@ -43,29 +43,22 @@ class RemoteAuthenticator(
 
     override suspend fun login(username: String, password: String): UnitOutcome<LoginError> {
         val response = runFailing {
-            httpClient.post(Login()) {
+            httpClient.post(LoginRoute()) {
                 contentType(ContentType.Application.Json)
                 setBody(LoginBody(username, password))
             }
         }.getOrElse { return Failure(LoginError.ConnectionError) }
 
         val body = response.bodyOrNull<Response>()
-
         return when (enumValueOfOrNull<LoginResponse.Status>(body?.status)) {
-            LoginResponse.Status.InvalidCredentials -> Failure(
-                LoginError.InvalidCredentials
-            )
-
-            LoginResponse.Status.InternalConnectionError -> Failure(
-                LoginError.UnexpectedError
-            )
-
+            LoginResponse.Status.InvalidCredentials -> Failure(LoginError.InvalidCredentials)
+            LoginResponse.Status.InternalConnectionError -> Failure(LoginError.UnexpectedError)
             null -> Failure(LoginError.UnexpectedError)
             LoginResponse.Status.Successful -> {
                 val successfulBody = response.body<LoginResponse.Successful>()
                 _loggedInMember.value = successfulBody.memberId
-                tokenStorage.set(successfulBody.token)
-                    .onFailure { Failure(LoginError.ConnectionError) }
+                tokenRepository.set(successfulBody.token)
+                    .onFailure { return Failure(LoginError.ConnectionError) }
                 UnitSuccess
             }
         }
@@ -73,10 +66,7 @@ class RemoteAuthenticator(
 
     override suspend fun logout(): UnitOutcome<LogoutError> {
         _loggedInMember.value = null
-        tokenStorage.clear().onFailure { Failure(LogoutError.UnexpectedError) }
+        tokenRepository.clear().onFailure { Failure(LogoutError.UnexpectedError) }
         return UnitSuccess
     }
 }
-
-@Resource("/login")
-class Login

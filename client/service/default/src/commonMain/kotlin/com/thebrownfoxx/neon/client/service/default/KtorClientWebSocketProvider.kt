@@ -1,7 +1,7 @@
-package com.thebrownfoxx.neon.client.remote.service
+package com.thebrownfoxx.neon.client.service.default
 
+import com.thebrownfoxx.neon.client.repository.TokenRepository
 import com.thebrownfoxx.neon.client.service.Authenticator
-import com.thebrownfoxx.neon.client.service.TokenStorage
 import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.client.websocket.WebSocketProvider
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 class KtorClientWebSocketProvider(
     private val httpClient: HttpClient,
-    private val tokenStorage: TokenStorage,
+    private val tokenRepository: TokenRepository,
     private val authenticator: Authenticator,
     private val externalScope: CoroutineScope,
     private val logger: Logger,
@@ -36,7 +36,7 @@ class KtorClientWebSocketProvider(
 
         if (session is Success) return session
 
-        val token = tokenStorage.token.value
+        val token = tokenRepository.get()
             .getOrElse { return Failure(WebSocketConnectionError.Unauthorized) }
 
         return runFailing {

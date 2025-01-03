@@ -1,8 +1,6 @@
 package com.thebrownfoxx.neon.client.application
 
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.thebrownfoxx.neon.client.remote.service.KtorClientWebSocketProvider
-import com.thebrownfoxx.neon.client.remote.service.RemoteAuthenticator
 import com.thebrownfoxx.neon.client.remote.service.RemoteGroupManager
 import com.thebrownfoxx.neon.client.remote.service.RemoteMemberManager
 import com.thebrownfoxx.neon.client.remote.service.RemoteMessenger
@@ -10,8 +8,10 @@ import com.thebrownfoxx.neon.client.repository.exposed.ExposedGroupMemberReposit
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedGroupRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedMemberRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedMessageRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedTokenRepository
 import com.thebrownfoxx.neon.client.service.Dependencies
-import com.thebrownfoxx.neon.client.service.default.InMemoryTokenStorage
+import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
+import com.thebrownfoxx.neon.client.service.default.KtorClientWebSocketProvider
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstGroupManager
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMemberManager
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMessenger
@@ -33,16 +33,18 @@ class AppDependencies(
     externalScope: CoroutineScope,
 ) : Dependencies {
     override val logger = PrintLogger
-    override val tokenStorage = InMemoryTokenStorage()
-    override val authenticator = RemoteAuthenticator(
+
+    private val tokenRepository = ExposedTokenRepository(database, externalScope)
+
+    override val authenticator = DefaultAuthenticator(
         httpClient,
-        tokenStorage,
+        tokenRepository,
         externalScope,
     )
 
     private val webSocketProvider = KtorClientWebSocketProvider(
         httpClient = httpClient,
-        tokenStorage = tokenStorage,
+        tokenRepository = tokenRepository,
         authenticator = authenticator,
         externalScope = externalScope,
         logger = logger,
@@ -98,7 +100,7 @@ class AppDependencies(
 
     init {
         externalScope.launch {
-            tokenStorage.token.collect {
+            tokenRepository.getAsFlow().collect {
                 it.onSuccess {
                     webSocketSession.connect { webSocketProvider.getSession() }
                 }
