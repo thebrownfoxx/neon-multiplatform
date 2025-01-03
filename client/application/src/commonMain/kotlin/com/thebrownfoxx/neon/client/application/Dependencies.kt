@@ -34,7 +34,11 @@ class AppDependencies(
 ) : Dependencies {
     override val logger = PrintLogger
     override val tokenStorage = InMemoryTokenStorage()
-    override val authenticator = RemoteAuthenticator(httpClient, tokenStorage)
+    override val authenticator = RemoteAuthenticator(
+        httpClient,
+        tokenStorage,
+        externalScope,
+    )
 
     private val webSocketProvider = KtorClientWebSocketProvider(
         httpClient = httpClient,
@@ -50,8 +54,8 @@ class AppDependencies(
             subscriber = webSocketSession,
             externalScope = externalScope,
         )
-        val localGroupRepository = ExposedGroupRepository(database)
-        val localGroupMemberRepository = ExposedGroupMemberRepository(database)
+        val localGroupRepository = ExposedGroupRepository(database, externalScope)
+        val localGroupMemberRepository = ExposedGroupMemberRepository(database, externalScope)
         OfflineFirstGroupManager(
             remoteGroupManager = remoteGroupManager,
             localGroupRepository = localGroupRepository,
@@ -65,7 +69,7 @@ class AppDependencies(
             subscriber = webSocketSession,
             externalScope = externalScope,
         )
-        val localMemberRepository = ExposedMemberRepository(database)
+        val localMemberRepository = ExposedMemberRepository(database, externalScope)
         OfflineFirstMemberManager(
             remoteMemberManager = remoteMemberManager,
             localMemberRepository = localMemberRepository,
@@ -83,6 +87,7 @@ class AppDependencies(
         val localMessageRepository = ExposedMessageRepository(
             database = database,
             getMemberId = { authenticator.loggedInMemberId.filterNotNull().first() },
+            externalScope = externalScope,
         )
         OfflineFirstMessenger(
             remoteMessenger = remoteMessenger,

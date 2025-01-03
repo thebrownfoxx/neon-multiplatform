@@ -3,10 +3,11 @@ package com.thebrownfoxx.neon.server.repository.exposed
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.UpdateError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapAddTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapOperationTransaction
@@ -29,6 +30,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.onSuccess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -45,10 +47,15 @@ import org.jetbrains.exposed.sql.selectAll
 
 class ExposedMessageRepository(
     database: Database,
-) : MessageRepository, ExposedDataSource(database, MessageTable) {
-    private val conversationPreviewsCache = ReactiveCache(::getConversationPreviews)
-    private val messagesCache = ReactiveCache(::getMessages)
-    private val messageCache = ReactiveCache(::get)
+    externalScope: CoroutineScope,
+) : MessageRepository {
+    init {
+        initializeExposeDatabase(database, MessageTable)
+    }
+
+    private val conversationPreviewsCache = ReactiveCache(externalScope, ::getConversationPreviews)
+    private val messagesCache = ReactiveCache(externalScope, ::getMessages)
+    private val messageCache = ReactiveCache(externalScope, ::get)
 
     override fun getConversationPreviewsAsFlow(
         memberId: MemberId,

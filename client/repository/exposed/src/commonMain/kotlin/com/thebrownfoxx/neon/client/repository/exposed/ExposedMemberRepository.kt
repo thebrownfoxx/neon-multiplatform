@@ -4,9 +4,10 @@ import com.thebrownfoxx.neon.client.model.LocalMember
 import com.thebrownfoxx.neon.client.repository.MemberRepository
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
+import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapUnitOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
@@ -17,6 +18,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.onSuccess
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -26,10 +28,15 @@ import org.jetbrains.exposed.sql.upsert
 
 class ExposedMemberRepository(
     database: Database,
-) : MemberRepository, ExposedDataSource(database, LocalMemberTable) {
-    private val reactiveCache = ReactiveCache(::get)
+    externalScope: CoroutineScope,
+) : MemberRepository {
+    init {
+        initializeExposeDatabase(database, LocalMemberTable)
+    }
 
-    override fun getAsFlow(id: MemberId) = reactiveCache.getAsFlow(id)
+    private val cache = ReactiveCache(externalScope, ::get)
+
+    override fun getAsFlow(id: MemberId) = cache.getAsFlow(id)
 
     override suspend fun upsert(member: LocalMember): UnitOutcome<DataOperationError> {
             return dataTransaction {
@@ -40,7 +47,7 @@ class ExposedMemberRepository(
                 }
             }
                 .mapUnitOperationTransaction()
-                .onSuccess { reactiveCache.update(member.id) }
+                .onSuccess { cache.update(member.id) }
     }
 
     private suspend fun get(id: MemberId): Outcome<LocalMember, GetError> {

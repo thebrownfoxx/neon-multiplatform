@@ -3,9 +3,10 @@ package com.thebrownfoxx.neon.server.repository.exposed
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
+import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapAddTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
@@ -21,6 +22,7 @@ import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.onInnerSuccess
 import com.thebrownfoxx.outcome.map.onOuterFailure
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -32,16 +34,21 @@ import java.util.UUID
 
 class ExposedGroupMemberRepository(
     database: Database,
-) : GroupMemberRepository, ExposedDataSource(database, GroupMemberTable) {
-    private val reactiveMembersCache = ReactiveCache(::getMembers)
-    private val reactiveGroupsCache = ReactiveCache(::getGroups)
-    private val reactiveAdminsCache = ReactiveCache(::getAdmins)
+    externalScope: CoroutineScope,
+) : GroupMemberRepository {
+    init {
+        initializeExposeDatabase(database, GroupMemberTable)
+    }
 
-    override fun getMembersAsFlow(groupId: GroupId) = reactiveMembersCache.getAsFlow(groupId)
+    private val membersCache = ReactiveCache(externalScope, ::getMembers)
+    private val groupsCache = ReactiveCache(externalScope, ::getGroups)
+    private val adminsCache = ReactiveCache(externalScope, ::getAdmins)
 
-    override fun getGroupsAsFlow(memberId: MemberId) = reactiveGroupsCache.getAsFlow(memberId)
+    override fun getMembersAsFlow(groupId: GroupId) = membersCache.getAsFlow(groupId)
 
-    override fun getAdminsAsFlow(groupId: GroupId) = reactiveAdminsCache.getAsFlow(groupId)
+    override fun getGroupsAsFlow(memberId: MemberId) = groupsCache.getAsFlow(memberId)
+
+    override fun getAdminsAsFlow(groupId: GroupId) = adminsCache.getAsFlow(groupId)
 
     override suspend fun getMembers(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
         return dataTransaction {
@@ -95,9 +102,9 @@ class ExposedGroupMemberRepository(
             .asReversible {
                 dataTransaction { GroupMemberTable.deleteWhere { GroupMemberTable.id eq id } }
             }.onFinalize {
-                reactiveMembersCache.update(groupId)
-                reactiveGroupsCache.update(memberId)
-                reactiveAdminsCache.update(groupId)
+                membersCache.update(groupId)
+                groupsCache.update(memberId)
+                adminsCache.update(groupId)
             }
     }
 

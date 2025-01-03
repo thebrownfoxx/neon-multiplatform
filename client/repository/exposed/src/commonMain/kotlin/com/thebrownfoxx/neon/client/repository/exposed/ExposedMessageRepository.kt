@@ -7,9 +7,11 @@ import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.repository.MessageRepository
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
+import com.thebrownfoxx.neon.common.data.ReactiveCache
+import com.thebrownfoxx.neon.common.data.SingleReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapUnitOperationTransaction
@@ -22,6 +24,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.onSuccess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
@@ -43,12 +46,16 @@ import org.jetbrains.exposed.sql.upsert
 class ExposedMessageRepository(
     database: Database,
     private val getMemberId: suspend () -> MemberId, // TODO: This should be bound to authenticator? idk man
-) : MessageRepository,
-    ExposedDataSource(database, LocalMessageTable, LocalTimestampedMessageIdTable) {
-    private val conversationsCache = SingleReactiveCache(::getConversations) // TODO: remove "reactive" from reactive cache names like this
-    private val messagesCache = ReactiveCache(::getMessages)
-    private val messageCache = ReactiveCache(::get)
-    private val outgoingMessagesCache = SingleReactiveCache(::getOutgoingMessages)
+    externalScope: CoroutineScope,
+) : MessageRepository {
+    init {
+        initializeExposeDatabase(database, LocalMessageTable, LocalTimestampedMessageIdTable)
+    }
+
+    private val conversationsCache = SingleReactiveCache(externalScope, ::getConversations)
+    private val messagesCache = ReactiveCache(externalScope, ::getMessages)
+    private val messageCache = ReactiveCache(externalScope, ::get)
+    private val outgoingMessagesCache = SingleReactiveCache(externalScope, ::getOutgoingMessages)
 
     override val conversationPreviews:
             Flow<Outcome<LocalConversationPreviews, DataOperationError>> =

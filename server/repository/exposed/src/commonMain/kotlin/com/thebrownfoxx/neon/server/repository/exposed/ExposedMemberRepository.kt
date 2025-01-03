@@ -2,9 +2,10 @@ package com.thebrownfoxx.neon.server.repository.exposed
 
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
+import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapAddTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
@@ -24,6 +25,7 @@ import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.map.transform
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -33,10 +35,15 @@ import org.jetbrains.exposed.sql.selectAll
 
 class ExposedMemberRepository(
     database: Database,
-) : MemberRepository, ExposedDataSource(database, MemberTable) {
-    private val reactiveCache = ReactiveCache(::get)
+    externalScope: CoroutineScope,
+) : MemberRepository {
+    init {
+        initializeExposeDatabase(database, MemberTable)
+    }
 
-    override fun getAsFlow(id: MemberId) = reactiveCache.getAsFlow(id)
+    private val cache = ReactiveCache(externalScope, ::get)
+
+    override fun getAsFlow(id: MemberId) = cache.getAsFlow(id)
 
     override suspend fun get(id: MemberId): Outcome<Member, GetError> {
         return dataTransaction {

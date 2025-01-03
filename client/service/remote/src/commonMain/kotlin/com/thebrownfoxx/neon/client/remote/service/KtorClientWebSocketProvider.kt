@@ -18,10 +18,7 @@ import io.ktor.client.plugins.websocket.WebSocketException
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.bearerAuth
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 
 class KtorClientWebSocketProvider(
     private val httpClient: HttpClient,
@@ -30,8 +27,6 @@ class KtorClientWebSocketProvider(
     private val externalScope: CoroutineScope,
     private val logger: Logger,
 ) : WebSocketProvider {
-    private val coroutineScope = CoroutineScope(Dispatchers.IO) + SupervisorJob()
-
     private var session: Outcome<KtorClientWebSocketSession, WebSocketConnectionError> =
         Failure(WebSocketConnectionError.Unauthorized)
 
@@ -65,7 +60,7 @@ class KtorClientWebSocketProvider(
     }
 
     private fun disconnectOnLogout() {
-        coroutineScope.launch {
+        externalScope.launch {
             authenticator.loggedIn.collect { loggedIn ->
                 if (!loggedIn) disconnect()
             }

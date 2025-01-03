@@ -24,7 +24,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.resources.Resource
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,14 +33,13 @@ import kotlinx.coroutines.flow.stateIn
 class RemoteAuthenticator(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
+    externalScope: CoroutineScope,
 ) : Authenticator {
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
-
     private val _loggedInMember = MutableStateFlow<MemberId?>(null)
     override val loggedInMemberId = _loggedInMember.asStateFlow()
 
     override val loggedIn = loggedInMemberId.map { it != null }
-        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+        .stateIn(externalScope, SharingStarted.Eagerly, false)
 
     override suspend fun login(username: String, password: String): UnitOutcome<LoginError> {
         val response = runFailing {
