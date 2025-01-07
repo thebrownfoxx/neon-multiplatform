@@ -20,7 +20,11 @@ interface Messenger {
 
     fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>>
 
-    suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<SendMessageError>
+    suspend fun sendMessage(
+        id: MessageId = MessageId(),
+        groupId: GroupId,
+        content: String,
+    ): UnitOutcome<SendMessageError>
 
     enum class GetConversationPreviewsError {
         MemberNotFound,

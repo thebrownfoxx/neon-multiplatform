@@ -237,7 +237,7 @@ class ExposedMessageRepository(
     )
 }
 
-private object LocalMessageTable : Table("local_message") {
+private object LocalMessageTable : Table("message") {
     val id = uuid("id")
     val groupId = uuid("group_id")
     val senderId = uuid("sender_id")
@@ -252,7 +252,7 @@ private object LocalMessageTable : Table("local_message") {
     override val primaryKey = PrimaryKey(id)
 }
 
-private object LocalTimestampedMessageIdTable : Table("local_timestamped_message_id") {
+private object LocalTimestampedMessageIdTable : Table("timestamped_message_id") {
     val id = uuid("id")
     val groupId = uuid("group_id")
     val timestamp = timestamp("timestamp")

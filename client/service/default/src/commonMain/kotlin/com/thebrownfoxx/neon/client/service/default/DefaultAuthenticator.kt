@@ -1,12 +1,12 @@
 package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.client.repository.TokenRepository
+import com.thebrownfoxx.neon.client.repository.TokenRepository.Token
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Authenticator.LoginError
 import com.thebrownfoxx.neon.client.service.Authenticator.LogoutError
 import com.thebrownfoxx.neon.client.service.default.extension.bodyOrNull
 import com.thebrownfoxx.neon.client.service.default.extension.enumValueOfOrNull
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.Response
 import com.thebrownfoxx.neon.server.route.authentication.LoginBody
 import com.thebrownfoxx.neon.server.route.authentication.LoginResponse
@@ -15,6 +15,7 @@ import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.getOrElse
+import com.thebrownfoxx.outcome.map.getOrNull
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.client.HttpClient
@@ -24,19 +25,21 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DefaultAuthenticator(
     private val httpClient: HttpClient,
     private val tokenRepository: TokenRepository,
     externalScope: CoroutineScope,
 ) : Authenticator {
-    private val _loggedInMember = MutableStateFlow<MemberId?>(null)
-    override val loggedInMemberId = _loggedInMember.asStateFlow()
+    override val loggedInMemberId = tokenRepository.getAsFlow()
+        .mapLatest { it.getOrNull()?.memberId }
+        .stateIn(externalScope, SharingStarted.Eagerly, null)
 
     override val loggedIn = loggedInMemberId.map { it != null }
         .stateIn(externalScope, SharingStarted.Eagerly, false)
@@ -55,9 +58,8 @@ class DefaultAuthenticator(
             LoginResponse.Status.InternalConnectionError -> Failure(LoginError.UnexpectedError)
             null -> Failure(LoginError.UnexpectedError)
             LoginResponse.Status.Successful -> {
-                val successfulBody = response.body<LoginResponse.Successful>()
-                _loggedInMember.value = successfulBody.memberId
-                tokenRepository.set(successfulBody.token)
+                val (memberId, jwt) = response.body<LoginResponse.Successful>()
+                tokenRepository.set(Token(jwt, memberId))
                     .onFailure { return Failure(LoginError.ConnectionError) }
                 UnitSuccess
             }
@@ -65,7 +67,6 @@ class DefaultAuthenticator(
     }
 
     override suspend fun logout(): UnitOutcome<LogoutError> {
-        _loggedInMember.value = null
         tokenRepository.clear().onFailure { Failure(LogoutError.UnexpectedError) }
         return UnitSuccess
     }

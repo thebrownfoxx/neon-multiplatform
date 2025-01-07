@@ -4,6 +4,7 @@ import com.thebrownfoxx.neon.client.websocket.WebSocketRequester.RequestTimeout
 import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
+import com.thebrownfoxx.neon.common.extension.channelFlow
 import com.thebrownfoxx.neon.common.extension.coroutineScope
 import com.thebrownfoxx.neon.common.extension.mirror
 import com.thebrownfoxx.neon.common.extension.supervisorScope
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -132,7 +132,6 @@ class AlwaysActiveWebSocketSession(
     ): Outcome<R, RequestTimeout> {
         val session = session.filterNotNull().first()
         var response: R? = null
-        logger.logDebug("Coroutine started")
         supervisorScope {
             val requestHandler = RequestHandler
                 .create(webSocketSession = session, externalScope = this) { handleResponse() }
@@ -142,7 +141,6 @@ class AlwaysActiveWebSocketSession(
             }
             cancel()
         }
-        logger.logDebug("Coroutine completed")  // This is not being reached
         return when (val finalResponse = response) {
             null -> Failure(RequestTimeout)
             else -> Success(finalResponse)

@@ -11,7 +11,7 @@ import com.thebrownfoxx.neon.client.repository.exposed.ExposedMessageRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedTokenRepository
 import com.thebrownfoxx.neon.client.service.Dependencies
 import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
-import com.thebrownfoxx.neon.client.service.default.KtorClientWebSocketProvider
+import com.thebrownfoxx.neon.client.service.default.KtorClientWebSocketConnector
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstGroupManager
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMemberManager
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMessenger
@@ -42,10 +42,8 @@ class AppDependencies(
         externalScope,
     )
 
-    private val webSocketProvider = KtorClientWebSocketProvider(
+    private val webSocketProvider = KtorClientWebSocketConnector(
         httpClient = httpClient,
-        tokenRepository = tokenRepository,
-        authenticator = authenticator,
         externalScope = externalScope,
         logger = logger,
     )
@@ -62,7 +60,6 @@ class AppDependencies(
             remoteGroupManager = remoteGroupManager,
             localGroupRepository = localGroupRepository,
             localGroupMemberRepository = localGroupMemberRepository,
-            externalScope = externalScope,
         )
     }
 
@@ -75,7 +72,6 @@ class AppDependencies(
         OfflineFirstMemberManager(
             remoteMemberManager = remoteMemberManager,
             localMemberRepository = localMemberRepository,
-            externalScope = externalScope,
         )
     }
 
@@ -92,17 +88,17 @@ class AppDependencies(
             externalScope = externalScope,
         )
         OfflineFirstMessenger(
+            authenticator = authenticator,
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
-            externalScope = externalScope,
         )
     }
 
     init {
         externalScope.launch {
             tokenRepository.getAsFlow().collect {
-                it.onSuccess {
-                    webSocketSession.connect { webSocketProvider.getSession() }
+                it.onSuccess { token ->
+                    webSocketSession.connect { webSocketProvider.connect(token.jwt) }
                 }
             }
         }

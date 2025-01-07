@@ -1,7 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.exposed
 
 import com.thebrownfoxx.neon.client.repository.GroupMemberRepository
-import com.thebrownfoxx.neon.client.repository.GroupMemberRepository.LocalGroupMember
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
@@ -14,6 +13,7 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -34,15 +34,18 @@ class ExposedGroupMemberRepository(
     override fun getMembersAsFlow(groupId: GroupId) = cache.getAsFlow(groupId)
 
     override suspend fun batchUpsert(
-        groupMembers: List<LocalGroupMember>,
+        groupId: GroupId,
+        memberIds: Set<MemberId>,
     ): UnitOutcome<DataOperationError> {
         return dataTransaction {
-            LocalGroupMemberTable.batchUpsert(groupMembers) { groupMember ->
-                this[LocalGroupMemberTable.groupId] = groupMember.groupId.toJavaUuid()
-                this[LocalGroupMemberTable.memberId] = groupMember.memberId.toJavaUuid()
-                this[LocalGroupMemberTable.isAdmin] = groupMember.isAdmin
+            LocalGroupMemberTable.batchUpsert(memberIds) { memberId ->
+                this[LocalGroupMemberTable.groupId] = groupId.toJavaUuid()
+                this[LocalGroupMemberTable.memberId] = memberId.toJavaUuid()
+                this[LocalGroupMemberTable.isAdmin] = false
             }
-        }.mapUnitOperationTransaction()
+        }
+            .mapUnitOperationTransaction()
+            .onSuccess { cache.update(groupId) }
     }
 
     private suspend fun getMembers(groupId: GroupId): Outcome<Set<MemberId>, DataOperationError> {

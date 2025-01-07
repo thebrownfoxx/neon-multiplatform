@@ -49,6 +49,7 @@ class DummyMessenger(
     }
 
     override suspend fun sendMessage(
+        id: MessageId,
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError> {

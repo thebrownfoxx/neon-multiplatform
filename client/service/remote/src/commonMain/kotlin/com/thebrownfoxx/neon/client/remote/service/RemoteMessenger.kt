@@ -95,10 +95,11 @@ class RemoteMessenger(
     }
 
     override suspend fun sendMessage(
+        id: MessageId,
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError> {
-        val request = SendMessageRequest(id = MessageId(), groupId = groupId, content = content)
+        val request = SendMessageRequest(id = id, groupId = groupId, content = content)
         return requester.request(request) {
             map<SendMessageUnauthorized> { Failure(SendMessageError.Unauthorized) }
             map<GetMessagesGroupNotFound> { Failure(SendMessageError.GroupNotFound) }

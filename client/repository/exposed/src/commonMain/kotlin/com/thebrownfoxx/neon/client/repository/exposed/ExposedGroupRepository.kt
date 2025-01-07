@@ -82,7 +82,7 @@ class ExposedGroupRepository(
     }
 }
 
-private object LocalGroupTable : Table("local_group") {
+private object LocalGroupTable : Table("group") {
     val id = uuid("id")
     val name = varchar("name", length = 64).nullable()
     val avatarUrl = varchar("avatar_url", length = 2048).nullable()

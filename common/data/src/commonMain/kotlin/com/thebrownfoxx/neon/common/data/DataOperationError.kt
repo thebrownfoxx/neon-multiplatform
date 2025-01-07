@@ -2,7 +2,12 @@ package com.thebrownfoxx.neon.common.data
 
 enum class DataOperationError {
     ConnectionError,
-    UnexpectedError,
+    UnexpectedError;
+
+    fun toGetError() = when (this) {
+        ConnectionError -> GetError.ConnectionError
+        UnexpectedError -> GetError.UnexpectedError
+    }
 }
 
 enum class GetError {

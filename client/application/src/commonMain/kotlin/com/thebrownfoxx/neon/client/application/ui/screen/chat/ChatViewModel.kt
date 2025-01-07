@@ -184,7 +184,8 @@ class ChatViewModel(
 
     private fun LocalChatGroup.getMemberToShow(loggedInMemberId: MemberId?): Flow<LocalMember> {
         return groupManager.getMembers(id).flatMapLatest { members ->
-            val memberToShow = members.getOrThrow().first { it != loggedInMemberId }
+            val memberToShow = members.getOrThrow()
+                .first { it != loggedInMemberId }
             memberManager.getMember(memberToShow).map { it.getOrThrow() }
         }
     }
@@ -392,9 +393,10 @@ class ChatViewModel(
     )
 
     fun onSendMessage() {
+        val message = message.value
+        this.message.value = ""
         viewModelScope.launch {
-            messenger.sendMessage(conversationGroup.value!!, message.value)
-            message.value = ""
+            messenger.sendMessage(groupId = conversationGroup.value!!, content = message)
         }
     }
 }
