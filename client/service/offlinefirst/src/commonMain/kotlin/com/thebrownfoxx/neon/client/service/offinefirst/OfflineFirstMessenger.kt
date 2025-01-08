@@ -12,7 +12,10 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
+import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
 import com.thebrownfoxx.neon.common.extension.failedWith
+import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Failure
@@ -22,11 +25,14 @@ import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onFailure
+import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.time.Duration.Companion.seconds
 
 class OfflineFirstMessenger(
     private val authenticator: Authenticator,
@@ -34,17 +40,14 @@ class OfflineFirstMessenger(
     private val localMessageRepository: MessageRepository,
     externalScope: CoroutineScope,
 ) : Messenger {
+    private val sendMessageExponentialBackoffValues = ExponentialBackoffValues(
+        initialDelay = 1.seconds,
+        maxDelay = 32.seconds,
+        factor = 2.0,
+    )
+
     init {
-        externalScope.launch {
-            while (true) {
-                val outgoingMessage = localMessageRepository.outgoingQueue.receive()
-                remoteMessenger.sendMessage(
-                    id = outgoingMessage.id,
-                    groupId = outgoingMessage.groupId,
-                    content = outgoingMessage.content,
-                )
-            }
-        }
+        externalScope.launch { sendOutgoingMessages() }
     }
 
     override val conversationPreviews:
@@ -124,6 +127,42 @@ class OfflineFirstMessenger(
         )
         localMessageRepository.upsert(localMessage)
         return UnitSuccess
+    }
+
+    private suspend fun sendOutgoingMessages() {
+        while (true) {
+            val outgoingMessage = localMessageRepository.outgoingQueue.receive()
+            val exponentialBackoff = ExponentialBackoff(sendMessageExponentialBackoffValues)
+            loop {
+                remoteMessenger.sendMessage(
+                    id = outgoingMessage.id,
+                    groupId = outgoingMessage.groupId,
+                    content = outgoingMessage.content,
+                )
+                    .onSuccess { breakLoop() }
+                    .onFailure { error ->
+                        onSendFailure(error, outgoingMessage, onDone = { breakLoop() })
+                    }
+                exponentialBackoff.delay()
+            }
+        }
+    }
+
+    private suspend fun onSendFailure(
+        error: SendMessageError,
+        outgoingMessage: LocalMessage,
+        onDone: () -> Unit,
+    ) {
+        when (error) {
+            SendMessageError.Unauthorized, SendMessageError.GroupNotFound -> {
+                val failedMessage = outgoingMessage.copy(delivery = LocalDelivery.Failed)
+                localMessageRepository.upsert(failedMessage)
+                onDone()
+            }
+
+            SendMessageError.DuplicateId -> onDone()
+            SendMessageError.UnexpectedError, SendMessageError.RequestTimeout -> {}
+        }
     }
 
     private fun LocalConversationPreviews.isEmpty(): Boolean {

@@ -28,7 +28,7 @@ class DummyMessenger(
 ) : Messenger {
     private val generatedMessages = mutableMapOf<MessageId, LocalMessage>()
 
-    override val conversationPreviews =
+    override val conversationPreviews: Flow<Success<LocalConversationPreviews>> =
         flow {
             delay(conversationPreviewsDelay)
             val nudged = generateConversationPreviews(2)
@@ -37,7 +37,9 @@ class DummyMessenger(
             emit(Success(LocalConversationPreviews(nudged, unread, read)))
         }
 
-    override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
+    override fun getMessages(
+        groupId: GroupId,
+    ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
         TODO("Not yet implemented")
     }
 

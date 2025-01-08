@@ -35,6 +35,7 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
@@ -105,6 +106,7 @@ class RemoteMessenger(
         return requester.request(request) {
             map { _: SendMessageUnauthorized -> Failure(SendMessageError.Unauthorized) }
             map { _: SendMessageGroupNotFound -> Failure(SendMessageError.GroupNotFound) }
+            map { _: SendMessageDuplicateId -> Failure(SendMessageError.DuplicateId) }
             map { _: SendMessageUnexpectedError -> Failure(SendMessageError.UnexpectedError) }
             map { _: SendMessageSuccessful -> UnitSuccess }
         }.flatMapError(

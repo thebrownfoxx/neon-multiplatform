@@ -6,6 +6,7 @@ import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession.SendError
 import com.thebrownfoxx.neon.common.data.websocket.ktor.KtorSerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.data.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.data.websocket.model.SerializedWebSocketMessage
+import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.type.Type
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.mapError
@@ -32,15 +33,14 @@ class KtorClientWebSocketSession(
 ) : WebSocketSession {
     init {
         externalScope.launch {
-            var closed = false
-            while (!closed) {
+            loop {
                 runFailing { session.incoming.receive() }
                     .onSuccess { frame ->
                         val message = KtorSerializedWebSocketMessage(session.converter!!, frame)
                         _incomingMessages.emit(message)
                     }.onFailure {
-                        closed = true
                         _closed.value = true
+                        breakLoop()
                     }
             }
         }

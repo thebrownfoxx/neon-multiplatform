@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.server.application.routing
 
 import com.thebrownfoxx.neon.common.data.websocket.send
+import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
@@ -43,13 +44,12 @@ fun Route.webSocketConnectionRoute() {
                     messenger = messenger,
                     externalScope = scope,
                 )
-                var closed = false
-                while (!closed) {
+                loop {
                     runFailing { incoming.receive() }
                         .onSuccess { session.emitFrame(it) }
                         .onFailure {
                             logger.logInfo("Closed WebSocketSession ${session.id}")
-                            closed = true
+                            breakLoop()
                         }
                 }
                 webSocketManager.removeSession(session.id)

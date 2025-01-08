@@ -11,6 +11,7 @@ import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
 import com.thebrownfoxx.neon.common.extension.channelFlow
 import com.thebrownfoxx.neon.common.extension.coroutineScope
+import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.extension.mirror
 import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.extension.withTimeout
@@ -85,10 +86,9 @@ class AlwaysActiveWebSocketSession(
         initializeSession: suspend () -> Outcome<WebSocketSession, WebSocketConnectionError>,
     ) {
         val exponentialBackoff = ExponentialBackoff(connectionExponentialBackoffValues)
-        var unauthorized = false
-        while (!unauthorized) {
+        loop {
             initializeSession()
-                .onFailure { onConnectionFailure(it, log) { unauthorized = true } }
+                .onFailure { onConnectionFailure(it, log, onUnauthorized = { breakLoop() }) }
                 .onSuccess { onConnectionSuccess(it, exponentialBackoff) }
             exponentialBackoff.delay()
         }
@@ -204,11 +204,10 @@ class AlwaysActiveWebSocketSession(
                 maxDelay = 32.seconds,
                 factor = 2.0,
             )
-            var successful = false
-            while (!successful) {
+            loop {
                 send(message.value, message.type).onSuccess {
                     logger.logInfo("Sent: ${message.value}")
-                    successful = true
+                    breakLoop()
                 }
                 exponentialBackoff.delay()
             }

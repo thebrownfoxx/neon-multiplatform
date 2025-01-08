@@ -19,6 +19,7 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
@@ -126,7 +127,8 @@ class MessageWebSocketMessageManager(
                     Messenger.SendMessageError.GroupNotFound ->
                         session.send(SendMessageGroupNotFound(requestId, id, groupId))
 
-                    Messenger.SendMessageError.DuplicateId -> TODO()
+                    Messenger.SendMessageError.DuplicateId ->
+                        session.send(SendMessageDuplicateId(requestId, id))
 
                     Messenger.SendMessageError.UnexpectedError ->
                         session.send(SendMessageUnexpectedError(requestId, id))

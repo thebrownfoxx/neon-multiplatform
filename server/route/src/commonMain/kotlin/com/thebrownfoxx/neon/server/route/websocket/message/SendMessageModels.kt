@@ -30,6 +30,12 @@ data class SendMessageGroupNotFound(
 ) : WebSocketMessage(kClass = SendMessageGroupNotFound::class)
 
 @Serializable
+data class SendMessageDuplicateId(
+    override val requestId: RequestId,
+    val id: MessageId,
+) : WebSocketMessage(kClass = SendMessageDuplicateId::class)
+
+@Serializable
 data class SendMessageUnexpectedError(
     override val requestId: RequestId,
     val id: MessageId,

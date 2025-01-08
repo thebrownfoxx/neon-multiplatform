@@ -3,10 +3,6 @@
 import java.io.FileInputStream
 import java.util.Properties
 
-
-include(":outcome")
-
-
 rootProject.name = "Neon"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
