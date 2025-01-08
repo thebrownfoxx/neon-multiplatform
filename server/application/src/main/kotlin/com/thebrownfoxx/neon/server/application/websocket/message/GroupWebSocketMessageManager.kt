@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.application.websocket.message
 
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.data.websocket.listen
+import com.thebrownfoxx.neon.common.data.websocket.send
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.common.websocket.listen
-import com.thebrownfoxx.neon.common.websocket.send
 import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Community
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersRequest

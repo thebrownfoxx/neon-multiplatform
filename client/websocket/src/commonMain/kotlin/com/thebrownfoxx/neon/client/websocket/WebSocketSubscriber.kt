@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.client.websocket
 
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.common.websocket.incomingInstancesOf
-import com.thebrownfoxx.neon.common.websocket.model.RequestId
-import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.model.typeOf
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.data.websocket.incomingInstancesOf
+import com.thebrownfoxx.neon.common.data.websocket.model.RequestId
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
+import com.thebrownfoxx.neon.common.type.Type
+import com.thebrownfoxx.neon.common.type.typeOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow

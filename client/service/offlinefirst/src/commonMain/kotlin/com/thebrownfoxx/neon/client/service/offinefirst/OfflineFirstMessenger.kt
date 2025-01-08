@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst
 
 import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.repository.MessageRepository
@@ -14,20 +15,37 @@ import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.extension.failedWith
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 class OfflineFirstMessenger(
     private val authenticator: Authenticator,
     private val remoteMessenger: Messenger,
     private val localMessageRepository: MessageRepository,
+    externalScope: CoroutineScope,
 ) : Messenger {
-    // TODO: Implement proper eager local updates and lazy remote updates for the best experience
+    init {
+        externalScope.launch {
+            while (true) {
+                val outgoingMessage = localMessageRepository.outgoingQueue.receive()
+                remoteMessenger.sendMessage(
+                    id = outgoingMessage.id,
+                    groupId = outgoingMessage.groupId,
+                    content = outgoingMessage.content,
+                )
+            }
+        }
+    }
 
     override val conversationPreviews:
             Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> = run {
@@ -38,12 +56,14 @@ class OfflineFirstMessenger(
             localFlow = mappedLocalFlow,
             remoteFlow = remoteMessenger.conversationPreviews,
         ) {
-            defaultTransform(
-                succeeded = { it is Success },
-                notFound = { it.failedWith(GetConversationPreviewsError.MemberNotFound) },
-                failedUnexpectedly = { it.failedWith(GetConversationPreviewsError.UnexpectedError) },
+            transformLazy(
+                localSucceeded = { it is Success && it.value.isNotEmpty() },
+                localNotFound = { it is Success && it.value.isEmpty() },
+                localFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
+                remoteSucceeded = { it is Success },
+                remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
+                remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
                 updateLocal = ::updateConversationPreviews,
-                deleteLocal = { TODO() },
             )
         }
     }
@@ -58,7 +78,7 @@ class OfflineFirstMessenger(
             localFlow = mappedLocalFlow,
             remoteFlow = remoteMessenger.getMessages(groupId),
         ) {
-            defaultTransform(
+            transformLazy(
                 localSucceeded = { it is Success && it.value.isNotEmpty() },
                 localNotFound = { it is Success && it.value.isEmpty() },
                 localFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
@@ -66,7 +86,6 @@ class OfflineFirstMessenger(
                 remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
                 remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
                 updateLocal = ::updateGroupMessages,
-                deleteLocal = { TODO() },
             )
         }
     }
@@ -79,12 +98,11 @@ class OfflineFirstMessenger(
             localFlow = mappedLocalFlow,
             remoteFlow = remoteMessenger.getMessage(id),
         ) {
-            defaultTransform(
+            transformLazy(
                 succeeded = { it is Success },
                 notFound = { it.failedWith(GetMessageError.NotFound) },
                 failedUnexpectedly = { it.failedWith(GetMessageError.UnexpectedError) },
                 updateLocal = ::updateMessage,
-                deleteLocal = { TODO() },
             )
         }
     }
@@ -94,19 +112,26 @@ class OfflineFirstMessenger(
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError> {
-        // TODO: Uncomment this once the other parts can handle only having messages from local
-//        val loggedInMemberId = authenticator.loggedInMemberId.value
-//            ?: return Failure(SendMessageError.Unauthorized)
-//        val localMessage = LocalMessage(
-//            id = id,
-//            groupId = groupId,
-//            senderId = loggedInMemberId,
-//            content = content,
-//            timestamp = Clock.System.now(),
-//            delivery = LocalDelivery.Sending,
-//        )
-//        localMessageRepository.upsert(localMessage)
-        return remoteMessenger.sendMessage(id, groupId, content)
+        val loggedInMemberId = authenticator.loggedInMemberId.value
+            ?: return Failure(SendMessageError.Unauthorized)
+        val localMessage = LocalMessage(
+            id = id,
+            groupId = groupId,
+            senderId = loggedInMemberId,
+            content = content,
+            timestamp = Clock.System.now(),
+            delivery = LocalDelivery.Sending,
+        )
+        localMessageRepository.upsert(localMessage)
+        return UnitSuccess
+    }
+
+    private fun LocalConversationPreviews.isEmpty(): Boolean {
+        return nudgedPreviews.isEmpty() && unreadPreviews.isEmpty() && readPreviews.isEmpty()
+    }
+
+    private fun LocalConversationPreviews.isNotEmpty(): Boolean {
+        return !isEmpty()
     }
 
     private suspend fun updateConversationPreviews(

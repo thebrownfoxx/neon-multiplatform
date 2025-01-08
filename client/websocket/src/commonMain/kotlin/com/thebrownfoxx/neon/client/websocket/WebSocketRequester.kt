@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.client.websocket
 
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester.RequestTimeout
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.common.websocket.incomingInstancesOf
-import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.model.typeOf
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.data.websocket.incomingInstancesOf
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
+import com.thebrownfoxx.neon.common.type.Type
+import com.thebrownfoxx.neon.common.type.typeOf
 import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 interface WebSocketRequester {
     suspend fun <R> request(
-        request: Any?,
+        request: WebSocketMessage?,
         requestType: Type,
         handleResponse: RequestHandler<R>.() -> Unit,
     ): Outcome<R, RequestTimeout>
@@ -42,7 +42,7 @@ class RequestHandler<R> private constructor(
             webSocketSession: WebSocketSession,
             externalScope: CoroutineScope,
             handleResponse: RequestHandler<R>.() -> Unit,
-        ) = RequestHandler<R>(webSocketSession, externalScope).apply { handleResponse() }
+        ) = RequestHandler<R>(webSocketSession, externalScope).apply(handleResponse)
     }
 
     @PublishedApi

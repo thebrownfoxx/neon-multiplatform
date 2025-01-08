@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.server.application.routing
 
+import com.thebrownfoxx.neon.common.data.websocket.send
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.Uuid
-import com.thebrownfoxx.neon.common.websocket.send
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
 import com.thebrownfoxx.neon.server.application.plugin.AuthenticationType
 import com.thebrownfoxx.neon.server.application.plugin.MemberIdClaim

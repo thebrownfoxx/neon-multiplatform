@@ -12,11 +12,13 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.client.service.toConversationPreviews
-import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
-import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
+import com.thebrownfoxx.neon.common.data.Requester
+import com.thebrownfoxx.neon.common.data.map
+import com.thebrownfoxx.neon.common.data.request
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.extension.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -35,9 +37,11 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnexpectedError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -54,7 +58,7 @@ import kotlinx.coroutines.flow.flowOf
 class RemoteMessenger(
     authenticator: Authenticator,
     private val subscriber: WebSocketSubscriber,
-    private val requester: WebSocketRequester,
+    private val requester: Requester<WebSocketMessage>,
     externalScope: CoroutineScope,
 ) : Messenger {
     private val messagesCache =
@@ -101,10 +105,10 @@ class RemoteMessenger(
     ): UnitOutcome<SendMessageError> {
         val request = SendMessageRequest(id = id, groupId = groupId, content = content)
         return requester.request(request) {
-            map<SendMessageUnauthorized> { Failure(SendMessageError.Unauthorized) }
-            map<GetMessagesGroupNotFound> { Failure(SendMessageError.GroupNotFound) }
-            map<GetMessagesUnexpectedError> { Failure(SendMessageError.UnexpectedError) }
-            map<SendMessageSuccessful> { UnitSuccess }
+            map { _: SendMessageUnauthorized -> Failure(SendMessageError.Unauthorized) }
+            map { _: SendMessageGroupNotFound -> Failure(SendMessageError.GroupNotFound) }
+            map { _: SendMessageUnexpectedError -> Failure(SendMessageError.UnexpectedError) }
+            map { _: SendMessageSuccessful -> UnitSuccess }
         }.flatMapError(
             onInnerFailure = { it },
             onOuterFailure = { SendMessageError.RequestTimeout },

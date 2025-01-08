@@ -1,12 +1,12 @@
 package com.thebrownfoxx.neon.client.websocket
 
 import com.thebrownfoxx.neon.common.Logger
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession.SendError
-import com.thebrownfoxx.neon.common.websocket.ktor.KtorSerializedWebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.ktor.toKtorTypeInfo
-import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.model.Type
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession.SendError
+import com.thebrownfoxx.neon.common.data.websocket.ktor.KtorSerializedWebSocketMessage
+import com.thebrownfoxx.neon.common.data.websocket.ktor.toKtorTypeInfo
+import com.thebrownfoxx.neon.common.data.websocket.model.SerializedWebSocketMessage
+import com.thebrownfoxx.neon.common.type.Type
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.map.onFailure

@@ -14,7 +14,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(projects.common)
             implementation(projects.common.data)
-            implementation(projects.common.websocket)
+            implementation(projects.common.data.websocket)
             implementation(projects.client.model)
             implementation(projects.client.repository)
             implementation(projects.client.service)

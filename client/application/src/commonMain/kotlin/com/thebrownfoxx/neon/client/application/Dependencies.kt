@@ -91,6 +91,7 @@ class AppDependencies(
             authenticator = authenticator,
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
+            externalScope = externalScope,
         )
     }
 

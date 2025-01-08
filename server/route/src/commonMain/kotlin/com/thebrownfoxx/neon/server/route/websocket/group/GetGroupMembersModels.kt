@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.route.websocket.group
 
+import com.thebrownfoxx.neon.common.data.websocket.model.RequestId
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
-import com.thebrownfoxx.neon.common.websocket.model.RequestId
-import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
 import kotlinx.serialization.Serializable
 
 @Serializable

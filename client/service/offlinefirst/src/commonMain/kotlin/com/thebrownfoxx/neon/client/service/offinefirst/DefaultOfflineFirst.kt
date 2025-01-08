@@ -4,19 +4,27 @@ fun <T> OfflineFirstScope<T>.defaultTransformLocal(
     localSucceeded: (T) -> Boolean,
     localNotFound: (T) -> Boolean,
     localFailedUnexpectedly: (T) -> Boolean,
-    remoteSucceeded: (T) -> Boolean,
     remoteNotFound: (T) -> Boolean,
-    remoteFailedUnexpectedly: (T) -> Boolean,
 ) {
     transformLocal { newLocal, previousRemote ->
-        if ((localSucceeded(newLocal) && (previousRemote == null ||
-                    remoteSucceeded(previousRemote) ||
-                    remoteFailedUnexpectedly(previousRemote))) ||
-            (localNotFound(newLocal) && previousRemote != null &&
-                    remoteNotFound(previousRemote)) ||
+        if (localSucceeded(newLocal) ||
+            (localNotFound(newLocal) && previousRemote != null && remoteNotFound(previousRemote)) ||
             localFailedUnexpectedly(newLocal)
         ) emit()
     }
+}
+
+fun <T> OfflineFirstScope<T>.defaultTransformLocal(
+    succeeded: (T) -> Boolean,
+    notFound: (T) -> Boolean,
+    failedUnexpectedly: (T) -> Boolean,
+) {
+    defaultTransformLocal(
+        localSucceeded = succeeded,
+        localNotFound = notFound,
+        localFailedUnexpectedly = failedUnexpectedly,
+        remoteNotFound = notFound,
+    )
 }
 
 fun <T> OfflineFirstScope<T>.defaultTransformRemote(
@@ -37,49 +45,6 @@ fun <T> OfflineFirstScope<T>.defaultTransformRemote(
     }
 }
 
-fun <T> OfflineFirstScope<T>.defaultTransform(
-    localSucceeded: (T) -> Boolean,
-    localNotFound: (T) -> Boolean,
-    localFailedUnexpectedly: (T) -> Boolean,
-    remoteSucceeded: (T) -> Boolean,
-    remoteNotFound: (T) -> Boolean,
-    remoteFailedUnexpectedly: (T) -> Boolean,
-    updateLocal: suspend (T) -> Unit,
-    deleteLocal: suspend () -> Unit,
-) {
-    defaultTransformLocal(
-        localSucceeded = localSucceeded,
-        localNotFound = localNotFound,
-        localFailedUnexpectedly = localFailedUnexpectedly,
-        remoteSucceeded = remoteSucceeded,
-        remoteNotFound = remoteNotFound,
-        remoteFailedUnexpectedly = remoteFailedUnexpectedly,
-    )
-    defaultTransformRemote(
-        localNotFound = localNotFound,
-        remoteSucceeded = remoteSucceeded,
-        remoteNotFound = remoteNotFound,
-        remoteFailedUnexpectedly = remoteFailedUnexpectedly,
-        updateLocal = updateLocal,
-        deleteLocal = deleteLocal,
-    )
-}
-
-fun <T> OfflineFirstScope<T>.defaultTransformLocal(
-    succeeded: (T) -> Boolean,
-    notFound: (T) -> Boolean,
-    failedUnexpectedly: (T) -> Boolean,
-) {
-    defaultTransformLocal(
-        localSucceeded = succeeded,
-        localNotFound = notFound,
-        localFailedUnexpectedly = failedUnexpectedly,
-        remoteSucceeded = succeeded,
-        remoteNotFound = notFound,
-        remoteFailedUnexpectedly = failedUnexpectedly,
-    )
-}
-
 fun <T> OfflineFirstScope<T>.defaultTransformRemote(
     succeeded: (T) -> Boolean,
     notFound: (T) -> Boolean,
@@ -98,19 +63,47 @@ fun <T> OfflineFirstScope<T>.defaultTransformRemote(
 }
 
 fun <T> OfflineFirstScope<T>.defaultTransform(
+    localSucceeded: (T) -> Boolean,
+    localNotFound: (T) -> Boolean,
+    localFailedUnexpectedly: (T) -> Boolean,
+    remoteSucceeded: (T) -> Boolean,
+    remoteNotFound: (T) -> Boolean,
+    remoteFailedUnexpectedly: (T) -> Boolean,
+    updateLocal: suspend (T) -> Unit,
+    deleteLocal: suspend () -> Unit,
+) {
+    defaultTransformLocal(
+        localSucceeded = localSucceeded,
+        localNotFound = localNotFound,
+        localFailedUnexpectedly = localFailedUnexpectedly,
+        remoteNotFound = remoteNotFound,
+    )
+    defaultTransformRemote(
+        localNotFound = localNotFound,
+        remoteSucceeded = remoteSucceeded,
+        remoteNotFound = remoteNotFound,
+        remoteFailedUnexpectedly = remoteFailedUnexpectedly,
+        updateLocal = updateLocal,
+        deleteLocal = deleteLocal,
+    )
+}
+
+fun <T> OfflineFirstScope<T>.defaultTransform(
     succeeded: (T) -> Boolean,
     notFound: (T) -> Boolean,
     failedUnexpectedly: (T) -> Boolean,
     updateLocal: suspend (T) -> Unit,
     deleteLocal: suspend () -> Unit,
 ) {
-    defaultTransform(
-        localSucceeded = succeeded,
-        localNotFound = notFound,
-        localFailedUnexpectedly = failedUnexpectedly,
-        remoteSucceeded = succeeded,
-        remoteNotFound = notFound,
-        remoteFailedUnexpectedly = failedUnexpectedly,
+    defaultTransformLocal(
+        succeeded = succeeded,
+        notFound = notFound,
+        failedUnexpectedly = failedUnexpectedly,
+    )
+    defaultTransformRemote(
+        succeeded = succeeded,
+        notFound = notFound,
+        failedUnexpectedly = failedUnexpectedly,
         updateLocal = updateLocal,
         deleteLocal = deleteLocal,
     )

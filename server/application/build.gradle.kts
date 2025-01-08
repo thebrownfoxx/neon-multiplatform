@@ -46,8 +46,8 @@ dependencies {
 
     implementation(projects.common)
     implementation(projects.common.hash)
-    implementation(projects.common.websocket)
-    implementation(projects.common.websocket.ktor)
+    implementation(projects.common.data.websocket)
+    implementation(projects.common.data.websocket.ktor)
     implementation(projects.server.repository)
     implementation(projects.server.repository.exposed)
     implementation(projects.server.route)

@@ -1,7 +1,15 @@
 package com.thebrownfoxx.neon.client.websocket
 
-import com.thebrownfoxx.neon.client.websocket.WebSocketRequester.RequestTimeout
 import com.thebrownfoxx.neon.common.Logger
+import com.thebrownfoxx.neon.common.data.RequestHandler
+import com.thebrownfoxx.neon.common.data.Requester
+import com.thebrownfoxx.neon.common.data.Requester.RequestTimeout
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketRequestHandler
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
+import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession.SendError
+import com.thebrownfoxx.neon.common.data.websocket.awaitClose
+import com.thebrownfoxx.neon.common.data.websocket.model.SerializedWebSocketMessage
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
 import com.thebrownfoxx.neon.common.extension.channelFlow
@@ -9,12 +17,7 @@ import com.thebrownfoxx.neon.common.extension.coroutineScope
 import com.thebrownfoxx.neon.common.extension.mirror
 import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.extension.withTimeout
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession
-import com.thebrownfoxx.neon.common.websocket.WebSocketSession.SendError
-import com.thebrownfoxx.neon.common.websocket.awaitClose
-import com.thebrownfoxx.neon.common.websocket.model.SerializedWebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.model.Type
-import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
+import com.thebrownfoxx.neon.common.type.Type
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -35,11 +38,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import kotlin.time.Duration.Companion.seconds
 
 class AlwaysActiveWebSocketSession(
     private val logger: Logger,
-) : WebSocketSession, WebSocketSubscriber, WebSocketRequester {
+) : WebSocketSession, WebSocketSubscriber, Requester<WebSocketMessage> {
     private val requestTimeout = 5.seconds
 
     private val connectionExponentialBackoffValues = ExponentialBackoffValues(
@@ -126,15 +130,18 @@ class AlwaysActiveWebSocketSession(
     }
 
     override suspend fun <R> request(
-        request: Any?,
+        request: WebSocketMessage?,
         requestType: Type,
-        handleResponse: RequestHandler<R>.() -> Unit,
+        handleResponse: RequestHandler<WebSocketMessage, R>.() -> Unit,
     ): Outcome<R, RequestTimeout> {
         val session = session.filterNotNull().first()
         var response: R? = null
         supervisorScope {
-            val requestHandler = RequestHandler
-                .create(webSocketSession = session, externalScope = this) { handleResponse() }
+            val requestHandler = WebSocketRequestHandler.create(
+                webSocketSession = session,
+                externalScope = this,
+                handleResponse = handleResponse,
+            )
             session.send(request, requestType)
             withTimeout(requestTimeout) {
                 response = requestHandler.await()
@@ -193,6 +200,7 @@ class AlwaysActiveWebSocketSession(
 
     private suspend fun WebSocketSession.sendQueuedMessages() {
         while (true) {
+            yield()
             val message = sendChannel.receive()
             val exponentialBackoff = ExponentialBackoff(
                 initialDelay = 1.seconds,

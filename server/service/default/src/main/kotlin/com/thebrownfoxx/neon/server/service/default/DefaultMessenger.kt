@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.server.service.default
 
+import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.transaction.transaction
@@ -154,7 +155,7 @@ class DefaultMessenger(
         )
 
         messageRepository.add(message).finalize()
-            .onFailure { return Failure(SendMessageError.UnexpectedError) }
+            .onFailure { return Failure(it.toSendMessageError()) }
 
         return UnitSuccess
     }
@@ -234,6 +235,11 @@ class DefaultMessenger(
     private fun GetError.getGroupErrorToSendMessageError() = when (this) {
         GetError.NotFound -> SendMessageError.GroupNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> SendMessageError.UnexpectedError
+    }
+
+    private fun AddError.toSendMessageError() = when (this) {
+        AddError.Duplicate -> SendMessageError.DuplicateId
+        AddError.ConnectionError, AddError.UnexpectedError -> SendMessageError.UnexpectedError
     }
 
     private fun GetError.getGroupErrorToMarkConversationAsReadError() =

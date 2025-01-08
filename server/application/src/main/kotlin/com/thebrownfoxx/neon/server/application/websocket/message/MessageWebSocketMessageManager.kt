@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.server.application.websocket.message
 
+import com.thebrownfoxx.neon.common.data.websocket.listen
+import com.thebrownfoxx.neon.common.data.websocket.model.RequestId
+import com.thebrownfoxx.neon.common.data.websocket.send
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.common.websocket.listen
-import com.thebrownfoxx.neon.common.websocket.model.RequestId
-import com.thebrownfoxx.neon.common.websocket.send
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
@@ -125,6 +125,8 @@ class MessageWebSocketMessageManager(
 
                     Messenger.SendMessageError.GroupNotFound ->
                         session.send(SendMessageGroupNotFound(requestId, id, groupId))
+
+                    Messenger.SendMessageError.DuplicateId -> TODO()
 
                     Messenger.SendMessageError.UnexpectedError ->
                         session.send(SendMessageUnexpectedError(requestId, id))

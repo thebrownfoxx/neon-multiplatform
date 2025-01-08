@@ -22,10 +22,13 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Query
@@ -61,6 +64,15 @@ class ExposedMessageRepository(
             Flow<Outcome<LocalConversationPreviews, DataOperationError>> =
         conversationsCache.getAsFlow()
 
+    override val outgoingQueue = Channel<LocalMessage>(Channel.BUFFERED)
+
+    init {
+        externalScope.launch {
+            val outgoingMessages = getOutgoingMessages().getOrElse { return@launch }
+            outgoingMessages.forEach { outgoingQueue.send(it) }
+        }
+    }
+
     override fun getMessagesAsFlow(
         id: GroupId,
     ): Flow<Outcome<List<LocalTimestampedMessageId>, DataOperationError>> {
@@ -71,6 +83,7 @@ class ExposedMessageRepository(
         return messageCache.getAsFlow(id)
     }
 
+    @Deprecated("Use outgoingQueue instead")
     override fun getOutgoingMessagesAsFlow(): Flow<Outcome<List<LocalMessage>, DataOperationError>> {
         return outgoingMessagesCache.getAsFlow()
     }
@@ -96,6 +109,7 @@ class ExposedMessageRepository(
                 messageCache.update(message.id)
                 if (message.delivery == LocalDelivery.Sending) {
                     outgoingMessagesCache.update()
+                    outgoingQueue.send(message)
                     conversationsCache.update()
                     messagesCache.update(message.groupId)
                 }
