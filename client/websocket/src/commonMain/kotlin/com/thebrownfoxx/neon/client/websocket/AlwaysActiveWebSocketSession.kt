@@ -1,10 +1,7 @@
 package com.thebrownfoxx.neon.client.websocket
 
+import com.thebrownfoxx.neon.client.websocket.WebSocketRequester.RequestTimeout
 import com.thebrownfoxx.neon.common.Logger
-import com.thebrownfoxx.neon.common.data.RequestHandler
-import com.thebrownfoxx.neon.common.data.Requester
-import com.thebrownfoxx.neon.common.data.Requester.RequestTimeout
-import com.thebrownfoxx.neon.common.data.websocket.WebSocketRequestHandler
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession.SendError
 import com.thebrownfoxx.neon.common.data.websocket.awaitClose
@@ -43,7 +40,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class AlwaysActiveWebSocketSession(
     private val logger: Logger,
-) : WebSocketSession, WebSocketSubscriber, Requester<WebSocketMessage> {
+) : WebSocketSession, WebSocketSubscriber, WebSocketRequester {
     private val requestTimeout = 5.seconds
 
     private val connectionExponentialBackoffValues = ExponentialBackoffValues(
@@ -132,12 +129,12 @@ class AlwaysActiveWebSocketSession(
     override suspend fun <R> request(
         request: WebSocketMessage?,
         requestType: Type,
-        handleResponse: RequestHandler<WebSocketMessage, R>.() -> Unit,
+        handleResponse: RequestHandler<R>.() -> Unit,
     ): Outcome<R, RequestTimeout> {
         val session = session.filterNotNull().first()
         var response: R? = null
         supervisorScope {
-            val requestHandler = WebSocketRequestHandler.create(
+            val requestHandler = RequestHandler.create(
                 webSocketSession = session,
                 externalScope = this,
                 handleResponse = handleResponse,

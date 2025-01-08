@@ -12,13 +12,11 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.client.service.toConversationPreviews
+import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
+import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.data.Requester
-import com.thebrownfoxx.neon.common.data.map
-import com.thebrownfoxx.neon.common.data.request
-import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.extension.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -58,7 +56,7 @@ import kotlinx.coroutines.flow.flowOf
 class RemoteMessenger(
     authenticator: Authenticator,
     private val subscriber: WebSocketSubscriber,
-    private val requester: Requester<WebSocketMessage>,
+    private val requester: WebSocketRequester,
     externalScope: CoroutineScope,
 ) : Messenger {
     private val messagesCache =

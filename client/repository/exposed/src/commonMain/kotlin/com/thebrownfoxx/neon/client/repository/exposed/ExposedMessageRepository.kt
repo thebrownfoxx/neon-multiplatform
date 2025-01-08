@@ -108,10 +108,10 @@ class ExposedMessageRepository(
             .onSuccess {
                 messageCache.update(message.id)
                 if (message.delivery == LocalDelivery.Sending) {
-                    outgoingMessagesCache.update()
-                    outgoingQueue.send(message)
                     conversationsCache.update()
                     messagesCache.update(message.groupId)
+                    outgoingMessagesCache.update()
+                    outgoingQueue.send(message)
                 }
             }
     }
