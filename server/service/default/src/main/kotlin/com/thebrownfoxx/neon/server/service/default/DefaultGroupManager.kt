@@ -84,7 +84,7 @@ class DefaultGroupManager(
             isGod = isGod,
         )
 
-        return groupRepository.add(community).result.map(
+        return groupRepository.add(community).finalize().map(
             onSuccess = { community.id },
             onFailure = { CreateCommunityError.UnexpectedError },
         )
@@ -111,7 +111,7 @@ class DefaultGroupManager(
 
         if (group !is Community) return Failure(SetInviteCodeError.GroupNotCommunity)
 
-        return inviteCodeRepository.set(groupId, inviteCode).result
+        return inviteCodeRepository.set(groupId, inviteCode).finalize()
             .mapError { it.toSetInviteCodeError() }
     }
 
@@ -140,7 +140,7 @@ class DefaultGroupManager(
 
         if (memberId in groupMembers) return Failure(AddGroupMemberError.AlreadyAMember)
 
-        return groupMemberRepository.addMember(groupId, memberId, isAdmin).result.map(
+        return groupMemberRepository.addMember(groupId, memberId, isAdmin).finalize().map(
             onSuccess = {},
             onFailure = { it.toAddGroupMemberError() },
         )

@@ -148,7 +148,7 @@ class ChatViewModel(
     }
 
     private fun LocalMessage.toChatPreviewState(): Flow<ChatPreviewState> {
-        return authenticator.loggedInMember.flatMapLatest { loggedInMemberId ->
+        return authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
             groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
                 when (val group = groupOutcome.getOrThrow()) {
                     is LocalChatGroup -> toLoadedChatPreviewState(loggedInMemberId, group)
@@ -184,7 +184,8 @@ class ChatViewModel(
 
     private fun LocalChatGroup.getMemberToShow(loggedInMemberId: MemberId?): Flow<LocalMember> {
         return groupManager.getMembers(id).flatMapLatest { members ->
-            val memberToShow = members.getOrThrow().first { it != loggedInMemberId }
+            val memberToShow = members.getOrThrow()
+                .first { it != loggedInMemberId }
             memberManager.getMember(memberToShow).map { it.getOrThrow() }
         }
     }
@@ -258,7 +259,7 @@ class ChatViewModel(
 
     private val message = MutableStateFlow("")
 
-    val conversation = authenticator.loggedInMember.flatMapLatest { loggedInMemberId ->
+    val conversation = authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
         conversationGroup.flatMapLatest conversationGroup@{ groupId ->
             if (groupId == null) return@conversationGroup flowOf(null)
             groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
@@ -269,11 +270,12 @@ class ChatViewModel(
 
                 val entries = messenger.getMessages(groupId).flatMapLatest { messagesOutcome ->
                     val messageIds = messagesOutcome.getOrThrow()
-                    val messagesFlows = messageIds.map { messageId ->
-                        messenger.getMessage(messageId).flatMapLatest { messageOutcome ->
-                            messageOutcome.getOrThrow()
-                                .toLocalMessageWithSenderState(loggedInMemberId, direct)
-                        }
+                    val messagesFlows = messageIds.map { timestampedMessageId ->
+                        messenger.getMessage(timestampedMessageId.id)
+                            .flatMapLatest { messageOutcome ->
+                                messageOutcome.getOrThrow()
+                                    .toLocalMessageWithSenderState(loggedInMemberId, direct)
+                            }
                     }
 
                     combineOrEmpty(messagesFlows) { messages ->
@@ -391,9 +393,10 @@ class ChatViewModel(
     )
 
     fun onSendMessage() {
+        val message = message.value
+        this.message.value = ""
         viewModelScope.launch {
-            messenger.sendMessage(conversationGroup.value!!, message.value)
-            message.value = ""
+            messenger.sendMessage(groupId = conversationGroup.value!!, content = message)
         }
     }
 }

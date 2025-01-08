@@ -3,10 +3,6 @@
 import java.io.FileInputStream
 import java.util.Properties
 
-
-include(":outcome")
-
-
 rootProject.name = "Neon"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
@@ -52,10 +48,10 @@ dependencyResolutionManagement {
 include(":common")
 include(":common:must")
 include(":common:hash")
-include(":common:websocket")
-include(":common:websocket:ktor")
 include(":common:data")
 include(":common:data:exposed")
+include(":common:data:websocket")
+include(":common:data:websocket:ktor")
 include(":server:application")
 include(":server:model")
 include(":server:route")
@@ -71,10 +67,8 @@ include(":client:model")
 include(":client:converter")
 include(":client:websocket")
 include(":client:repository")
-include(":client:repository:local")
-include(":client:repository:local:exposed")
-include(":client:repository:remote")
-include(":client:repository:remote:websocket")
-include(":client:repository:offlinefirst")
+include(":client:repository:exposed")
 include(":client:service")
 include(":client:service:default")
+include(":client:service:offlinefirst")
+include(":client:service:remote")

@@ -3,9 +3,11 @@ package com.thebrownfoxx.neon.client.application.dummy
 import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
+import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.client.service.Messenger.ConversationPreviewsUnexpectedError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
+import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
+import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -26,8 +28,7 @@ class DummyMessenger(
 ) : Messenger {
     private val generatedMessages = mutableMapOf<MessageId, LocalMessage>()
 
-    override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, ConversationPreviewsUnexpectedError>> =
+    override val conversationPreviews: Flow<Success<LocalConversationPreviews>> =
         flow {
             delay(conversationPreviewsDelay)
             val nudged = generateConversationPreviews(2)
@@ -36,7 +37,9 @@ class DummyMessenger(
             emit(Success(LocalConversationPreviews(nudged, unread, read)))
         }
 
-    override fun getMessages(groupId: GroupId): Flow<Outcome<Set<MessageId>, Messenger.GetMessagesError>> {
+    override fun getMessages(
+        groupId: GroupId,
+    ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
         TODO("Not yet implemented")
     }
 
@@ -47,7 +50,11 @@ class DummyMessenger(
         }
     }
 
-    override suspend fun sendMessage(groupId: GroupId, content: String): UnitOutcome<Unit> {
+    override suspend fun sendMessage(
+        id: MessageId,
+        groupId: GroupId,
+        content: String,
+    ): UnitOutcome<SendMessageError> {
         TODO("Not yet implemented")
     }
 

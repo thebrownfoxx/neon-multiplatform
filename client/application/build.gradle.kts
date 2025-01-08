@@ -57,12 +57,18 @@ kotlin {
             implementation(libs.exposed.jdbc)
             implementation(libs.sqlite.jdbc)
             implementation(projects.common)
+            implementation(projects.common.data)
+            implementation(projects.common.data.websocket)
             implementation(projects.server.model)
             implementation(projects.server.route)
             implementation(projects.client.model)
             implementation(projects.client.websocket)
+            implementation(projects.client.repository)
+            implementation(projects.client.repository.exposed)
             implementation(projects.client.service)
             implementation(projects.client.service.default)
+            implementation(projects.client.service.remote)
+            implementation(projects.client.service.offlinefirst)
         }
 
         androidMain.dependencies {

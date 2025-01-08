@@ -13,8 +13,9 @@ kotlin {
             implementation(libs.kotlinx.serialization)
             implementation(libs.ktor.client.websockets)
             implementation(projects.common)
-            implementation(projects.common.websocket)
-            implementation(projects.common.websocket.ktor)
+            implementation(projects.common.data)
+            implementation(projects.common.data.websocket)
+            implementation(projects.common.data.websocket.ktor)
             implementation(projects.server.route)
         }
         commonTest.dependencies {

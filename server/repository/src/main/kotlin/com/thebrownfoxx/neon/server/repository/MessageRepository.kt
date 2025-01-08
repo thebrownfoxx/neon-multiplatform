@@ -20,7 +20,7 @@ interface MessageRepository {
 
     fun getMessagesAsFlow(
         groupId: GroupId,
-    ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>>
+    ): Flow<Outcome<List<TimestampedMessageId>, DataOperationError>>
 
     fun getAsFlow(id: MessageId): Flow<Outcome<Message, GetError>>
 

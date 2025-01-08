@@ -2,9 +2,9 @@ package com.thebrownfoxx.neon.server.repository.exposed
 
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
@@ -28,7 +28,11 @@ import org.jetbrains.exposed.sql.upsert
 @OptIn(ExperimentalStdlibApi::class)
 class ExposedPasswordRepository(
     database: Database,
-) : PasswordRepository, ExposedDataSource(database, PasswordTable) {
+) : PasswordRepository {
+    init {
+        initializeExposeDatabase(database, PasswordTable)
+    }
+
     override suspend fun getHash(memberId: MemberId): Outcome<Hash, GetError> {
         return dataTransaction {
             PasswordTable

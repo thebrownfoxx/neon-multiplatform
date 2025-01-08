@@ -34,13 +34,12 @@ class InMemoryMessageRepository : MessageRepository {
 
     override fun getMessagesAsFlow(
         groupId: GroupId,
-    ): Flow<Outcome<Set<TimestampedMessageId>, DataOperationError>> {
+    ): Flow<Outcome<List<TimestampedMessageId>, DataOperationError>> {
         return messages.mapLatest { messages ->
             val messageIds = messages.values
                 .filter { it.groupId == groupId }
                 .sortedByDescending { it.timestamp }
                 .map { TimestampedMessageId(it.id, it.timestamp) }
-                .toSet()
 
             Success(messageIds)
         }

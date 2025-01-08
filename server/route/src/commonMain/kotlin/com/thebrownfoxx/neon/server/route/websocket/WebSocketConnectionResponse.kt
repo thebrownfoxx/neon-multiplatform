@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.route.websocket
 
-import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessage
-import com.thebrownfoxx.neon.common.websocket.model.WebSocketMessageLabel
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
+import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessageLabel
 import kotlinx.serialization.Serializable
 
 object WebSocketConnectionResponse {

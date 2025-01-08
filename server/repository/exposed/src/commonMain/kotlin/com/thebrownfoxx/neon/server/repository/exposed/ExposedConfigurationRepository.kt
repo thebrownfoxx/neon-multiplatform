@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.server.repository.exposed
 
 import com.thebrownfoxx.neon.common.data.DataOperationError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapOperationTransaction
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
@@ -21,7 +21,11 @@ import org.jetbrains.exposed.sql.upsert
 
 class ExposedConfigurationRepository(
     database: Database,
-) : ConfigurationRepository, ExposedDataSource(database, ConfigurationTable) {
+) : ConfigurationRepository {
+    init {
+        initializeExposeDatabase(database, ConfigurationTable)
+    }
+
     override suspend fun getInitialized(): Outcome<Boolean, DataOperationError> {
         return dataTransaction {
             ConfigurationTable

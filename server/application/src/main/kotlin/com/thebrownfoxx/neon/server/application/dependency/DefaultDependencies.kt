@@ -23,13 +23,15 @@ import com.thebrownfoxx.neon.server.service.default.DefaultMessenger
 import com.thebrownfoxx.neon.server.service.default.DefaultPermissionChecker
 import com.thebrownfoxx.outcome.map.onFailure
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Database
 import kotlin.time.Duration.Companion.days
 
 class DefaultDependencies : Dependencies {
+    override val applicationScope = CoroutineScope(SupervisorJob())
+
     override val webSocketManager = WebSocketManager()
 
     private val jwtConfig =
@@ -51,12 +53,12 @@ class DefaultDependencies : Dependencies {
     )
 
     private val configurationRepository = ExposedConfigurationRepository(database)
-    private val groupRepository = ExposedGroupRepository(database)
-    private val memberRepository = ExposedMemberRepository(database)
-    private val groupMemberRepository = ExposedGroupMemberRepository(database)
-    private val inviteCodeRepository = ExposedInviteCodeRepository(database)
+    private val groupRepository = ExposedGroupRepository(database, applicationScope)
+    private val memberRepository = ExposedMemberRepository(database, applicationScope)
+    private val groupMemberRepository = ExposedGroupMemberRepository(database, applicationScope)
+    private val inviteCodeRepository = ExposedInviteCodeRepository(database, applicationScope)
     private val passwordRepository = ExposedPasswordRepository(database)
-    private val messageRepository = ExposedMessageRepository(database)
+    private val messageRepository = ExposedMessageRepository(database, applicationScope)
     private val hasher = MultiplatformHasher()
     private val permissionChecker = DefaultPermissionChecker(groupMemberRepository)
 
@@ -88,7 +90,7 @@ class DefaultDependencies : Dependencies {
     override val logger = PrintLogger
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        runBlocking {
             generateInitialServiceData().integrate(
                 configurationRepository,
                 groupRepository,

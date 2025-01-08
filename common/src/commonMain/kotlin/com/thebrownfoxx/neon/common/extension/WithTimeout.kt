@@ -3,18 +3,25 @@ package com.thebrownfoxx.neon.common.extension
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
-import kotlin.contracts.ExperimentalContracts
 import kotlin.time.Duration
 
-@OptIn(ExperimentalContracts::class)
 suspend fun <T> withTimeout(
     timeout: Duration,
-    block: suspend CoroutineScope.() -> T,
-): Outcome<T, TimeoutError> {
-    return runFailing { withTimeout(timeout.inWholeMilliseconds, block) }
-        .mapError { TimeoutError }
+    block: suspend WithTimeoutScope.() -> T,
+): Outcome<T, Timeout> {
+    val scope = WithTimeoutScope()
+    return runFailing { withTimeout(timeout) { scope.block() } }
+        .mapError { Timeout }
+        .also { scope.afterTimeout.forEach { it() } }
 }
 
-data object TimeoutError
+data object Timeout
+
+class WithTimeoutScope internal constructor() {
+    internal var afterTimeout = mutableListOf<suspend () -> Unit>()
+
+    fun runAfterTimeout(function: suspend () -> Unit) {
+        afterTimeout.add(function)
+    }
+}

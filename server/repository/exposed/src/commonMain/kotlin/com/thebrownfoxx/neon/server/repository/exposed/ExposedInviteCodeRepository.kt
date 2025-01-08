@@ -1,14 +1,16 @@
 package com.thebrownfoxx.neon.server.repository.exposed
 
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.exposed.ExposedDataSource
+import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
 import com.thebrownfoxx.neon.common.data.exposed.firstOrNotFound
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapGetTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toCommonUuid
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
+import com.thebrownfoxx.neon.common.data.transaction.onFinalize
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.server.repository.InviteCode
 import com.thebrownfoxx.neon.server.repository.InviteCodeRepository
@@ -20,6 +22,7 @@ import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.transform
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -30,10 +33,15 @@ import java.util.UUID
 
 class ExposedInviteCodeRepository(
     database: Database,
-) : InviteCodeRepository, ExposedDataSource(database, InviteCodeTable) {
-    private val reactiveCache = ReactiveCache(::get)
+    externalScope: CoroutineScope,
+) : InviteCodeRepository {
+    init {
+        initializeExposeDatabase(database, InviteCodeTable)
+    }
 
-    override fun getAsFlow(groupId: GroupId) = reactiveCache.getAsFlow(groupId)
+    private val cache = ReactiveCache(externalScope, ::get)
+
+    override fun getAsFlow(groupId: GroupId) = cache.getAsFlow(groupId)
 
     override suspend fun getGroup(inviteCode: String): Outcome<GroupId, GetError> {
         return dataTransaction {
@@ -60,9 +68,9 @@ class ExposedInviteCodeRepository(
                 it[this.inviteCode] = inviteCode
             }
         }
-        return UnitSuccess.asReversible(finalize = { reactiveCache.update(groupId) }) {
+        return UnitSuccess.asReversible {
             dataTransaction { InviteCodeTable.deleteWhere { InviteCodeTable.id eq id } }
-        }
+        }.onFinalize { cache.update(groupId) }
     }
 
     private suspend fun get(groupId: GroupId): Outcome<InviteCode, GetError> {

@@ -18,7 +18,7 @@ interface Messenger {
     fun getMessages(
         actorId: MemberId,
         groupId: GroupId,
-    ): Flow<Outcome<Set<TimestampedMessageId>, GetMessagesError>>
+    ): Flow<Outcome<List<TimestampedMessageId>, GetMessagesError>>
 
     fun getMessage(
         actorId: MemberId,
@@ -64,6 +64,7 @@ interface Messenger {
     enum class SendMessageError {
         Unauthorized,
         GroupNotFound,
+        DuplicateId,
         UnexpectedError,
     }
 

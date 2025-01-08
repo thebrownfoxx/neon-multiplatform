@@ -39,6 +39,15 @@ fun Outcome<*, DataTransactionError>.mapUnitOperationTransaction(
     onFailure = DataTransactionError::toDataOperationError,
 )
 
+fun <T> Outcome<Outcome<T, GetError>, DataTransactionError>.mapGetTransaction(
+    stackTrace: StackTrace = StackTrace(),
+) =
+    flatMapError(
+        stackTrace = stackTrace,
+        onInnerFailure = { it },
+        onOuterFailure = DataTransactionError::toGetError,
+    )
+
 fun Outcome<Outcome<*, AddError>, DataTransactionError>.mapAddTransaction(
     stackTrace: StackTrace = StackTrace(),
 ) = flatMap(
@@ -56,15 +65,6 @@ fun Outcome<Outcome<*, UpdateError>, DataTransactionError>.mapUpdateTransaction(
     onInnerFailure = { it },
     onOuterFailure = DataTransactionError::toUpdateError,
 )
-
-fun <T> Outcome<Outcome<T, GetError>, DataTransactionError>.mapGetTransaction(
-    stackTrace: StackTrace = StackTrace(),
-) =
-    flatMapError(
-        stackTrace = stackTrace,
-        onInnerFailure = { it },
-        onOuterFailure = DataTransactionError::toGetError,
-    )
 
 sealed interface DataTransactionError {
     data object SqlError : DataTransactionError
