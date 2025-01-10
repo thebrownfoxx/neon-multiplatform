@@ -5,8 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
-import com.thebrownfoxx.neon.server.application.environment.ServerEnvironment.BasicAuthPassword
-import com.thebrownfoxx.neon.server.application.environment.ServerEnvironment.BasicAuthUsername
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.BasicAuthPassword
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.BasicAuthUsername
 import com.thebrownfoxx.neon.server.service.JwtClaimKey
 import com.thebrownfoxx.neon.server.service.JwtConfig
 import com.thebrownfoxx.outcome.map.getOrElse

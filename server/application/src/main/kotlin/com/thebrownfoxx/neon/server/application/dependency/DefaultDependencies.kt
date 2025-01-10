@@ -5,8 +5,8 @@ import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.application.environment.DotEnvironment
-import com.thebrownfoxx.neon.server.application.environment.ServerEnvironment.JwtSecret
-import com.thebrownfoxx.neon.server.application.environment.ServerEnvironment.PostgresPassword
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.JwtSecret
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.PostgresPassword
 import com.thebrownfoxx.neon.server.application.websocket.WebSocketManager
 import com.thebrownfoxx.neon.server.repository.data.integrate
 import com.thebrownfoxx.neon.server.repository.data.serviceData

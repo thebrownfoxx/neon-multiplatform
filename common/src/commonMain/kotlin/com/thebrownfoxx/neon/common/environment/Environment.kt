@@ -1,8 +1,9 @@
 package com.thebrownfoxx.neon.common.environment
 
-interface Environment {
-    operator fun get(key: EnvironmentKey): String
+interface Environment<K : EnvironmentKey> {
+    operator fun get(key: K): String
 }
 
-@JvmInline
-value class EnvironmentKey(val name: String)
+interface EnvironmentKey {
+    val label: String
+}

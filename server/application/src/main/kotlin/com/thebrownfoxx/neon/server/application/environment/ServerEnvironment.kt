@@ -1,11 +1,14 @@
 package com.thebrownfoxx.neon.server.application.environment
 
+import com.thebrownfoxx.neon.common.environment.Environment
 import com.thebrownfoxx.neon.common.environment.EnvironmentKey
 
-object ServerEnvironment {
-    val Port = EnvironmentKey("PORT")
-    val JwtSecret = EnvironmentKey("JWT_SECRET")
-    val PostgresPassword = EnvironmentKey("POSTGRES_PASSWORD")
-    val BasicAuthUsername = EnvironmentKey("BASIC_AUTH_USERNAME")
-    val BasicAuthPassword = EnvironmentKey("BASIC_AUTH_PASSWORD")
+typealias ServerEnvironment = Environment<ServerEnvironmentKey>
+
+enum class ServerEnvironmentKey(override val label: String) : EnvironmentKey {
+    Port("PORT"),
+    JwtSecret("JWT_SECRET"),
+    PostgresPassword("POSTGRES_PASSWORD"),
+    BasicAuthUsername("BASIC_AUTH_USERNAME"),
+    BasicAuthPassword("BASIC_AUTH_PASSWORD"),
 }

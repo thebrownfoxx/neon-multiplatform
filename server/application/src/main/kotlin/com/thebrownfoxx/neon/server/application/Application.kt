@@ -2,7 +2,7 @@ package com.thebrownfoxx.neon.server.application
 
 import com.thebrownfoxx.neon.server.application.dependency.DefaultDependencies
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
-import com.thebrownfoxx.neon.server.application.environment.ServerEnvironment.Port
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.Port
 import com.thebrownfoxx.neon.server.application.plugin.configureSecurity
 import com.thebrownfoxx.neon.server.application.routing.configureRouting
 import io.ktor.server.application.Application
