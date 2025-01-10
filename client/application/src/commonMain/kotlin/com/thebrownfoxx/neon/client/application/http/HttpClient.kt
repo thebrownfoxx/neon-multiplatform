@@ -1,5 +1,7 @@
 package com.thebrownfoxx.neon.client.application.http
 
+import com.thebrownfoxx.neon.client.application.environment.ClientEnvironment
+import com.thebrownfoxx.neon.client.application.environment.ClientEnvironmentKey
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -11,7 +13,7 @@ import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-fun HttpClient() = HttpClient(CIO) {
+fun HttpClient(environment: ClientEnvironment) = HttpClient(CIO) {
     val json = Json { ignoreUnknownKeys = true }
 
     install(ContentNegotiation) {
@@ -25,8 +27,8 @@ fun HttpClient() = HttpClient(CIO) {
     }
 
     defaultRequest {
-        host = "127.0.0.1"
-        port = 8080
+        host = environment[ClientEnvironmentKey.Host]
+        port = environment[ClientEnvironmentKey.Port].toInt()
         url { protocol = URLProtocol.HTTP }
     }
 }

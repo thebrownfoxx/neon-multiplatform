@@ -1,6 +1,10 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import com.codingfeline.buildkonfig.gradle.TargetConfigDsl
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -8,6 +12,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.buildkonfig)
 }
 
 tasks.withType<Tar> {
@@ -19,12 +24,11 @@ tasks.withType<Zip> {
 }
 
 kotlin {
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
+    compilerOptions {
+        jvmToolchain(libs.versions.jvm.get().toInt())
     }
+
+    androidTarget()
     
     jvm("desktop")
     
@@ -125,6 +129,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            includeAllModules = true
             packageName = "com.thebrownfoxx.neon.client.application"
             packageVersion = "1.0.0"
         }
@@ -133,4 +138,36 @@ compose.desktop {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+buildkonfig {
+    packageName = "com.thebrownfoxx.neon.client.application"
+
+    defaultConfigs {
+        buildConfigFields(properties("local.properties"))
+    }
+
+    targetConfigs {
+        create("desktop") {
+            buildConfigFields(properties("desktop.local.properties"))
+        }
+        create("android") {
+            buildConfigFields(properties("android.local.properties"))
+        }
+    }
+}
+
+fun properties(path: String): Properties {
+    val propertiesFile = projectDir.resolve(path)
+    val properties = Properties()
+    if (propertiesFile.exists()) {
+        properties.load(FileInputStream(propertiesFile))
+    }
+    return properties
+}
+
+fun TargetConfigDsl.buildConfigFields(properties: Properties) {
+    buildConfigField(STRING, "HOST", properties.getProperty("HOST") ?: "")
+    buildConfigField(STRING, "PORT", properties.getProperty("PORT") ?: "")
+    buildConfigField(STRING, "LOCAL_PATH", properties.getProperty("LOCAL_PATH") ?: "")
 }

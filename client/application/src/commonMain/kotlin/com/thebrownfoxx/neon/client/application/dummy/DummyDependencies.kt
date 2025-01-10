@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.client.application.dummy
 import com.thebrownfoxx.neon.client.service.Dependencies
 import com.thebrownfoxx.neon.common.PrintLogger
 
-object DummyDependencies : Dependencies {
+class DummyDependencies : Dependencies {
     override val logger = PrintLogger
     override val authenticator = DummyAuthenticator()
     override val groupManager = DummyGroupManager()

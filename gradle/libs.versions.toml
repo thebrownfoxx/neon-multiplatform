@@ -1,5 +1,6 @@
 [versions]
 # Kotlin
+dotenvKotlin = "6.5.0"
 kotlin = "2.1.0"
 kotlinx-coroutines = "1.9.0"
 kotlinx-serialization = "1.7.3"
@@ -9,6 +10,8 @@ kotlinx-datetime = "0.6.1"
 outcome = "0.3.1"
 kotlincrypto-hash = "0.5.3"
 kotlincrypto-random = "0.3.2"
+buildkonfig = "0.15.2"
+jvm="21"
 
 # Server
 ktor = "3.0.1"
@@ -57,6 +60,7 @@ ktor-resources = { module = "io.ktor:ktor-resources", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 
 # Ktor Server
+dotenv-kotlin = { module = "io.github.cdimascio:dotenv-kotlin", version.ref = "dotenvKotlin" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt-jvm", version.ref = "ktor" }
@@ -110,3 +114,4 @@ ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+buildkonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildkonfig" }
