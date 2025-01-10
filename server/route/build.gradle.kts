@@ -4,6 +4,10 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        jvmToolchain(libs.versions.jvm.get().toInt())
+    }
+
     jvm()
 
     sourceSets {
@@ -12,7 +16,7 @@ kotlin {
             implementation(libs.kotlinx.serialization)
             implementation(libs.ktor.resources)
             implementation(projects.common)
-            implementation(projects.common.websocket)
+            implementation(projects.common.data.websocket)
             implementation(projects.server.model)
         }
         commonTest.dependencies {

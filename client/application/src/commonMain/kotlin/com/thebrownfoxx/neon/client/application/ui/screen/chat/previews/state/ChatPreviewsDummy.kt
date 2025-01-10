@@ -22,6 +22,12 @@ object ChatPreviewsDummy {
         ),
     )
 
+    val LoadingChatPreviewsState = ChatPreviewsState(
+        nudgedConversations = List(2) { LoadingChatPreviewState() },
+        unreadConversations = List(10) { LoadingChatPreviewState() },
+        readConversations = List(30) { LoadingChatPreviewState() },
+    )
+
     val NudgedConversations = listOf(
         receivedDirectChatPreview(
             name = "AndreaStella",
@@ -131,17 +137,17 @@ object ChatPreviewsDummy {
                 placeholder = "logie_bear",
             ),
         ),
-        ChatPreviewState(
+        LoadedChatPreviewState(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-        ChatPreviewState(
+        LoadedChatPreviewState(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-        ChatPreviewState(
+        LoadedChatPreviewState(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
@@ -169,7 +175,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = delivery,
-        sender = SentState,
+        sender = SentChatPreviewState,
         emphasized = emphasized,
     )
 
@@ -187,7 +193,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = null,
-        sender = ReceivedDirectState,
+        sender = ReceivedDirectChatPreviewState,
         emphasized = emphasized,
     )
 
@@ -204,7 +210,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = delivery,
-        sender = SentState,
+        sender = SentChatPreviewState,
         emphasized = emphasized,
     )
 
@@ -221,7 +227,7 @@ object ChatPreviewsDummy {
         message = message,
         timestamp = timestamp,
         delivery = null,
-        sender = ReceivedCommunityState(sender),
+        sender = ReceivedCommunityChatPreviewState(sender),
         emphasized = emphasized,
     )
 
@@ -233,7 +239,7 @@ object ChatPreviewsDummy {
         delivery: DeliveryState?,
         sender: ChatPreviewSenderState,
         emphasized: Boolean,
-    ) = ChatPreviewState(
+    ) = LoadedChatPreviewState(
         avatar = avatar,
         name = name,
         content = ChatPreviewContentState(

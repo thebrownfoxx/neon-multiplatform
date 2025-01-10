@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
 
 @Preview
@@ -25,7 +25,7 @@ private fun Preview() {
 private fun SizeComparisonPreview() {
     NeonTheme {
         ChatPreview(
-            state = ChatPreviewState(
+            state = LoadedChatPreviewState(
                 name = "little_lando",
                 content = null,
                 emphasized = false,

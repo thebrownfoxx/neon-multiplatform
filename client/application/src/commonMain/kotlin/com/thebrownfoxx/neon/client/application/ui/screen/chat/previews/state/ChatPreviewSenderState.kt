@@ -4,8 +4,10 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.Single
 
 sealed interface ChatPreviewSenderState
 
-data object SentState : ChatPreviewSenderState
+data object SentChatPreviewState : ChatPreviewSenderState
 
-data object ReceivedDirectState : ChatPreviewSenderState
+data object ReceivedDirectChatPreviewState : ChatPreviewSenderState
 
-data class ReceivedCommunityState(val senderAvatar: SingleAvatarState) : ChatPreviewSenderState
+data class ReceivedCommunityChatPreviewState(
+    val senderAvatar: SingleAvatarState,
+) : ChatPreviewSenderState

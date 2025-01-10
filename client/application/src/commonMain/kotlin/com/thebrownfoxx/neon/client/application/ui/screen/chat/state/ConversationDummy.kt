@@ -9,9 +9,9 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
 import com.thebrownfoxx.neon.common.extension.ago
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
 import com.thebrownfoxx.neon.common.type.Loaded
@@ -24,13 +24,13 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Hey, man. Are you okay?",
             timestamp = 10.minutes.ago,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         sentDirectMessage(
             content = "are you kidding me?",
             timestamp = 9.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
         ),
         sentDirectMessage(
             content = "what do you think?",
@@ -44,13 +44,13 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Come, on, mate.",
             timestamp = 8.minutes.ago,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         sentDirectMessage(
             content = "i was not informed the rollercoasters here require kissing",
             timestamp = 7.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         receivedDirectMessage(
@@ -72,14 +72,14 @@ object ConversationDummy {
         receivedDirectMessage(
             content = "Come on, now, mate.",
             timestamp = 6.minutes.ago,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
             mustSpace = true,
         ),
         timestamp(5.minutes.ago),
         sentDirectMessage(
             content = "just",
             timestamp = 5.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
         ),
         sentDirectMessage(
             content = "GET TF AWAY FROM CARLOS",
@@ -95,7 +95,7 @@ object ConversationDummy {
             content = "I'm sorry.",
             timestamp = 3.minutes.ago,
             read = false,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
         ),
     ).reversed()
 
@@ -109,7 +109,8 @@ object ConversationDummy {
                 name = "SharlLeclerc",
             )
         ),
-        entries = Loaded(DirectMessageEntries),
+        entries = DirectMessageEntries,
+        loading = false,
     )
 
     val ConversationPaneState = ConversationPaneState(
@@ -132,7 +133,7 @@ object ConversationDummy {
         sentCommunityMessage(
             content = "What the fuck just happened?",
             timestamp = 10.minutes.ago,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             mustSpace = true,
         ),
         sentCommunityMessage(
@@ -146,13 +147,13 @@ object ConversationDummy {
             content = "I'm sorry, Lando",
             timestamp = 8.minutes.ago,
             senderAvatar = oscar,
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
         ),
         sentCommunityMessage(
             content = "really sorry",
             timestamp = 8.minutes.ago,
             senderAvatar = oscar,
-            groupPosition = GroupPosition.Last,
+            groupPosition = GroupPosition.First,
         ),
     ).reversed()
 
@@ -182,9 +183,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = deliveryState,
+            delivery = deliveryState,
             groupPosition = groupPosition,
-            sender = SentState,
+            sender = SentMessageState,
         ),
         mustSpace = mustSpace,
     )
@@ -199,9 +200,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = if (read) DeliveryState.Read else DeliveryState.Delivered,
+            delivery = if (read) DeliveryState.Read else DeliveryState.Delivered,
             groupPosition = groupPosition,
-            sender = ReceivedDirectState,
+            sender = ReceivedDirectMessageState,
         ),
         mustSpace = mustSpace,
     )
@@ -216,9 +217,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = deliveryState,
+            delivery = deliveryState,
             groupPosition = groupPosition,
-            sender = SentState,
+            sender = SentMessageState,
         ),
         mustSpace = mustSpace,
     )
@@ -234,9 +235,9 @@ object ConversationDummy {
         message = MessageState(
             content = content,
             timestamp = timestamp.toLocalDateTime(),
-            deliveryState = if (read) DeliveryState.Read else DeliveryState.Delivered,
+            delivery = if (read) DeliveryState.Read else DeliveryState.Delivered,
             groupPosition = groupPosition,
-            sender = ReceivedCommunityState(senderAvatar),
+            sender = ReceivedCommunityMessageState(senderAvatar),
         ),
         mustSpace = mustSpace,
     )

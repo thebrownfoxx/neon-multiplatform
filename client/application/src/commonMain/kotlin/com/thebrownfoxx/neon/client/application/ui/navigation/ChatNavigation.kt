@@ -19,7 +19,11 @@ import kotlinx.serialization.Serializable
 data object ChatRoute
 
 fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
-    val viewModel = viewModel { ChatViewModel(dependencies::getGroupManager) }
+    val viewModel = viewModel {
+        with(dependencies) {
+            ChatViewModel(authenticator, groupManager, memberManager, messenger, logger)
+        }
+    }
     with(viewModel) {
         val chatPreviews by chatPreviews.collectAsStateWithLifecycle()
         val conversation by conversation.collectAsStateWithLifecycle()
@@ -31,13 +35,13 @@ fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
             ),
             eventHandler = ChatScreenEventHandler(
                 chatPreviewsEventHandler = ChatPreviewsEventHandler(
-                    onLoadMore = {},
-                    onConversationClick = ::onConversationClick
+                    onConversationClick = ::onConversationClick,
+                    onLastVisiblePreviewChange = ::onLastVisiblePreviewChange,
                 ),
                 conversationPaneEventHandler = ConversationPaneEventHandler(
                     onCall = {},
-                    onMessageChange = {},
-                    onSend = {},
+                    onMessageChange = ::onMessageChange,
+                    onSend = ::onSendMessage,
                     onMarkAsRead = {},
                     onClose = ::onConversationClose,
                 )

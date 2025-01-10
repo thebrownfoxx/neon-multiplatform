@@ -9,7 +9,6 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenE
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ChatScreenState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.state.ConversationDummy
 import com.thebrownfoxx.neon.client.application.ui.theme.NeonTheme
-import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
 
 @Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
@@ -18,7 +17,7 @@ private fun LoadingPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = Loading,
+                chatPreviews = ChatPreviewsDummy.LoadingChatPreviewsState,
                 conversation = null,
             ),
             eventHandler = ChatScreenEventHandler.Blank,
@@ -32,7 +31,7 @@ private fun LoadedPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
+                chatPreviews = ChatPreviewsDummy.ChatPreviewsState,
                 conversation = null,
             ),
             eventHandler = ChatScreenEventHandler.Blank,
@@ -46,11 +45,12 @@ private fun SelectedLoadingPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
+                chatPreviews = ChatPreviewsDummy.ChatPreviewsState,
                 conversation = ConversationPaneState(
                     conversation = ConversationState(
                         info = Loading,
-                        entries = Loading,
+                        entries = emptyList(),
+                        loading = true,
                     ),
                 ),
             ),
@@ -65,7 +65,7 @@ private fun SelectedPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = Loaded(ChatPreviewsDummy.ChatPreviewsState),
+                chatPreviews = ChatPreviewsDummy.ChatPreviewsState,
                 conversation = ConversationDummy.ConversationPaneState,
             ),
             eventHandler = ChatScreenEventHandler.Blank,

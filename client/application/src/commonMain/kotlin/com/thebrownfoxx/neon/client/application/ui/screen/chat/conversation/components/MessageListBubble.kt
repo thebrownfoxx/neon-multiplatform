@@ -49,8 +49,8 @@ fun ReceivedCommunityMessageListBubble(
 ) {
     ReceivedCommunityMessageLayout(
         avatar = {
-            when {
-                groupPosition == GroupPosition.First -> MediumAvatar(avatar = senderAvatar)
+            when (groupPosition) {
+                GroupPosition.Last, GroupPosition.Alone -> MediumAvatar(avatar = senderAvatar)
                 else -> Spacer(width = AvatarSize.Medium.dp)
             }
         },

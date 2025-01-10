@@ -15,11 +15,10 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.componen
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component.FakeSearchBar
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
-import com.thebrownfoxx.neon.common.type.Loadable
 
 @Composable
 fun ChatPreviewsPane(
-    state: Loadable<ChatPreviewsState>,
+    state: ChatPreviewsState,
     eventHandler: ChatPreviewsEventHandler,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),

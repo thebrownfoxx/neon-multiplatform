@@ -6,8 +6,9 @@ import kotlin.uuid.Uuid as KUuid
 
 val IgnoredUuid = Uuid("IGNORED")
 
+@JvmInline
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
-data class Uuid(val value: String = KUuid.random().toString()) {
+value class Uuid(val value: String = KUuid.random().toString()) {
     override fun toString(): String = value
 }

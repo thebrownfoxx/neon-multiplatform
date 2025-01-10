@@ -4,6 +4,10 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        jvmToolchain(21)
+    }
+
     jvm()
 
     sourceSets {

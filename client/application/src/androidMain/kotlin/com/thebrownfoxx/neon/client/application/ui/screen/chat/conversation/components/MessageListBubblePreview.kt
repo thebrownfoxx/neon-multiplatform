@@ -44,7 +44,7 @@ private fun FirstReceivedCommunityPreview() {
                 placeholder = "Person"
             ),
             content = "Hey, that's great!",
-            groupPosition = GroupPosition.First,
+            groupPosition = GroupPosition.Last,
             read = false,
             modifier = Modifier.padding(16.dp),
         )

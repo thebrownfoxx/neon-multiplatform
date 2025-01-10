@@ -5,9 +5,11 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.neon.server.application.dependency.DependencyProvider
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.BasicAuthPassword
+import com.thebrownfoxx.neon.server.application.environment.ServerEnvironmentKey.BasicAuthUsername
 import com.thebrownfoxx.neon.server.service.JwtClaimKey
 import com.thebrownfoxx.neon.server.service.JwtConfig
-import com.thebrownfoxx.outcome.getOrElse
+import com.thebrownfoxx.outcome.map.getOrElse
 import io.ktor.server.application.Application
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.UserIdPrincipal
@@ -46,13 +48,18 @@ fun Route.authenticate(
 }
 
 private fun AuthenticationConfig.basicAuthentication() {
-    basic(AuthenticationType.Basic.name) {
-        realm = "neon"
-        validate { (name, password) ->
-            // TODO: Don't hardcode this
-            when {
-                name == "admin" && password == "password" -> UserIdPrincipal(name)
-                else -> null
+    with(DependencyProvider.dependencies) {
+        basic(AuthenticationType.Basic.name) {
+            realm = "neon"
+            validate { (username, password) ->
+                val correctUsername = environment[BasicAuthUsername]
+                val correctPassword = environment[BasicAuthPassword]
+
+                when {
+                    username == correctUsername &&
+                            password == correctPassword -> UserIdPrincipal(correctUsername)
+                    else -> null
+                }
             }
         }
     }
