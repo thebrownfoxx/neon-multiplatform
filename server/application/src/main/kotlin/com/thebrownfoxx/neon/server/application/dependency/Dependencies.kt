@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.application.dependency
 
 import com.thebrownfoxx.neon.common.Logger
-import com.thebrownfoxx.neon.server.application.environment.Environment
+import com.thebrownfoxx.neon.common.environment.Environment
 import com.thebrownfoxx.neon.server.application.websocket.WebSocketManager
 import com.thebrownfoxx.neon.server.service.Authenticator
 import com.thebrownfoxx.neon.server.service.GroupManager
