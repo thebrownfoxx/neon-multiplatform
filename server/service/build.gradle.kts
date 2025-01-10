@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -7,20 +7,26 @@ kotlin {
     compilerOptions {
         jvmToolchain(libs.versions.jvm.get().toInt())
     }
-}
 
-dependencies {
-    implementation(libs.outcome)
-    implementation(libs.kotlinx.coroutines)
-    implementation(libs.kotlinx.serialization)
-    implementation(libs.kotlinx.datetime)
-    implementation(libs.auth0.jwt)
-    implementation(projects.common)
-    testImplementation(libs.kotlin.test)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(projects.common.must)
-    testImplementation(projects.common.hash)
-    implementation(projects.server.model)
-    testImplementation(projects.server.repository)
-    testImplementation(projects.server.repository.inmemory)
+    jvm()
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.outcome)
+            implementation(libs.kotlinx.coroutines)
+            implementation(libs.kotlinx.serialization)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.auth0.jwt)
+            implementation(projects.common)
+            implementation(projects.server.model)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(projects.common.must)
+            implementation(projects.common.hash)
+            implementation(projects.server.repository)
+            implementation(projects.server.repository.inmemory)
+        }
+    }
 }
