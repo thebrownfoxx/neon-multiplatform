@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
+kotlin {
+    compilerOptions {
+        jvmToolchain(libs.versions.jvm.get().toInt())
+    }
+}
+
 dependencies {
     implementation(libs.outcome)
     implementation(libs.kotlinx.coroutines)

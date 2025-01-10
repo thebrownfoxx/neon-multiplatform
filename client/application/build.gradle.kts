@@ -24,12 +24,11 @@ tasks.withType<Zip> {
 }
 
 kotlin {
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
+    compilerOptions {
+        jvmToolchain(libs.versions.jvm.get().toInt())
     }
+
+    androidTarget()
     
     jvm("desktop")
     

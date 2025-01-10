@@ -11,6 +11,7 @@ outcome = "0.3.1"
 kotlincrypto-hash = "0.5.3"
 kotlincrypto-random = "0.3.2"
 buildkonfig = "0.15.2"
+jvm="21"
 
 # Server
 ktor = "3.0.1"
