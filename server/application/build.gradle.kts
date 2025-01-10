@@ -9,7 +9,7 @@ group = "com.thebrownfoxx.neon.server.application"
 version = "1.0.0"
 
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    mainClass.set("com.thebrownfoxx.neon.server.application.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.dotenv.kotlin)
 
     implementation(projects.common)
     implementation(projects.common.hash)

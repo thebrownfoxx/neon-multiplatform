@@ -4,6 +4,9 @@ import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.server.application.environment.DotEnvironment
+import com.thebrownfoxx.neon.server.application.environment.EnvironmentKey.JwtSecret
+import com.thebrownfoxx.neon.server.application.environment.EnvironmentKey.PostgresPassword
 import com.thebrownfoxx.neon.server.application.websocket.WebSocketManager
 import com.thebrownfoxx.neon.server.repository.data.integrate
 import com.thebrownfoxx.neon.server.repository.data.serviceData
@@ -30,18 +33,19 @@ import org.jetbrains.exposed.sql.Database
 import kotlin.time.Duration.Companion.days
 
 class DefaultDependencies : Dependencies {
+    override val environment = DotEnvironment()
+
     override val applicationScope = CoroutineScope(SupervisorJob())
 
     override val webSocketManager = WebSocketManager()
 
-    private val jwtConfig =
-        JwtConfig(
-            realm = "neon",
-            issuer = "https://neon/",
-            audience = "neon-audience",
-            validity = 30.days,
-            secret = "secret", // TODO: This should be moved to env
-        )
+    private val jwtConfig = JwtConfig(
+        realm = "neon",
+        issuer = "https://neon/",
+        audience = "neon-audience",
+        validity = 30.days,
+        secret = environment[JwtSecret],
+    )
 
     override val jwtProcessor = DefaultJwtProcessor(jwtConfig)
 
@@ -49,7 +53,7 @@ class DefaultDependencies : Dependencies {
         url = "jdbc:postgresql://localhost:5432/neon",
         driver = "org.postgresql.Driver",
         user = "postgres",
-        password = "development", // TODO: Move to env
+        password = environment[PostgresPassword],
     )
 
     private val configurationRepository = ExposedConfigurationRepository(database)
@@ -291,9 +295,23 @@ private fun generateExtensiveF1ServiceData() = serviceData {
         conversation {
             // Random messages with earlier timestamps
             repeat(500) { i ->
-                val randomMembers = listOf(max, checo, lewis, george, charles, carlos, lando, oscar, pierre, esteban)
+                val randomMembers = listOf(
+                    max,
+                    checo,
+                    lewis,
+                    george,
+                    charles,
+                    carlos,
+                    lando,
+                    oscar,
+                    pierre,
+                    esteban
+                )
                 val randomSender = randomMembers.random()
-                randomSender.said("Random global chat message ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+                randomSender.said(
+                    "Random global chat message ${i + 1}",
+                    Instant.fromEpochSeconds(i.toLong())
+                )
             }
 
             // Specific messages with later timestamps
@@ -317,7 +335,10 @@ private fun generateExtensiveF1ServiceData() = serviceData {
             repeat(300) { i ->
                 val randomMembers = listOf(max, checo, christian)
                 val randomSender = randomMembers.random()
-                randomSender.said("Red Bull internal chat ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+                randomSender.said(
+                    "Red Bull internal chat ${i + 1}",
+                    Instant.fromEpochSeconds(i.toLong())
+                )
             }
 
             // Specific messages with later timestamps
@@ -341,7 +362,10 @@ private fun generateExtensiveF1ServiceData() = serviceData {
             repeat(300) { i ->
                 val randomMembers = listOf(lewis, george, toto)
                 val randomSender = randomMembers.random()
-                randomSender.said("Mercedes team chat ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+                randomSender.said(
+                    "Mercedes team chat ${i + 1}",
+                    Instant.fromEpochSeconds(i.toLong())
+                )
             }
 
             // Specific messages with later timestamps
@@ -365,7 +389,10 @@ private fun generateExtensiveF1ServiceData() = serviceData {
             repeat(300) { i ->
                 val randomMembers = listOf(charles, carlos, mattia)
                 val randomSender = randomMembers.random()
-                randomSender.said("Ferrari internal chat ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+                randomSender.said(
+                    "Ferrari internal chat ${i + 1}",
+                    Instant.fromEpochSeconds(i.toLong())
+                )
             }
 
             // Specific messages with later timestamps
@@ -378,9 +405,10 @@ private fun generateExtensiveF1ServiceData() = serviceData {
     conversation {
         // Random messages with earlier timestamps
         repeat(200) { i ->
-            val randomMembers = listOf(max, checo, lewis, george, charles, carlos, lando, oscar, pierre, esteban)
+            val randomMembers =
+                listOf(max, checo, lewis, george, charles, carlos, lando, oscar, pierre, esteban)
             val randomSender = randomMembers.random()
-            randomSender.said("Cross-team banter ${i+1}", Instant.fromEpochSeconds(i.toLong()))
+            randomSender.said("Cross-team banter ${i + 1}", Instant.fromEpochSeconds(i.toLong()))
         }
     }
 }
