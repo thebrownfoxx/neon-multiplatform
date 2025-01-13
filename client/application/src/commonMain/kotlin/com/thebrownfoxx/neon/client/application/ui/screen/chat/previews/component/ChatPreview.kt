@@ -27,12 +27,9 @@ import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewSenderState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadingChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewStateValues
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentChatPreviewState
-import com.thebrownfoxx.neon.common.type.Loaded
-import com.thebrownfoxx.neon.common.type.Loading
 import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.deleted_group
@@ -46,18 +43,13 @@ fun ChatPreview(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val loadable = when (state) {
-        is LoadedChatPreviewState -> Loaded(state)
-        is LoadingChatPreviewState -> Loading
-    }
-
     AnimatedLoadableContent(
-        targetState = loadable,
+        targetState = state.values,
         loader = { ChatPreviewLoader() },
         modifier = modifier,
     ) {
        LoadedChatPreview(
-           state = it,
+           values = it,
            onClick = onClick,
        )
     }
@@ -65,11 +57,11 @@ fun ChatPreview(
 
 @Composable
 private fun LoadedChatPreview(
-    state: LoadedChatPreviewState,
+    values: ChatPreviewStateValues,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    with(state) {
+    with(values) {
         Surface(modifier = modifier) {
             Surface(
                 onClick = onClick,

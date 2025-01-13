@@ -32,8 +32,8 @@ import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntry
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedGroupMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
 import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
@@ -113,7 +113,7 @@ private fun LazyListScope.entries(entries: List<MessageListEntry>) {
                         read = entry.message.delivery == DeliveryState.Read,
                     )
 
-                    is ReceivedCommunityMessageState -> ReceivedCommunityMessageListBubble(
+                    is ReceivedGroupMessageState -> ReceivedCommunityMessageListBubble(
                         senderAvatar = sender.senderAvatar,
                         content = entry.message.content,
                         groupPosition = entry.message.groupPosition,

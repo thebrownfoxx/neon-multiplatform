@@ -5,7 +5,10 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.GroupA
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.common.extension.ago
+import com.thebrownfoxx.neon.common.extension.flatListOf
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
+import com.thebrownfoxx.neon.common.type.Loaded
+import com.thebrownfoxx.neon.common.type.Loading
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -23,12 +26,13 @@ object ChatPreviewsDummy {
     )
 
     val LoadingChatPreviewsState = ChatPreviewsState(
-        nudgedConversations = List(2) { LoadingChatPreviewState() },
-        unreadConversations = List(10) { LoadingChatPreviewState() },
-        readConversations = List(30) { LoadingChatPreviewState() },
+        listItems = List(20) { ChatPreviewState(values = Loading) },
+        loading = true,
     )
 
     val NudgedConversations = listOf(
+        ChatPreviewHeader(ChatPreviewHeaderValue.NudgedConversations)
+    ) + listOf(
         receivedDirectChatPreview(
             name = "AndreaStella",
             message = "where the feet pics",
@@ -41,9 +45,13 @@ object ChatPreviewsDummy {
             timestamp = 2.days.ago,
             emphasized = true,
         ),
-    ).sortedByDescending { it.content?.timestamp }
+    )
+        .sortedByDescending { it.content?.timestamp }
+        .map { ChatPreviewState(values = Loaded(it)) }
 
     val UnreadConversations = listOf(
+        ChatPreviewHeader(ChatPreviewHeaderValue.UnreadConversations)
+    ) + listOf(
         receivedCommunityChatPreview(
             avatar = SingleAvatarState(
                 url = null,
@@ -64,9 +72,13 @@ object ChatPreviewsDummy {
             timestamp = 5.minutes.ago,
             emphasized = true,
         ),
-    ).sortedByDescending { it.content?.timestamp }
+    )
+        .sortedByDescending { it.content?.timestamp }
+        .map { ChatPreviewState(values = Loaded(it)) }
 
     val ReadConversations = listOf(
+        ChatPreviewHeader(ChatPreviewHeaderValue.ReadConversations)
+    ) + listOf(
         sentDirectChatPreview(
             name = "SharlLeclair",
             message = "GET AWAY FROM CARLOS",
@@ -137,27 +149,28 @@ object ChatPreviewsDummy {
                 placeholder = "logie_bear",
             ),
         ),
-        LoadedChatPreviewState(
+        ChatPreviewStateValues(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-        LoadedChatPreviewState(
+        ChatPreviewStateValues(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-        LoadedChatPreviewState(
+        ChatPreviewStateValues(
             avatar = oconGroupAvatar,
             name = "Awesome Doods",
             content = null,
         ),
-    ).sortedByDescending { it.content?.timestamp }
+    )
+        .sortedByDescending { it.content?.timestamp }
+        .map { ChatPreviewState(values = Loaded(it)) }
 
     val ChatPreviewsState = ChatPreviewsState(
-        nudgedConversations = NudgedConversations,
-        unreadConversations = UnreadConversations,
-        readConversations = ReadConversations,
+        listItems = flatListOf(NudgedConversations, UnreadConversations, ReadConversations),
+        loading = false,
     )
 
     private fun sentDirectChatPreview(
@@ -239,7 +252,7 @@ object ChatPreviewsDummy {
         delivery: DeliveryState?,
         sender: ChatPreviewSenderState,
         emphasized: Boolean,
-    ) = LoadedChatPreviewState(
+    ) = ChatPreviewStateValues(
         avatar = avatar,
         name = name,
         content = ChatPreviewContentState(

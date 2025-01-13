@@ -24,7 +24,7 @@ fun NonExpandedChatScreen(
     with(state) {
         with(eventHandler) {
             AnimatedContent(
-                targetState = conversation,
+                targetState = conversationPaneState,
                 transitionSpec = {
                     val reversed = targetState == null
                     sharedZAxisEnter(reversed) togetherWith sharedZAxisExit(reversed)
@@ -34,7 +34,7 @@ fun NonExpandedChatScreen(
             ) {
                 when (it) {
                     null -> ChatPreviewsPane(
-                        state = chatPreviews,
+                        state = chatPreviewsState,
                         eventHandler = chatPreviewsEventHandler,
                         modifier = modifier,
                         contentPadding = SafeDrawingPadding,

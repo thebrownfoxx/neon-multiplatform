@@ -1,8 +1,13 @@
 package com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.component
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -13,12 +18,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
+import com.thebrownfoxx.neon.client.application.ui.component.loader.TextLoader
 import com.thebrownfoxx.neon.client.application.ui.extension.copy
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewHeader
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewHeaderValue
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewListItem
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewStateId
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
-import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.Loaded
+import com.thebrownfoxx.neon.common.type.Loading
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.conversations
@@ -35,125 +47,110 @@ fun ChatPreviews(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val listState = rememberLazyListState()
+    val visibleItems = listState.layoutInfo.visibleItemsInfo
+    LaunchedEffect(visibleItems) {
+        setLastVisiblePreview(visibleItems, eventHandler.onLastVisiblePreviewChange)
+    }
+
+    val loading = state.loading
+    LaunchedEffect(loading) {
+        if (!loading) listState.animateScrollToItem(0)
+    }
 
     // TODO: Highlight the selected conversation
     Surface(modifier = modifier) {
-        with(receiver = state) {
-            with(receiver = eventHandler) {
-                val visibleItems = listState.layoutInfo.visibleItemsInfo
-                LaunchedEffect(visibleItems) {
-                    (visibleItems.lastOrNull()?.key as? String)?.let { groupId ->
-                        onLastVisiblePreviewChange(GroupId(Uuid(groupId)))
-                    }
-                }
+        LazyColumn(
+            contentPadding = contentPadding,
+            state = listState,
+        ) {
+            listItems(state.listItems, eventHandler.onConversationClick)
+        }
+    }
+}
 
-                LazyColumn(
-                    contentPadding = contentPadding,
-                    state = listState,
-                ) {
-                    nudgedConversations(
-                        nudgedConversations = nudgedConversations,
-                        onConversationClick = onConversationClick,
-                    )
-                    unreadConversations(
-                        unreadConversations = unreadConversations,
-                        readConversationsEmpty = readConversations.isEmpty(),
-                        onConversationClick = onConversationClick,
-                    )
-                    readConversations(
-                        readConversations = readConversations,
-                        unreadConversationsEmpty = unreadConversations.isEmpty(),
-                        onConversationClick = onConversationClick,
-                    )
-                }
+private fun setLastVisiblePreview(
+    visibleItems: List<LazyListItemInfo>,
+    onLastVisiblePreviewChange: (ChatPreviewStateId) -> Unit,
+) {
+    (visibleItems.lastOrNull()?.key as? String)?.let { previewId ->
+        onLastVisiblePreviewChange(ChatPreviewStateId(Uuid(previewId)))
+    }
+}
+
+private fun LazyListScope.listItems(
+    listItems: List<ChatPreviewListItem>,
+    onConversationClick: (ChatPreviewState) -> Unit,
+) {
+    if (listItems.firstOrNull() !is ChatPreviewHeader) {
+        item {
+            Spacer(modifier = Modifier.height(16.dp).animateItem())
+        }
+    }
+    items(
+        items = listItems,
+        key = { it.key },
+    ) {
+        ListItem(
+            listItem = it,
+            onConversationClick = onConversationClick,
+        )
+    }
+}
+
+@Composable
+private fun LazyItemScope.ListItem(
+    listItem: ChatPreviewListItem,
+    onConversationClick: (ChatPreviewState) -> Unit,
+) {
+    Box(modifier = Modifier.animateItem()) {
+        when (listItem) {
+            is ChatPreviewHeader -> Header(listItem)
+            is ChatPreviewState -> {
+                ChatPreview(
+                    state = listItem,
+                    onClick = { onConversationClick(listItem) },
+                )
             }
         }
     }
 }
 
-private fun LazyListScope.nudgedConversations(
-    nudgedConversations: List<ChatPreviewState>,
-    onConversationClick: (ChatPreviewState) -> Unit,
+@Composable
+private fun Header(header: ChatPreviewHeader) {
+    val resource = when (header.value) {
+        ChatPreviewHeaderValue.NudgedConversations -> Res.string.nudged_conversations
+        ChatPreviewHeaderValue.UnreadConversations -> Res.string.unread_conversations
+        ChatPreviewHeaderValue.ReadConversations -> Res.string.read_conversations
+        ChatPreviewHeaderValue.Conversations -> Res.string.conversations
+    }
+    Header(
+        text = stringResource(resource),
+        showPlaceholder = header.showPlaceholder,
+    )
+}
+
+@Composable
+private fun Header(
+    text: String,
+    showPlaceholder: Boolean,
 ) {
-    if (nudgedConversations.isNotEmpty()) nudgedHeader()
-    items(
-        items = nudgedConversations,
-        key = { conversation -> conversation.groupId.value },
-    ) { conversation ->
-        ChatPreview(
-            state = conversation,
-            onClick = { onConversationClick(conversation) },
+    val loadable = if (showPlaceholder) Loading else Loaded(text)
+    AnimatedLoadableContent(
+        targetState = loadable,
+        loader = { HeaderLoader(text) },
+        modifier = Modifier.padding(16.dp.padding.copy(bottom = 8.dp)),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleLarge,
         )
-    }
-}
-
-private fun LazyListScope.nudgedHeader() {
-    item { Header(text = stringResource(Res.string.nudged_conversations)) }
-}
-
-private fun LazyListScope.unreadConversations(
-    unreadConversations: List<ChatPreviewState>,
-    readConversationsEmpty: Boolean,
-    onConversationClick: (ChatPreviewState) -> Unit,
-) {
-    if (unreadConversations.isNotEmpty()) unreadHeader(readConversationsEmpty)
-    items(
-        items = unreadConversations,
-        key = { it.groupId.value },
-    ) { conversation ->
-        ChatPreview(
-            state = conversation,
-            onClick = { onConversationClick(conversation) },
-        )
-    }
-}
-
-private fun LazyListScope.unreadHeader(readConversationsEmpty: Boolean) {
-    item {
-        val label = stringResource(
-            when {
-                readConversationsEmpty -> Res.string.conversations
-                else -> Res.string.unread_conversations
-            },
-        )
-        Header(label)
-    }
-}
-
-private fun LazyListScope.readConversations(
-    readConversations: List<ChatPreviewState>,
-    unreadConversationsEmpty: Boolean,
-    onConversationClick: (ChatPreviewState) -> Unit,
-) {
-    if (readConversations.isNotEmpty()) readHeader(unreadConversationsEmpty)
-    items(
-        items = readConversations,
-        key = { it.groupId.value },
-    ) { conversation ->
-        ChatPreview(
-            state = conversation,
-            onClick = { onConversationClick(conversation) },
-        )
-    }
-}
-
-private fun LazyListScope.readHeader(unreadConversationsEmpty: Boolean) {
-    item {
-        val label = stringResource(
-            when {
-                unreadConversationsEmpty -> Res.string.conversations
-                else -> Res.string.read_conversations
-            },
-        )
-        Header(label)
     }
 }
 
 @Composable
-private fun Header(text: String) {
-    Text(
+private fun HeaderLoader(text: String) {
+    TextLoader(
         text = text,
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(16.dp.padding.copy(bottom = 8.dp)),
     )
 }

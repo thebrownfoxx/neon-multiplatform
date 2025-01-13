@@ -24,23 +24,37 @@ import kotlin.time.Duration.Companion.seconds
 
 class DummyMessenger(
     private val conversationPreviewsDelay: Duration = 0.seconds,
+    private val getMessagesDelay: Duration = 0.seconds,
     private val getMessageDelay: Duration = 0.seconds,
 ) : Messenger {
     private val generatedMessages = mutableMapOf<MessageId, LocalMessage>()
 
-    override val conversationPreviews: Flow<Success<LocalConversationPreviews>> =
-        flow {
-            delay(conversationPreviewsDelay)
-            val nudged = generateConversationPreviews(2)
-            val unread = generateConversationPreviews(10)
-            val read = generateConversationPreviews(500)
-            emit(Success(LocalConversationPreviews(nudged, unread, read)))
-        }
+    private val generatedConversationPreviews = run {
+        val nudged = generateConversationPreviews(2)
+        val unread = generateConversationPreviews(10)
+        val read = generateConversationPreviews(500)
+        LocalConversationPreviews(nudged, unread, read)
+    }
+
+    override val conversationPreviews: Flow<Success<LocalConversationPreviews>> = flow {
+        delay(conversationPreviewsDelay)
+        emit(Success(generatedConversationPreviews))
+    }
 
     override fun getMessages(
         groupId: GroupId,
     ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
-        TODO("Not yet implemented")
+        return flow {
+            delay(getMessagesDelay)
+            val messages = List(100) {
+                LocalTimestampedMessageId(
+                    id = MessageId(),
+                    groupId = groupId,
+                    timestamp = Clock.System.now(),
+                )
+            }
+            emit(Success(messages))
+        }
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
