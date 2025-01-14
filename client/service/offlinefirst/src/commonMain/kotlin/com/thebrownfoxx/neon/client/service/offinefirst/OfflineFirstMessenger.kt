@@ -11,6 +11,7 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsErr
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
+import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
@@ -22,7 +23,6 @@ import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
-import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.map.onFailure
@@ -39,6 +39,7 @@ class OfflineFirstMessenger(
     private val remoteMessenger: Messenger,
     private val localMessageRepository: MessageRepository,
     externalScope: CoroutineScope,
+    private val logger: Logger,
 ) : Messenger {
     private val sendMessageExponentialBackoffValues = ExponentialBackoffValues(
         initialDelay = 1.seconds,
@@ -125,8 +126,8 @@ class OfflineFirstMessenger(
             timestamp = Clock.System.now(),
             delivery = LocalDelivery.Sending,
         )
-        localMessageRepository.upsert(localMessage)
-        return UnitSuccess
+        return localMessageRepository.upsert(localMessage)
+            .mapError { SendMessageError.UnexpectedError }
     }
 
     private suspend fun sendOutgoingMessages() {
@@ -157,6 +158,7 @@ class OfflineFirstMessenger(
             SendMessageError.Unauthorized, SendMessageError.GroupNotFound -> {
                 val failedMessage = outgoingMessage.copy(delivery = LocalDelivery.Failed)
                 localMessageRepository.upsert(failedMessage)
+                    .onFailure { logger.logError(it) }
                 onDone()
             }
 
@@ -181,7 +183,9 @@ class OfflineFirstMessenger(
             previews.nudgedPreviews,
             previews.unreadPreviews,
             previews.readPreviews,
-        ).forEach { localMessageRepository.batchUpsert(it) }
+        ).forEach { subList ->
+            localMessageRepository.batchUpsert(subList).onFailure { logger.logError(it) }
+        }
     }
 
     private suspend fun updateGroupMessages(
@@ -189,6 +193,7 @@ class OfflineFirstMessenger(
     ) {
         val timestampedMessageIds = timestampedMessageIdsOutcome.getOrElse { return }
         localMessageRepository.batchUpsertTimestampedIds(timestampedMessageIds)
+            .onFailure { logger.logError(it) }
     }
 
     private fun GetError.toGetMessageError() = when (this) {
@@ -200,6 +205,6 @@ class OfflineFirstMessenger(
         messageOutcome: Outcome<LocalMessage, *>,
     ) {
         val message = messageOutcome.getOrElse { return }
-        localMessageRepository.upsert(message)
+        localMessageRepository.upsert(message).onFailure { logger.logError(it) }
     }
 }

@@ -29,7 +29,7 @@ data class GetMessageNotFound(
     val id: MessageId,
     ) : WebSocketMessage(
     kClass = GetMessageNotFound::class,
-    description = "The group with the given id was not found",
+    description = "The message with the given id was not found",
 )
 
 @Serializable

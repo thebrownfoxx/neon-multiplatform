@@ -34,6 +34,7 @@ import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.Id
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.ThrowingApi
 import com.thebrownfoxx.outcome.map.getOrThrow
@@ -61,6 +62,7 @@ class ConversationStateHandler(
     private val logger: Logger,
 ) {
     // TODO: Lazy load the messages, just like in ChatPreviewsStateHandler
+    private val loadingEmitted = mutableListOf<Id>()
 
     private val groupAggregator = GroupAggregator(groupManager, memberManager)
 
@@ -114,7 +116,10 @@ class ConversationStateHandler(
         loggedInMemberId: MemberId?,
     ): Flow<Loadable<ConversationInfoState>> {
         return flow {
-            emit(Loading) // TODO: This will show a loading indicator whenever this function is called :(
+            if (id !in loadingEmitted) {
+                emit(Loading)
+                loadingEmitted.add(id)
+            }
             mirror(getInfo(loggedInMemberId)) { Loaded(it) }
         }
     }

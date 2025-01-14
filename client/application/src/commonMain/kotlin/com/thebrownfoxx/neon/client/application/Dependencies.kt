@@ -92,6 +92,7 @@ class AppDependencies(
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
             externalScope = externalScope,
+            logger = logger,
         )
     }
 

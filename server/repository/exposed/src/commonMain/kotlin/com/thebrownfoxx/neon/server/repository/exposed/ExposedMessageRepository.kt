@@ -103,10 +103,11 @@ class ExposedMessageRepository(
                         .selectAll()
                         .where(GroupMemberTable.groupId eq message.groupId.toJavaUuid())
                         .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
-                }.onSuccess { members ->
-                    members.forEach { conversationPreviewsCache.update(it) }
+                }.onSuccess { memberIds ->
+                    memberIds.forEach { conversationPreviewsCache.update(it) }
                 }
                 messagesCache.update(message.groupId)
+                messageCache.update(message.id)
             }
     }
 

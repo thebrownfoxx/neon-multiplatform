@@ -61,6 +61,8 @@ class ChatPreviewsStateHandler(
     externalScope: CoroutineScope,
     private val logger: Logger,
 ) {
+    private val loadingEmitted = mutableListOf<GroupId>()
+
     private val groupAggregator = GroupAggregator(groupManager, memberManager)
 
     private val initialState = ChatPreviewsState(
@@ -198,10 +200,10 @@ class ChatPreviewsStateHandler(
         mustBeLoaded: Boolean,
     ): Flow<Loadable<ChatPreviewStateValues>> {
         return flow {
-            // TODO: This will re-emit Loading whenever this function is called,
-            //  which is whenever there is an update to the upstream flows.
-            //  We should only emit Loading once
-            emit(Loading)
+            if (groupId !in loadingEmitted) {
+                emit(Loading)
+                loadingEmitted.add(groupId)
+            }
             if (mustBeLoaded) mirror(toChatPreviewStateValues(loggedInMemberId)) { Loaded(it) }
         }
     }
