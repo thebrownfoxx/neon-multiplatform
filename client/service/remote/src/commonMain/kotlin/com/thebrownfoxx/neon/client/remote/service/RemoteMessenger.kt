@@ -17,7 +17,7 @@ import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.extension.mirrorTo
+import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId

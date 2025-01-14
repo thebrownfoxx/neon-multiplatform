@@ -9,10 +9,10 @@ import com.thebrownfoxx.neon.common.data.websocket.model.SerializedWebSocketMess
 import com.thebrownfoxx.neon.common.data.websocket.model.WebSocketMessage
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
-import com.thebrownfoxx.neon.common.extension.channelFlow
 import com.thebrownfoxx.neon.common.extension.coroutineScope
+import com.thebrownfoxx.neon.common.extension.flow.channelFlow
+import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.loop
-import com.thebrownfoxx.neon.common.extension.mirror
 import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.extension.withTimeout
 import com.thebrownfoxx.neon.common.type.Type

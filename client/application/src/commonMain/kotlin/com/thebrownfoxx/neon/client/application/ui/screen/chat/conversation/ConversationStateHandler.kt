@@ -26,9 +26,9 @@ import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.common.Logger
-import com.thebrownfoxx.neon.common.extension.combineOrEmpty
-import com.thebrownfoxx.neon.common.extension.flow
-import com.thebrownfoxx.neon.common.extension.mirror
+import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
+import com.thebrownfoxx.neon.common.extension.flow.flow
+import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
 import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded

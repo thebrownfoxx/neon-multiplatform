@@ -7,8 +7,8 @@ import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalMember
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
-import com.thebrownfoxx.neon.common.extension.combineOrEmpty
-import com.thebrownfoxx.neon.common.extension.flow
+import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
+import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.ThrowingApi

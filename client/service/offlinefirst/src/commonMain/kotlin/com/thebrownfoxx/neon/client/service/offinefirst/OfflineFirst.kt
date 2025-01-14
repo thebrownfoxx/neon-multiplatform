@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.service.offinefirst
 
-import com.thebrownfoxx.neon.common.extension.mergeTransform
+import com.thebrownfoxx.neon.common.extension.flow.mergeTransform
 import kotlinx.coroutines.flow.Flow
 
 fun <T> offlineFirst(

@@ -7,7 +7,7 @@ import com.thebrownfoxx.neon.client.service.MemberManager.GetMemberError
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.extension.mirrorTo
+import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.member.GetMemberRequest

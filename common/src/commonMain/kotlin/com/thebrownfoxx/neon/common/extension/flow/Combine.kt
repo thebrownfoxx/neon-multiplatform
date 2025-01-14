@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.common.extension
+package com.thebrownfoxx.neon.common.extension.flow
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
