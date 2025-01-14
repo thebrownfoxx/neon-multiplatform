@@ -107,10 +107,11 @@ object ConversationDummy {
                     placeholder = "SharlLeclerc",
                 ),
                 name = "SharlLeclerc",
+                isCommunity = false,
             )
         ),
         entries = DirectMessageEntries,
-        loading = false,
+        loadingEntries = false,
     )
 
     val ConversationPaneState = ConversationPaneState(

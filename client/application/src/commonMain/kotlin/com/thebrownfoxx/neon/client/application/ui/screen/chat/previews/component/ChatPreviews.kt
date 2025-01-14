@@ -53,9 +53,9 @@ fun ChatPreviews(
         setLastVisiblePreview(visibleItems, eventHandler.onLastVisiblePreviewChange)
     }
 
-    val loading = state.loading
-    LaunchedEffect(loading) {
-        if (!loading) listState.animateScrollToItem(0)
+    val ready = state.ready
+    LaunchedEffect(ready) {
+        if (ready) listState.animateScrollToItem(0)
     }
 
     // TODO: Highlight the selected conversation

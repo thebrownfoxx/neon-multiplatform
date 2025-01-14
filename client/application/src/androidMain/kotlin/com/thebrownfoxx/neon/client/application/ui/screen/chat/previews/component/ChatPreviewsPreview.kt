@@ -14,7 +14,7 @@ private fun LoadingPreview() {
         ChatPreviews(
             state = ChatPreviewsState(
                 listItems = List(20) { loadingChatPreviewState() },
-                loading = true,
+                ready = false,
             ),
             eventHandler = ChatPreviewsEventHandler.Blank,
         )

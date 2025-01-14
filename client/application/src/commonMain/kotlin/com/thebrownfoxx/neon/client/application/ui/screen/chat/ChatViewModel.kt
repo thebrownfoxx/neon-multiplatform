@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.client.application.ui.screen.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.ConversationStateHandler
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntryId
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.ChatPreviewsStateHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewStateId
 import com.thebrownfoxx.neon.client.service.Authenticator
@@ -11,6 +12,7 @@ import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MessageId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -22,7 +24,7 @@ class ChatViewModel(
     private val messenger: Messenger,
     logger: Logger,
 ) : ViewModel() {
-    private val idMap = mutableMapOf<GroupId, ChatPreviewStateId>()
+    private val chatPreviewIdMap = mutableMapOf<GroupId, ChatPreviewStateId>()
 
     private val lastVisibleGroupId = MutableStateFlow<GroupId?>(null)
 
@@ -33,11 +35,15 @@ class ChatViewModel(
         groupManager = groupManager,
         memberManager = memberManager,
         messenger = messenger,
-        idMap = idMap,
+        idMap = chatPreviewIdMap,
         lastVisibleGroupId = lastVisibleGroupId.asStateFlow(),
         externalScope = viewModelScope,
         logger = logger,
     )
+
+    private val messageIdMap = mutableMapOf<MessageId, MessageListEntryId>()
+
+    private val lastVisibleMessageId = MutableStateFlow<MessageId?>(null)
 
     private val message = MutableStateFlow("")
 
@@ -46,7 +52,9 @@ class ChatViewModel(
         groupManager = groupManager,
         memberManager = memberManager,
         messenger = messenger,
-        selectedConversationGroupId = selectedConversationGroupId,
+        idMap = messageIdMap,
+        selectedConversationGroupId = selectedConversationGroupId.asStateFlow(),
+        lastVisibleMessageId = lastVisibleMessageId.asStateFlow(),
         message = message,
         externalScope = viewModelScope,
         logger = logger,
@@ -56,13 +64,13 @@ class ChatViewModel(
 
     val conversationPaneState = conversationStateHandler.paneState
 
+    fun onConversationClick(groupId: GroupId) {
+        selectedConversationGroupId.value = groupId
+    }
+
     fun onLastVisiblePreviewChange(chatPreviewStateId: ChatPreviewStateId) {
         val groupId = chatPreviewStateId.toGroupId() ?: return
         lastVisibleGroupId.value = groupId
-    }
-
-    fun onConversationClick(groupId: GroupId) {
-        selectedConversationGroupId.value = groupId
     }
 
     fun onConversationClose() {
@@ -82,7 +90,16 @@ class ChatViewModel(
         }
     }
 
+    fun onLastVisibleEntryChange(messageListEntryId: MessageListEntryId) {
+        val messageId = messageListEntryId.toMessageId() ?: return
+        lastVisibleMessageId.value = messageId
+    }
+
     private fun ChatPreviewStateId.toGroupId(): GroupId? {
-        return idMap.filterValues { it == this }.keys.firstOrNull()
+        return chatPreviewIdMap.filterValues { it == this }.keys.firstOrNull()
+    }
+
+    private fun MessageListEntryId.toMessageId(): MessageId? {
+        return messageIdMap.filterValues { it == this }.keys.firstOrNull()
     }
 }

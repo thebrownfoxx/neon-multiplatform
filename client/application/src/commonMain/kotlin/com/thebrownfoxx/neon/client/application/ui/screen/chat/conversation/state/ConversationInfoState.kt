@@ -5,4 +5,5 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.Avatar
 data class ConversationInfoState(
     val avatar: AvatarState?,
     val name: String?,
+    val isCommunity: Boolean,
 )

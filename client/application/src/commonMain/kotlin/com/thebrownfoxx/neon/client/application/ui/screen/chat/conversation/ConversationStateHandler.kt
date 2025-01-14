@@ -7,6 +7,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntry
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntryId
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageSenderState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
@@ -26,6 +27,7 @@ import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.common.Logger
+import com.thebrownfoxx.neon.common.extension.coercedSubList
 import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.extension.flow.mirror
@@ -34,8 +36,8 @@ import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.id.Id
 import com.thebrownfoxx.neon.common.type.id.MemberId
+import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.ThrowingApi
 import com.thebrownfoxx.outcome.map.getOrThrow
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +51,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class, ThrowingApi::class)
 class ConversationStateHandler(
@@ -56,20 +59,33 @@ class ConversationStateHandler(
     private val groupManager: GroupManager,
     private val memberManager: MemberManager,
     private val messenger: Messenger,
+    private val idMap: MutableMap<MessageId, MessageListEntryId>,
     selectedConversationGroupId: Flow<GroupId?>,
+    lastVisibleMessageId: Flow<MessageId?>,
     message: Flow<String>,
     externalScope: CoroutineScope,
     private val logger: Logger,
 ) {
-    // TODO: Lazy load the messages, just like in ChatPreviewsStateHandler
-    private val loadingEmitted = mutableListOf<Id>()
+    private var loadingInfoEmitted = false
+    private var loadingMessagesEmitted = false
+
+    init {
+        externalScope.launch {
+            selectedConversationGroupId.collect {
+                loadingInfoEmitted = false
+                loadingMessagesEmitted = false
+            }
+        }
+    }
 
     private val groupAggregator = GroupAggregator(groupManager, memberManager)
 
     private val conversation = authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
         selectedConversationGroupId.flatMapLatest groupId@{ groupId ->
             if (groupId == null) return@groupId flowOf(null)
-            getConversation(loggedInMemberId, groupId)
+            lastVisibleMessageId.flatMapLatest { lastVisibleMessageId ->
+                getConversation(loggedInMemberId, groupId, lastVisibleMessageId)
+            }
         }
     }
 
@@ -88,17 +104,20 @@ class ConversationStateHandler(
     private fun getConversation(
         loggedInMemberId: MemberId?,
         groupId: GroupId,
+        lastVisibleMessageId: MessageId?,
     ): Flow<ConversationState> {
         return groupManager.getGroup(groupId).flatMapLatest { groupOutcome ->
-            groupOutcome.getOrThrow().toConversationState(loggedInMemberId)
+            groupOutcome.getOrThrow()
+                .toConversationState(loggedInMemberId, lastVisibleMessageId)
         }
     }
 
     private fun LocalGroup.toConversationState(
         loggedInMemberId: MemberId?,
+        lastVisibleMessageId: MessageId?,
     ): Flow<ConversationState> {
         val infoFlow = getLoadableInfo(loggedInMemberId)
-        val entriesFlow = getMessageListEntries(loggedInMemberId)
+        val entriesFlow = getMessageListEntriesWithInitial(loggedInMemberId, lastVisibleMessageId)
         return combine(
             infoFlow,
             entriesFlow,
@@ -106,8 +125,8 @@ class ConversationStateHandler(
             ConversationState(
                 groupId = id,
                 info = info,
-                entries = entries,
-                loading = false,
+                entries = entries.value,
+                loadingEntries = entries.loading,
             )
         }
     }
@@ -116,9 +135,9 @@ class ConversationStateHandler(
         loggedInMemberId: MemberId?,
     ): Flow<Loadable<ConversationInfoState>> {
         return flow {
-            if (id !in loadingEmitted) {
+            if (!loadingInfoEmitted) {
                 emit(Loading)
-                loadingEmitted.add(id)
+                loadingInfoEmitted = true
             }
             mirror(getInfo(loggedInMemberId)) { Loaded(it) }
         }
@@ -141,6 +160,7 @@ class ConversationStateHandler(
             ConversationInfoState(
                 avatar = it.toAvatarState(),
                 name = it.toChatGroupName(),
+                isCommunity = false,
             )
         }
     }
@@ -152,17 +172,45 @@ class ConversationStateHandler(
             loggedInMemberId = loggedInMemberId,
             community = this,
         ).mapLatest {
-            ConversationInfoState(avatar = it, name = name)
+            ConversationInfoState(
+                avatar = it,
+                name = name,
+                isCommunity = true,
+            )
         }
     }
 
-    private fun LocalGroup.getMessageListEntries(
+    private fun LocalGroup.getMessageListEntriesWithInitial(
         loggedInMemberId: MemberId?,
-    ): Flow<List<MessageListEntry>> {
+        lastVisibleMessageId: MessageId?,
+    ): Flow<MessageListEntries> {
+        return flow {
+            if (!loadingMessagesEmitted) {
+                emit(MessageListEntries(value = emptyList(), loading = true))
+                loadingMessagesEmitted = true
+            }
+            mirror(getMessagesListEntries(loggedInMemberId, lastVisibleMessageId))
+        }
+    }
+
+    private fun LocalGroup.getMessagesListEntries(
+        loggedInMemberId: MemberId?,
+        lastVisibleMessageId: MessageId?,
+    ): Flow<MessageListEntries> {
         return messenger.getMessages(id).flatMapLatest { messagesOutcome ->
-            messagesOutcome.getOrThrow().map { timestampedMessageId ->
+            val messages = messagesOutcome.getOrThrow()
+
+            val lastVisibleIndex = messages.indexOfFirst { it.id == lastVisibleMessageId }
+            val lastIndexToLoad = lastVisibleIndex + 20
+
+            messages.coercedSubList(0..lastIndexToLoad).map { timestampedMessageId ->
                 getLocalMessageWithSenderState(timestampedMessageId, loggedInMemberId)
-            }.combineOrEmpty { it.toMessageListEntries() }
+            }.combineOrEmpty {
+                MessageListEntries(
+                    value = it.toMessageListEntries(),
+                    loading = it.size < messages.size,
+                )
+            }
         }
     }
 
@@ -175,6 +223,7 @@ class ConversationStateHandler(
                 groupId = id,
                 excludedIds = listOfNotNull(loggedInMemberId),
             ).mapLatest { it.size > 1 }
+
             else -> flowOf(false)
         }
         return messenger.getMessage(timestampedMessageId.id).flatMapLatest { messageOutcome ->
@@ -243,6 +292,7 @@ class ConversationStateHandler(
     }
 
     private fun MessageState.toMessageEntry(mustSpace: Boolean = false) = MessageEntry(
+        id = idMap.getOrPut(id) { MessageListEntryId() },
         message = this,
         mustSpace = mustSpace,
     )
@@ -250,5 +300,10 @@ class ConversationStateHandler(
     private data class LocalMessageWithSenderState(
         val message: LocalMessage,
         val sender: MessageSenderState,
+    )
+
+    private data class MessageListEntries(
+        val value: List<MessageListEntry>,
+        val loading: Boolean,
     )
 }

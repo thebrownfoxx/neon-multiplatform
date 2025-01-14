@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.client.application
 
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.thebrownfoxx.neon.client.application.dummy.DummyDependencies
 import com.thebrownfoxx.neon.client.application.environment.BuildKonfigEnvironment
 import com.thebrownfoxx.neon.client.application.environment.ClientEnvironmentKey.LocalPath
-import com.thebrownfoxx.neon.client.application.http.HttpClient
 import com.thebrownfoxx.neon.client.service.Dependencies
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -21,8 +21,8 @@ object DependencyProvider {
             url = "jdbc:sqlite:/${directory.path}/neon.db",
             driver = "org.sqlite.JDBC",
         )
-        AppDependencies(HttpClient(environment), database, serviceScope)
-//        DummyDependencies()
+//        AppDependencies(HttpClient(environment), database, serviceScope)
+        DummyDependencies()
     }
 }
 

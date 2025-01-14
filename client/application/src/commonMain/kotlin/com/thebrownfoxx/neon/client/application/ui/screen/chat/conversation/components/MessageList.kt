@@ -8,14 +8,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Visibility
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,12 +33,15 @@ import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.Deli
 import com.thebrownfoxx.neon.client.application.ui.extension.padding
 import com.thebrownfoxx.neon.client.application.ui.extension.plus
 import com.thebrownfoxx.neon.client.application.ui.extension.toReadableTime
+import com.thebrownfoxx.neon.client.application.ui.extension.verticalPadding
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ChunkTimestamp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntry
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageListEntryId
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedGroupMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
+import com.thebrownfoxx.neon.common.type.id.Uuid
 import kotlinx.datetime.LocalDateTime
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.mark_as_read
@@ -43,22 +50,46 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun MessageList(
     entries: List<MessageListEntry>,
+    isCommunity: Boolean,
+    loading: Boolean,
     onMarkAsRead: () -> Unit,
+    onLastVisibleEntryChange: (MessageListEntryId) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
+    val listState = rememberLazyListState()
+    val visibleItems = listState.layoutInfo.visibleItemsInfo
+    LaunchedEffect(visibleItems) {
+        setLastVisibleEntryChange(visibleItems, onLastVisibleEntryChange)
+    }
+
     Surface(modifier = modifier) {
-        LoadedMessageList(
+        MessageListContent(
+            listState = listState,
             entries = entries,
+            isCommunity = isCommunity,
+            loading = loading,
             onMarkAsRead = onMarkAsRead,
             contentPadding = contentPadding,
         )
     }
 }
 
+private fun setLastVisibleEntryChange(
+    visibleItems: List<LazyListItemInfo>,
+    onLastVisibleEntryChange: (MessageListEntryId) -> Unit,
+) {
+    (visibleItems.lastOrNull()?.key as? String)?.let { entryId ->
+        onLastVisibleEntryChange(MessageListEntryId(Uuid(entryId)))
+    }
+}
+
 @Composable
-private fun LoadedMessageList(
+private fun MessageListContent(
+    listState: LazyListState,
     entries: List<MessageListEntry>,
+    isCommunity: Boolean,
+    loading: Boolean,
     onMarkAsRead: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
@@ -72,6 +103,7 @@ private fun LoadedMessageList(
     }
 
     LazyColumn(
+        state = listState,
         modifier = modifier,
         reverseLayout = true,
         contentPadding = totalContentPadding,
@@ -84,6 +116,16 @@ private fun LoadedMessageList(
         }
 
         entries(entries)
+
+        if (loading) {
+            item {
+                MessageListLoader(
+                    isCommunity = isCommunity,
+                    contentPadding = 16.dp.verticalPadding,
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
     }
 }
 

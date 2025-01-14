@@ -27,7 +27,7 @@ object ChatPreviewsDummy {
 
     val LoadingChatPreviewsState = ChatPreviewsState(
         listItems = List(20) { ChatPreviewState(values = Loading) },
-        loading = true,
+        ready = false,
     )
 
     val NudgedConversations = listOf(
@@ -170,7 +170,7 @@ object ChatPreviewsDummy {
 
     val ChatPreviewsState = ChatPreviewsState(
         listItems = flatListOf(NudgedConversations, UnreadConversations, ReadConversations),
-        loading = false,
+        ready = true,
     )
 
     private fun sentDirectChatPreview(

@@ -42,6 +42,7 @@ fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
             onSend = ::onSendMessage,
             onMarkAsRead = {},
             onClose = ::onConversationClose,
+            onLastVisibleEntryChange = ::onLastVisibleEntryChange,
         )
         val eventHandler = ChatScreenEventHandler(
             chatPreviewsEventHandler = chatPreviewsEventHandler,

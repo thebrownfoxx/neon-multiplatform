@@ -50,7 +50,7 @@ private fun SelectedLoadingPreview() {
                     conversation = ConversationState(
                         info = Loading,
                         entries = emptyList(),
-                        loading = true,
+                        loadingEntries = true,
                     ),
                 ),
             ),

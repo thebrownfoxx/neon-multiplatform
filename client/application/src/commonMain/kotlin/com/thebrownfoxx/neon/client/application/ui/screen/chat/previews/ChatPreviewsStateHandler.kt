@@ -67,7 +67,7 @@ class ChatPreviewsStateHandler(
 
     private val initialState = ChatPreviewsState(
         listItems = List(20) { ChatPreviewState(values = Loading) },
-        loading = true,
+        ready = false,
     )
 
     val previews = authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
@@ -96,8 +96,8 @@ class ChatPreviewsStateHandler(
                 previews.getReadListItems(loggedInMemberId, lastIndexToLoad),
             ) { nudged, unread, read ->
                 ChatPreviewsState(
-                    flatListOf(nudged, unread, read),
-                    loading = false,
+                    listItems = flatListOf(nudged, unread, read),
+                    ready = true,
                 )
             }
         }
@@ -200,6 +200,8 @@ class ChatPreviewsStateHandler(
         mustBeLoaded: Boolean,
     ): Flow<Loadable<ChatPreviewStateValues>> {
         return flow {
+            // TODO: I really feel like these should be cached, since combine makes them wait for each other,
+            //  and others don't have any emissions
             if (groupId !in loadingEmitted) {
                 emit(Loading)
                 loadingEmitted.add(groupId)
