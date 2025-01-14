@@ -57,7 +57,7 @@ class ChatPreviewsStateHandler(
     private val memberManager: MemberManager,
     private val messenger: Messenger,
     private val idMap: MutableMap<GroupId, ChatPreviewStateId>,
-    lastVisiblePreviewId: Flow<ChatPreviewStateId?>,
+    lastVisibleGroupId: Flow<GroupId?>,
     externalScope: CoroutineScope,
     private val logger: Logger,
 ) {
@@ -71,7 +71,7 @@ class ChatPreviewsStateHandler(
     )
 
     val previews = authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
-        lastVisiblePreviewId.flatMapLatest { lastVisiblePreviewId ->
+        lastVisibleGroupId.flatMapLatest { lastVisiblePreviewId ->
             getPreviews(loggedInMemberId, lastVisiblePreviewId)
         }
     }
@@ -80,14 +80,14 @@ class ChatPreviewsStateHandler(
 
     private fun getPreviews(
         loggedInMemberId: MemberId?,
-        lastVisiblePreview: ChatPreviewStateId?,
+        lastVisibleGroupId: GroupId?,
     ): Flow<ChatPreviewsState> {
         return messenger.conversationPreviews.flatMapLatest { previewsOutcome ->
             val previews = previewsOutcome.getOrThrow()
             previews.mapToInitialStateIds()
 
             val lastVisiblePreviewIndex = previews.toFlatList()
-                .indexOfFirst { idMap[it.groupId] == lastVisiblePreview }
+                .indexOfFirst { it.groupId == lastVisibleGroupId }
             val lastIndexToLoad = lastVisiblePreviewIndex + 20
 
             combine(

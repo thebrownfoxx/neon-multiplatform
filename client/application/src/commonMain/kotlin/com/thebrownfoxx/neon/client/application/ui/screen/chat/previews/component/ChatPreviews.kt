@@ -31,6 +31,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.Ch
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.Uuid
 import neon.client.application.generated.resources.Res
 import neon.client.application.generated.resources.conversations
@@ -79,7 +80,7 @@ private fun setLastVisiblePreview(
 
 private fun LazyListScope.listItems(
     listItems: List<ChatPreviewListItem>,
-    onConversationClick: (ChatPreviewState) -> Unit,
+    onConversationClick: (GroupId) -> Unit,
 ) {
     if (listItems.firstOrNull() !is ChatPreviewHeader) {
         item {
@@ -100,17 +101,18 @@ private fun LazyListScope.listItems(
 @Composable
 private fun LazyItemScope.ListItem(
     listItem: ChatPreviewListItem,
-    onConversationClick: (ChatPreviewState) -> Unit,
+    onConversationClick: (GroupId) -> Unit,
 ) {
     Box(modifier = Modifier.animateItem()) {
         when (listItem) {
             is ChatPreviewHeader -> Header(listItem)
-            is ChatPreviewState -> {
-                ChatPreview(
-                    state = listItem,
-                    onClick = { onConversationClick(listItem) },
-                )
-            }
+            is ChatPreviewState -> ChatPreview(
+                state = listItem,
+                onClick = {
+                    if (listItem.values !is Loaded) return@ChatPreview
+                    onConversationClick(listItem.values.value.groupId)
+                },
+            )
         }
     }
 }
