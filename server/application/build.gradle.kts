@@ -53,6 +53,7 @@ dependencies {
 
     implementation(projects.common)
     implementation(projects.common.hash)
+    implementation(projects.common.data)
     implementation(projects.common.data.websocket)
     implementation(projects.common.data.websocket.ktor)
     implementation(projects.server.repository)
