@@ -26,7 +26,7 @@ class RemoteMemberManager(
     private val memberCache = Cache<MemberId, Outcome<LocalMember, GetMemberError>>(externalScope)
 
     override fun getMember(id: MemberId): Flow<Outcome<LocalMember, GetMemberError>> {
-        return memberCache.getAsFlow(id) {
+        return memberCache.getFlow(id) {
             subscriber.subscribeAsFlow(GetMemberRequest(id = id)) {
                 map<GetMemberNotFound> { Failure(GetMemberError.NotFound) }
                 map<GetMemberUnexpectedError> { Failure(GetMemberError.UnexpectedError) }

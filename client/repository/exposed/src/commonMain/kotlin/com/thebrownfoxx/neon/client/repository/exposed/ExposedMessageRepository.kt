@@ -58,7 +58,6 @@ class ExposedMessageRepository(
     private val conversationsCache = SingleReactiveCache(externalScope, ::getConversations)
     private val messagesCache = ReactiveCache(externalScope, ::getMessages)
     private val messageCache = ReactiveCache(externalScope, ::get)
-    private val outgoingMessagesCache = SingleReactiveCache(externalScope, ::getOutgoingMessages)
 
     override val conversationPreviews:
             Flow<Outcome<LocalConversationPreviews, DataOperationError>> =
@@ -103,10 +102,9 @@ class ExposedMessageRepository(
             .onSuccess {
                 messageCache.update(message.id)
                 if (message.delivery == LocalDelivery.Sending) {
+                    outgoingQueue.send(message)
                     conversationsCache.update()
                     messagesCache.update(message.groupId)
-                    outgoingMessagesCache.update()
-                    outgoingQueue.send(message)
                 }
             }
     }
