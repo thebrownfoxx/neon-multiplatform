@@ -74,7 +74,7 @@ class RemoteMessenger(
         }
 
     override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
-        return messagesCache.getFlow(groupId) {
+        return messagesCache.getOrInitialize(groupId) {
             subscriber.subscribeAsFlow(GetMessagesRequest(groupId = groupId)) {
                 map<GetMessagesUnauthorized> { Failure(GetMessagesError.Unauthorized) }
                 map<GetMessagesGroupNotFound> { Failure(GetMessagesError.GroupNotFound) }
@@ -87,7 +87,7 @@ class RemoteMessenger(
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
-        return messageCache.getFlow(id) {
+        return messageCache.getOrInitialize(id) {
             subscriber.subscribeAsFlow(GetMessageRequest(id = id)) {
                 map<GetMessageUnauthorized> { Failure(GetMessageError.Unauthorized) }
                 map<GetMessageNotFound> { Failure(GetMessageError.NotFound) }

@@ -30,7 +30,7 @@ class OfflineFirstGroupManager(
         Cache<GroupId, Outcome<Set<MemberId>, GetMembersError>>(externalScope)
 
     override fun getGroup(id: GroupId): Flow<Outcome<LocalGroup, GetGroupError>> {
-        return getGroupCache.getFlow(id) {
+        return getGroupCache.getOrInitialize(id) {
             val mappedLocalFlow = localGroupRepository.getAsFlow(id).map { local ->
                 local.mapError { it.toGetGroupError() }
             }
@@ -50,7 +50,7 @@ class OfflineFirstGroupManager(
     }
 
     override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>> {
-        return getMembersCache.getFlow(groupId) {
+        return getMembersCache.getOrInitialize(groupId) {
             val mappedLocalFlow =
                 localGroupMemberRepository.getMembersAsFlow(groupId).map { local ->
                     local.mapError { GetMembersError.UnexpectedError }

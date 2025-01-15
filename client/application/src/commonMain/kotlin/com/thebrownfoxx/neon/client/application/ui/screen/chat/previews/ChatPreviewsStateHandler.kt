@@ -202,7 +202,7 @@ class ChatPreviewsStateHandler(
         loggedInMemberId: MemberId?,
         mustBeLoaded: Boolean,
     ): Flow<Loadable<ChatPreviewStateValues>> {
-        return previewValuesCache.getFlow(groupId) {
+        return previewValuesCache.getOrInitialize(groupId) {
             emit(Loading)
         }.also {
             if (!mustBeLoaded) return@also

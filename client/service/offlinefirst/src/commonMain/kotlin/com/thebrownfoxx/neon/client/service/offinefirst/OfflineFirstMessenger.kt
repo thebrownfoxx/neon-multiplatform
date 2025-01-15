@@ -64,7 +64,7 @@ class OfflineFirstMessenger(
 
     override val conversationPreviews:
             Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> =
-        conversationPreviewsCache.getFlow {
+        conversationPreviewsCache.getOrInitialize {
             val mappedLocalFlow = localMessageRepository.conversationPreviews.map { local ->
                 local.mapError { GetConversationPreviewsError.UnexpectedError }
             }
@@ -87,7 +87,7 @@ class OfflineFirstMessenger(
     override fun getMessages(
         groupId: GroupId,
     ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
-        return getMessagesCache.getFlow(groupId) {
+        return getMessagesCache.getOrInitialize(groupId) {
             val mappedLocalFlow = localMessageRepository.getMessagesAsFlow(groupId).map { local ->
                 local.mapError { GetMessagesError.UnexpectedError }
             }
@@ -109,7 +109,7 @@ class OfflineFirstMessenger(
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
-        return getMessageCache.getFlow(id) {
+        return getMessageCache.getOrInitialize(id) {
             val mappedLocalFlow = localMessageRepository.getMessageAsFlow(id).map { local ->
                 local.mapError { it.toGetMessageError() }
             }

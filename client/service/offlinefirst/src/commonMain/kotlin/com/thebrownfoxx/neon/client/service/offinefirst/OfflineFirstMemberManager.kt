@@ -25,7 +25,7 @@ class OfflineFirstMemberManager(
         Cache<MemberId, Outcome<LocalMember, GetMemberError>>(externalScope)
 
     override fun getMember(id: MemberId): Flow<Outcome<LocalMember, GetMemberError>> {
-        return getMemberCache.getFlow(id) {
+        return getMemberCache.getOrInitialize(id) {
             val mappedLocalFlow = localMemberRepository.getAsFlow(id).map { local ->
                 local.mapError { it.toGetMemberError() }
             }
