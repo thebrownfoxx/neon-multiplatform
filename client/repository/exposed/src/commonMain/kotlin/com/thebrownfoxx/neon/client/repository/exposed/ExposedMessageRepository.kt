@@ -83,11 +83,6 @@ class ExposedMessageRepository(
         return messageCache.getAsFlow(id)
     }
 
-    @Deprecated("Use outgoingQueue instead")
-    override fun getOutgoingMessagesAsFlow(): Flow<Outcome<List<LocalMessage>, DataOperationError>> {
-        return outgoingMessagesCache.getAsFlow()
-    }
-
     override suspend fun upsert(message: LocalMessage): UnitOutcome<DataOperationError> {
         return dataTransaction {
             LocalMessageTable.upsert {

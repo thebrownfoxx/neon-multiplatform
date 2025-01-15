@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.common.data
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 
 class ReactiveCache<in K, out V>(
     scope: CoroutineScope,
@@ -8,8 +9,10 @@ class ReactiveCache<in K, out V>(
 ) {
     private val cache = Cache<K, V>(scope)
 
-    fun getAsFlow(key: K) = cache.getAsFlow(key) {
-        emit(get(key))
+    fun getAsFlow(key: K): Flow<V> {
+        return cache.getAsFlow(key) {
+            emit(get(key))
+        }
     }
 
     suspend fun update(key: K) {
@@ -23,8 +26,10 @@ class SingleReactiveCache<out V>(
 ) {
     private val cache = SingleCache<V>(scope)
 
-    fun getAsFlow() = cache.getAsFlow {
-        emit(get())
+    fun getAsFlow(): Flow<V> {
+        return cache.getAsFlow {
+            emit(get())
+        }
     }
 
     suspend fun update() {
