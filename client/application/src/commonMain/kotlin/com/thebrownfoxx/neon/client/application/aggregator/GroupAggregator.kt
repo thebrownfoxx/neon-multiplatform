@@ -34,15 +34,9 @@ class GroupAggregator(
                 .filter { it !in excludedIds }
                 .take(count)
                 .map { memberId ->
-                    memberManager.getMember(memberId).mapLatest {
-                        it.getOrThrow() .also {
-                            println("HEY $it")
-                        }
-                    }
+                    memberManager.getMember(memberId).mapLatest { it.getOrThrow() }
                 }
-                .combineOrEmpty {
-                    it.toList()
-                }
+                .combineOrEmpty { it.toList() }
         }
     }
 
