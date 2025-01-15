@@ -12,7 +12,9 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.common.Logger
+import com.thebrownfoxx.neon.common.data.Cache
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
 import com.thebrownfoxx.neon.common.extension.failedWith
@@ -51,63 +53,78 @@ class OfflineFirstMessenger(
         externalScope.launch { sendOutgoingMessages() }
     }
 
+    private val conversationPreviewsCache =
+        SingleCache<Outcome<LocalConversationPreviews, GetConversationPreviewsError>>(externalScope)
+
+    private val getMessagesCache =
+        Cache<GroupId, Outcome<List<LocalTimestampedMessageId>, GetMessagesError>>(externalScope)
+
+    private val getMessageCache =
+        Cache<MessageId, Outcome<LocalMessage, GetMessageError>>(externalScope)
+
     override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> = run {
-        val mappedLocalFlow = localMessageRepository.conversationPreviews.map { local ->
-            local.mapError { GetConversationPreviewsError.UnexpectedError }
+            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> =
+        conversationPreviewsCache.getFlow {
+            val mappedLocalFlow = localMessageRepository.conversationPreviews.map { local ->
+                local.mapError { GetConversationPreviewsError.UnexpectedError }
+            }
+            offlineFirst(
+                localFlow = mappedLocalFlow,
+                remoteFlow = remoteMessenger.conversationPreviews,
+            ) {
+                transformLazy(
+                    localSucceeded = { it is Success && it.value.isNotEmpty() },
+                    localNotFound = { it is Success && it.value.isEmpty() },
+                    localFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
+                    remoteSucceeded = { it is Success },
+                    remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
+                    remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
+                    updateLocal = { updateConversationPreviews(it) },
+                )
+            }
         }
-        offlineFirst(
-            localFlow = mappedLocalFlow,
-            remoteFlow = remoteMessenger.conversationPreviews,
-        ) {
-            transformLazy(
-                localSucceeded = { it is Success && it.value.isNotEmpty() },
-                localNotFound = { it is Success && it.value.isEmpty() },
-                localFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
-                remoteSucceeded = { it is Success },
-                remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
-                remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
-                updateLocal = ::updateConversationPreviews,
-            )
-        }
-    }
 
     override fun getMessages(
         groupId: GroupId,
     ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
-        val mappedLocalFlow = localMessageRepository.getMessagesAsFlow(groupId).map { local ->
-            local.mapError { GetMessagesError.UnexpectedError }
-        }
-        return offlineFirst(
-            localFlow = mappedLocalFlow,
-            remoteFlow = remoteMessenger.getMessages(groupId),
-        ) {
-            transformLazy(
-                localSucceeded = { it is Success && it.value.isNotEmpty() },
-                localNotFound = { it is Success && it.value.isEmpty() },
-                localFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
-                remoteSucceeded = { it is Success },
-                remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
-                remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
-                updateLocal = ::updateGroupMessages,
-            )
+        return getMessagesCache.getFlow(groupId) {
+            val mappedLocalFlow = localMessageRepository.getMessagesAsFlow(groupId).map { local ->
+                local.mapError { GetMessagesError.UnexpectedError }
+            }
+            offlineFirst(
+                localFlow = mappedLocalFlow,
+                remoteFlow = remoteMessenger.getMessages(groupId),
+            ) {
+                transformLazy(
+                    localSucceeded = { it is Success && it.value.isNotEmpty() },
+                    localNotFound = { it is Success && it.value.isEmpty() },
+                    localFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
+                    remoteSucceeded = { it is Success },
+                    remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
+                    remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
+                    updateLocal = { updateGroupMessages(it) },
+                )
+            }
         }
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
-        val mappedLocalFlow = localMessageRepository.getMessageAsFlow(id).map { local ->
-            local.mapError { it.toGetMessageError() }
-        }
-        return offlineFirst(
-            localFlow = mappedLocalFlow,
-            remoteFlow = remoteMessenger.getMessage(id),
-        ) {
-            transformLazy(
-                succeeded = { it is Success },
-                notFound = { it.failedWith(GetMessageError.NotFound) },
-                failedUnexpectedly = { it.failedWith(GetMessageError.UnexpectedError) },
-                updateLocal = ::updateMessage,
-            )
+        return getMessageCache.getFlow(id) {
+            val mappedLocalFlow = localMessageRepository.getMessageAsFlow(id).map { local ->
+                local.mapError { it.toGetMessageError() }
+            }
+
+            offlineFirst(
+                localFlow = mappedLocalFlow,
+                remoteFlow = remoteMessenger.getMessage(id),
+            ) {
+                transformLazy(
+                    succeeded = { it is Success },
+                    notFound = { it.failedWith(GetMessageError.NotFound) },
+                    failedUnexpectedly = { it.failedWith(GetMessageError.UnexpectedError) },
+                    updateLocal = { updateMessage(it) },
+                )
+            }
         }
     }
 
@@ -157,8 +174,7 @@ class OfflineFirstMessenger(
         when (error) {
             SendMessageError.Unauthorized, SendMessageError.GroupNotFound -> {
                 val failedMessage = outgoingMessage.copy(delivery = LocalDelivery.Failed)
-                localMessageRepository.upsert(failedMessage)
-                    .onFailure { logger.logError(it) }
+                localMessageRepository.upsert(failedMessage).onFailure { logger.logError(it) }
                 onDone()
             }
 

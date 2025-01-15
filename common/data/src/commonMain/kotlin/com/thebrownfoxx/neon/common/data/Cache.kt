@@ -5,21 +5,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 class Cache<in K, V>(private val externalScope: CoroutineScope) : FlowCollector<Cache.Entry<K, V>> {
     private val flows = ConcurrentHashMap<K, MutableSharedFlow<V>>()
 
-    fun getAsFlow(key: K, initialize: suspend FlowCollector<V>.() -> Unit): Flow<V> {
+    fun getFlow(key: K, initialize: suspend FlowCollector<V>.() -> Unit): Flow<V> {
         return flows.getOrPut(key) {
-            MutableSharedFlow<V>(replay = 1).apply {
+            cacheSharedFlow<V>().apply {
                 externalScope.launch {
                     initialize()
                     removeWhenUnsubscribed(key)
                 }
             }
-        }.asSharedFlow()
+        }
+            .asSharedFlow()
+            .distinctUntilChanged()
     }
 
     suspend fun emit(key: K, value: V) {
@@ -49,17 +52,21 @@ class Cache<in K, V>(private val externalScope: CoroutineScope) : FlowCollector<
 class SingleCache<V>(private val externalScope: CoroutineScope) : FlowCollector<V> {
     private var flow: MutableSharedFlow<V>? = null
 
-    fun getAsFlow(initialize: suspend FlowCollector<V>.() -> Unit): Flow<V> {
-        val flow = flow ?: MutableSharedFlow<V>(replay = 1).apply {
+    fun getFlow(initialize: suspend FlowCollector<V>.() -> Unit): Flow<V> {
+        val flow = flow ?: cacheSharedFlow<V>().apply {
             flow = this
             externalScope.launch {
                 initialize()
             }
         }
-        return flow.asSharedFlow()
+        return flow
+            .asSharedFlow()
+            .distinctUntilChanged()
     }
 
     override suspend fun emit(value: V) {
         flow?.emit(value)
     }
 }
+
+private fun <V> cacheSharedFlow() = MutableSharedFlow<V>(replay = 1, extraBufferCapacity = 16)

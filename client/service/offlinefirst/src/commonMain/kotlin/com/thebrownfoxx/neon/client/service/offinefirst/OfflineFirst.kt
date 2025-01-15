@@ -1,7 +1,18 @@
 package com.thebrownfoxx.neon.client.service.offinefirst
 
 import com.thebrownfoxx.neon.common.extension.flow.mergeTransform
+import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+
+suspend fun <T> FlowCollector<T>.offlineFirst(
+    localFlow: Flow<T>,
+    remoteFlow: Flow<T>,
+    transform: OfflineFirstScope<T>.() -> Unit,
+) {
+    com.thebrownfoxx.neon.client.service.offinefirst.offlineFirst(localFlow, remoteFlow, transform)
+        .mirrorTo(this)
+}
 
 fun <T> offlineFirst(
     localFlow: Flow<T>,

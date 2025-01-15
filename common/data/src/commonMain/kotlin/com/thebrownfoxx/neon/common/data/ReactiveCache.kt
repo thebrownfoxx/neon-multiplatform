@@ -10,7 +10,7 @@ class ReactiveCache<in K, out V>(
     private val cache = Cache<K, V>(scope)
 
     fun getAsFlow(key: K): Flow<V> {
-        return cache.getAsFlow(key) {
+        return cache.getFlow(key) {
             emit(get(key))
         }
     }
@@ -27,7 +27,7 @@ class SingleReactiveCache<out V>(
     private val cache = SingleCache<V>(scope)
 
     fun getAsFlow(): Flow<V> {
-        return cache.getAsFlow {
+        return cache.getFlow {
             emit(get())
         }
     }
