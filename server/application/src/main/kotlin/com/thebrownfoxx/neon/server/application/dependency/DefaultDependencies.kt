@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.server.application.dependency
 
-import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.neon.common.hash.MultiplatformHasher
+import com.thebrownfoxx.neon.common.logError
 import com.thebrownfoxx.neon.common.type.Url
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.application.environment.DotEnvironment
@@ -91,8 +91,6 @@ class DefaultDependencies : Dependencies {
         groupMemberRepository,
     )
 
-    override val logger = PrintLogger
-
     init {
         runBlocking {
             generateInitialServiceData().integrate(
@@ -104,8 +102,7 @@ class DefaultDependencies : Dependencies {
                 passwordRepository,
                 messageRepository,
                 hasher,
-                logger,
-            ).onFailure { logger.logError(it) }
+            ).onFailure { logError() }
         }
     }
 }

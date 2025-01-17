@@ -1,11 +1,12 @@
 package com.thebrownfoxx.neon.client.websocket
 
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.data.websocket.awaitClose
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
 import com.thebrownfoxx.neon.common.extension.loop
+import com.thebrownfoxx.neon.common.logError
+import com.thebrownfoxx.neon.common.logInfo
 import com.thebrownfoxx.neon.common.type.Jwt
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.onFailure
@@ -20,7 +21,6 @@ import kotlin.time.Duration.Companion.seconds
 class AutoConnectWebSocketSessionProvider(
     private val token: Flow<Jwt>,
     private val connector: WebSocketConnector,
-    private val logger: Logger,
     externalScope: CoroutineScope,
 ) : WebSocketSessionProvider {
     private val exponentialBackoffValues = ExponentialBackoffValues(
@@ -63,15 +63,15 @@ class AutoConnectWebSocketSessionProvider(
         log: String,
         onUnauthorized: () -> Unit,
     ) {
-        logger.logError("WebSocket connection failed. $log")
+        logError("WebSocket connection failed. $log")
         when (error) {
             WebSocketConnectionError.Unauthorized -> {
-                logger.logError("WebSocket reconnection canceled")
+                logError("WebSocket reconnection canceled")
                 onUnauthorized()
             }
 
             WebSocketConnectionError.ConnectionError ->
-                logger.logError("Reconnecting WebSocket")
+                logError("Reconnecting WebSocket")
         }
     }
 
@@ -79,10 +79,10 @@ class AutoConnectWebSocketSessionProvider(
         session: WebSocketSession,
         exponentialBackoff: ExponentialBackoff,
     ) {
-        logger.logInfo("WebSocket connected")
+        logInfo("WebSocket connected")
         _session.value = session
         exponentialBackoff.reset()
         session.awaitClose()
-        logger.logInfo("WebSocket finished. Reconnecting...")
+        logInfo("WebSocket finished. Reconnecting...")
     }
 }

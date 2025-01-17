@@ -1,7 +1,6 @@
 package com.thebrownfoxx.neon.client.websocket
 
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester.RequestTimeout
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession.SendError
 import com.thebrownfoxx.neon.common.data.websocket.awaitClose
@@ -15,6 +14,8 @@ import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.extension.withTimeout
+import com.thebrownfoxx.neon.common.logError
+import com.thebrownfoxx.neon.common.logInfo
 import com.thebrownfoxx.neon.common.type.Type
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
@@ -40,9 +41,7 @@ import kotlinx.coroutines.yield
 import kotlin.time.Duration.Companion.seconds
 
 @Deprecated("Use a WebSocketSessionProvider instead")
-class AlwaysActiveWebSocketSession(
-    private val logger: Logger,
-) : WebSocketSession, WebSocketSubscriber, WebSocketRequester {
+class AlwaysActiveWebSocketSession : WebSocketSession, WebSocketSubscriber, WebSocketRequester {
     private val requestTimeout = 5.seconds
 
     private val connectionExponentialBackoffValues = ExponentialBackoffValues(
@@ -157,15 +156,15 @@ class AlwaysActiveWebSocketSession(
         log: String,
         onUnauthorized: () -> Unit,
     ) {
-        logger.logError("WebSocket connection failed. $log")
+        logError("WebSocket connection failed. $log")
         when (error) {
             WebSocketConnectionError.Unauthorized -> {
-                logger.logError("WebSocket reconnection canceled")
+                logError("WebSocket reconnection canceled")
                 onUnauthorized()
             }
 
             WebSocketConnectionError.ConnectionError ->
-                logger.logError("Reconnecting WebSocket")
+                logError("Reconnecting WebSocket")
         }
     }
 
@@ -173,7 +172,7 @@ class AlwaysActiveWebSocketSession(
         session: WebSocketSession,
         exponentialBackoff: ExponentialBackoff,
     ) {
-        logger.logInfo("WebSocket connected")
+        logInfo("WebSocket connected")
         collectionJob?.cancel()
         collectionJob?.join()
         this.session.value = session
@@ -185,13 +184,13 @@ class AlwaysActiveWebSocketSession(
         }.getOrNull()
         exponentialBackoff.reset()
         session.awaitClose()
-        logger.logInfo("WebSocket finished. Reconnecting...")
+        logInfo("WebSocket finished. Reconnecting...")
     }
 
     private suspend fun WebSocketSession.mirrorIncomingMessages() {
         _incomingMessages.mirror(incomingMessages) {
             val label = it.serializedValue.getOrNull() ?: "<unknown message>"
-            logger.logInfo("Received: $label")
+            logInfo("Received: $label")
             it
         }
     }
@@ -207,7 +206,7 @@ class AlwaysActiveWebSocketSession(
             )
             loop {
                 send(message.value, message.type).onSuccess {
-                    logger.logInfo("Sent: ${message.value}")
+                    logInfo("Sent: ${message.value}")
                     breakLoop()
                 }
                 exponentialBackoff.delay()

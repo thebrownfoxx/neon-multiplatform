@@ -26,7 +26,6 @@ import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.Cache
 import com.thebrownfoxx.neon.common.data.JobManager
 import com.thebrownfoxx.neon.common.extension.flatListOf
@@ -34,6 +33,7 @@ import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
+import com.thebrownfoxx.neon.common.logError
 import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
@@ -60,7 +60,6 @@ class ChatPreviewsStateHandler(
     private val idMap: MutableMap<GroupId, ChatPreviewStateId>,
     lastVisibleGroupId: Flow<GroupId?>,
     externalScope: CoroutineScope,
-    private val logger: Logger,
 ) {
     private val previewValuesMirrorJobManager = JobManager<GroupId>(externalScope)
     private val previewValuesCache = Cache<GroupId, Loadable<ChatPreviewStateValues>>(externalScope)
@@ -77,7 +76,7 @@ class ChatPreviewsStateHandler(
             getPreviews(loggedInMemberId, lastVisiblePreviewId)
         }
     }
-        .catch { logger.logError(it) }
+        .catch { logError(it) }
         .stateIn(externalScope, SharingStarted.Eagerly, initialState)
 
     private fun getPreviews(

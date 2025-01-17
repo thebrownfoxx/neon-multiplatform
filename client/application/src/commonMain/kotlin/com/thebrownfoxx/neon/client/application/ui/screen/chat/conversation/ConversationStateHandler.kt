@@ -26,7 +26,6 @@ import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.data.SingleJobManager
 import com.thebrownfoxx.neon.common.extension.coercedSubList
@@ -34,6 +33,7 @@ import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
+import com.thebrownfoxx.neon.common.logError
 import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded
 import com.thebrownfoxx.neon.common.type.Loading
@@ -65,7 +65,6 @@ class ConversationStateHandler(
     lastVisibleMessageId: Flow<MessageId?>,
     message: Flow<String>,
     externalScope: CoroutineScope,
-    private val logger: Logger,
 ) {
     private val infoMirrorJobManager = SingleJobManager(externalScope)
     private val infoCache = SingleCache<Loadable<ConversationInfoState>>(externalScope)
@@ -102,7 +101,7 @@ class ConversationStateHandler(
             message = message,
         )
     }
-        .catch { logger.logError(it) }
+        .catch { logError(it) }
         .stateIn(externalScope, SharingStarted.Eagerly, null)
 
     private fun getConversation(

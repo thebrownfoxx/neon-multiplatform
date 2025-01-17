@@ -18,7 +18,6 @@ import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMessenger
 import com.thebrownfoxx.neon.client.websocket.AutoConnectWebSocketSessionProvider
 import com.thebrownfoxx.neon.client.websocket.AutoRetryWebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.AutoRetryWebSocketSubscriber
-import com.thebrownfoxx.neon.common.PrintLogger
 import com.thebrownfoxx.outcome.Success
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +33,6 @@ class AppDependencies(
     private val database: Database,
     externalScope: CoroutineScope,
 ) : Dependencies {
-    override val logger = PrintLogger
 
     private val tokenRepository = ExposedTokenRepository(database, externalScope)
 
@@ -47,7 +45,6 @@ class AppDependencies(
     private val webSocketConnector = KtorClientWebSocketConnector(
         httpClient = httpClient,
         externalScope = externalScope,
-        logger = logger,
     )
 
     private val token = tokenRepository.getAsFlow().transform { token ->
@@ -57,7 +54,6 @@ class AppDependencies(
     private val webSocketSessionProvider = AutoConnectWebSocketSessionProvider(
         token = token,
         connector = webSocketConnector,
-        logger = logger,
         externalScope = externalScope,
     )
 
@@ -109,7 +105,6 @@ class AppDependencies(
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
             externalScope = externalScope,
-            logger = logger,
         )
     }
 }

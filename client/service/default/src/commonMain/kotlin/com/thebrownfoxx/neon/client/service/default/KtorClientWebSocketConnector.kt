@@ -2,7 +2,6 @@ package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnector
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.type.Jwt
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.mapError
@@ -16,7 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 class KtorClientWebSocketConnector(
     private val httpClient: HttpClient,
     private val externalScope: CoroutineScope,
-    private val logger: Logger,
 ) : WebSocketConnector {
     override suspend fun connect(
         token: Jwt,
@@ -29,7 +27,7 @@ class KtorClientWebSocketConnector(
             ) {
                 bearerAuth(token.value)
             }
-            KtorClientWebSocketSession(actualSession, logger, externalScope)
+            KtorClientWebSocketSession(actualSession, externalScope)
         }.mapError { error ->
             when (error) {
                 is WebSocketException -> WebSocketConnectionError.Unauthorized

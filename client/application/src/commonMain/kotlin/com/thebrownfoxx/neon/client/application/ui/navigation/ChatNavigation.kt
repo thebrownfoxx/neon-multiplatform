@@ -21,7 +21,7 @@ data object ChatRoute
 fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
     val viewModel = viewModel {
         with(dependencies) {
-            ChatViewModel(authenticator, groupManager, memberManager, messenger, logger)
+            ChatViewModel(authenticator, groupManager, memberManager, messenger)
         }
     }
     with(viewModel) {
