@@ -39,25 +39,25 @@ class ExposedMemberRepository(
     override fun getAsFlow(id: MemberId) = cache.getAsFlow(id)
 
     override suspend fun upsert(member: LocalMember): UnitOutcome<DataOperationError> {
-            return dataTransaction {
-                LocalMemberTable.upsert {
-                    it[id] = member.id.toJavaUuid()
-                    it[username] = member.username
-                    it[avatarUrl] = member.avatarUrl?.value
-                }
+        return dataTransaction {
+            LocalMemberTable.upsert {
+                it[id] = member.id.toJavaUuid()
+                it[username] = member.username
+                it[avatarUrl] = member.avatarUrl?.value
             }
-                .mapUnitOperationTransaction()
-                .onSuccess { cache.update(member.id) }
+        }
+            .mapUnitOperationTransaction()
+            .onSuccess { cache.update(member.id) }
     }
 
     private suspend fun get(id: MemberId): Outcome<LocalMember, GetError> {
-            return dataTransaction {
-                LocalMemberTable
-                    .selectAll()
-                    .where(LocalMemberTable.id eq id.toJavaUuid())
-                    .firstOrNotFound()
-                    .map { it.toLocalMember() }
-            }.mapGetTransaction()
+        return dataTransaction {
+            LocalMemberTable
+                .selectAll()
+                .where(LocalMemberTable.id eq id.toJavaUuid())
+                .firstOrNotFound()
+                .map { it.toLocalMember() }
+        }.mapGetTransaction()
     }
 
     private fun ResultRow.toLocalMember() = LocalMember(

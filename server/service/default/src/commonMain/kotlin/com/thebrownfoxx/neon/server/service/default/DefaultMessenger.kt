@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.transaction.transaction
-import com.thebrownfoxx.neon.common.extension.flow
+import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.type.UnexpectedError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId

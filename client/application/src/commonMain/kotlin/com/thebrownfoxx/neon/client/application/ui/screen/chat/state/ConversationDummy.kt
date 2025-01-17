@@ -9,8 +9,8 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.GroupPosition
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageEntry
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.MessageState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedCommunityMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedDirectMessageState
+import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ReceivedGroupMessageState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.SentMessageState
 import com.thebrownfoxx.neon.common.extension.ago
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
@@ -107,10 +107,11 @@ object ConversationDummy {
                     placeholder = "SharlLeclerc",
                 ),
                 name = "SharlLeclerc",
+                isCommunity = false,
             )
         ),
         entries = DirectMessageEntries,
-        loading = false,
+        loadingEntries = false,
     )
 
     val ConversationPaneState = ConversationPaneState(
@@ -237,7 +238,7 @@ object ConversationDummy {
             timestamp = timestamp.toLocalDateTime(),
             delivery = if (read) DeliveryState.Read else DeliveryState.Delivered,
             groupPosition = groupPosition,
-            sender = ReceivedCommunityMessageState(senderAvatar),
+            sender = ReceivedGroupMessageState(senderAvatar),
         ),
         mustSpace = mustSpace,
     )

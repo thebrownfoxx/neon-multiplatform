@@ -6,6 +6,7 @@ class ConversationPaneEventHandler(
     val onMessageChange: (String) -> Unit,
     val onSend: () -> Unit,
     val onClose: () -> Unit,
+    val onLastVisibleEntryChange: (MessageListEntryId) -> Unit,
 ) {
     companion object {
         val Blank = ConversationPaneEventHandler(
@@ -14,6 +15,7 @@ class ConversationPaneEventHandler(
             onMessageChange = {},
             onSend = {},
             onClose = {},
+            onLastVisibleEntryChange = {},
         )
     }
 }

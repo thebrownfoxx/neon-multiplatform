@@ -17,8 +17,8 @@ private fun LoadingPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = ChatPreviewsDummy.LoadingChatPreviewsState,
-                conversation = null,
+                chatPreviewsState = ChatPreviewsDummy.LoadingChatPreviewsState,
+                conversationPaneState = null,
             ),
             eventHandler = ChatScreenEventHandler.Blank,
         )
@@ -31,8 +31,8 @@ private fun LoadedPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = ChatPreviewsDummy.ChatPreviewsState,
-                conversation = null,
+                chatPreviewsState = ChatPreviewsDummy.ChatPreviewsState,
+                conversationPaneState = null,
             ),
             eventHandler = ChatScreenEventHandler.Blank,
         )
@@ -45,12 +45,12 @@ private fun SelectedLoadingPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = ChatPreviewsDummy.ChatPreviewsState,
-                conversation = ConversationPaneState(
+                chatPreviewsState = ChatPreviewsDummy.ChatPreviewsState,
+                conversationPaneState = ConversationPaneState(
                     conversation = ConversationState(
                         info = Loading,
                         entries = emptyList(),
-                        loading = true,
+                        loadingEntries = true,
                     ),
                 ),
             ),
@@ -65,8 +65,8 @@ private fun SelectedPreview() {
     NeonTheme {
         ExpandedChatScreen(
             state = ChatScreenState(
-                chatPreviews = ChatPreviewsDummy.ChatPreviewsState,
-                conversation = ConversationDummy.ConversationPaneState,
+                chatPreviewsState = ChatPreviewsDummy.ChatPreviewsState,
+                conversationPaneState = ConversationDummy.ConversationPaneState,
             ),
             eventHandler = ChatScreenEventHandler.Blank,
         )

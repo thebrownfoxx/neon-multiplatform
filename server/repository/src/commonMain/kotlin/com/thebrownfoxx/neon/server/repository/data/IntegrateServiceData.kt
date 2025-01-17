@@ -1,5 +1,6 @@
 package com.thebrownfoxx.neon.server.repository.data
 
+import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.hash.Hasher
 import com.thebrownfoxx.neon.server.repository.ConfigurationRepository
@@ -25,11 +26,12 @@ suspend fun ServiceData.integrate(
     passwordRepository: PasswordRepository,
     messageRepository: MessageRepository,
     hasher: Hasher,
+    logger: Logger,
 ): UnitOutcome<Any> {
     if (configurationRepository.getInitialized().getOrElse { return Failure(it) })
         return UnitSuccess
 
-    println("Integrating $this")
+    logger.logInfo("Integrating $this")
     return transaction {
         for (groupRecord in groupRecords) {
             val (group, memberIds) = groupRecord

@@ -60,6 +60,7 @@ class AppDependencies(
             remoteGroupManager = remoteGroupManager,
             localGroupRepository = localGroupRepository,
             localGroupMemberRepository = localGroupMemberRepository,
+            externalScope = externalScope,
         )
     }
 
@@ -72,6 +73,7 @@ class AppDependencies(
         OfflineFirstMemberManager(
             remoteMemberManager = remoteMemberManager,
             localMemberRepository = localMemberRepository,
+            externalScope = externalScope,
         )
     }
 
@@ -92,6 +94,7 @@ class AppDependencies(
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
             externalScope = externalScope,
+            logger = logger,
         )
     }
 

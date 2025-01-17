@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.service.offinefirst
 
-import com.thebrownfoxx.neon.common.extension.mergeTransform
+import com.thebrownfoxx.neon.common.extension.flow.mergeTransform
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.map.onFailure

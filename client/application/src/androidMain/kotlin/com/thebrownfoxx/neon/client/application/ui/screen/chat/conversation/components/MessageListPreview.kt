@@ -11,7 +11,10 @@ private fun LoadingPreview() {
     NeonTheme {
         MessageList(
             entries = emptyList(),
+            isCommunity = false,
+            loading = true,
             onMarkAsRead = {},
+            onLastVisibleEntryChange = {},
         )
     }
 }
@@ -22,7 +25,10 @@ private fun MemberPreview() {
     NeonTheme {
         MessageList(
             entries = ConversationDummy.DirectMessageEntries,
+            isCommunity = false,
+            loading = false,
             onMarkAsRead = {},
+            onLastVisibleEntryChange = {},
         )
     }
 }
@@ -33,7 +39,10 @@ private fun CommunityPreview() {
     NeonTheme {
         MessageList(
             entries = ConversationDummy.CommunityMessageEntries,
+            isCommunity = true,
+            loading = false,
             onMarkAsRead = {},
+            onLastVisibleEntryChange = {},
         )
     }
 }

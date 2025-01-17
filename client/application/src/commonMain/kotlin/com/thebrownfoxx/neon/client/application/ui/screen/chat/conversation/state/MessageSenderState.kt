@@ -8,6 +8,6 @@ data object SentMessageState : MessageSenderState
 
 data object ReceivedDirectMessageState : MessageSenderState
 
-data class ReceivedCommunityMessageState(
+data class ReceivedGroupMessageState(
     val senderAvatar: SingleAvatarState,
 ) : MessageSenderState

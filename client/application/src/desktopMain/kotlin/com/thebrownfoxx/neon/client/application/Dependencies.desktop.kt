@@ -22,7 +22,7 @@ object DependencyProvider {
             driver = "org.sqlite.JDBC",
         )
         AppDependencies(HttpClient(environment), database, serviceScope)
-//        DummyDependencies
+//        DummyDependencies()
     }
 }
 

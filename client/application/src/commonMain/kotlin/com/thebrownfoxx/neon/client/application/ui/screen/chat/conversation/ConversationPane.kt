@@ -17,6 +17,7 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.comp
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.components.MessageList
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneEventHandler
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.state.ConversationPaneState
+import com.thebrownfoxx.neon.common.type.Loaded
 
 @Composable
 fun ConversationPane(
@@ -46,9 +47,13 @@ fun ConversationPane(
                 },
                 modifier = modifier,
             ) { innerPadding ->
+                val isCommunity = conversation.info is Loaded && conversation.info.value.isCommunity
                 MessageList(
                     entries = conversation.entries,
+                    isCommunity = isCommunity,
+                    loading = conversation.loadingEntries,
                     onMarkAsRead = onMarkAsRead,
+                    onLastVisibleEntryChange = onLastVisibleEntryChange,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = innerPadding + contentPadding.horizontal -
                             16.dp.verticalPadding,

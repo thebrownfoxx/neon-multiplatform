@@ -25,27 +25,32 @@ fun NavGraphBuilder.chatDestination() = composable<ChatRoute> {
         }
     }
     with(viewModel) {
-        val chatPreviews by chatPreviews.collectAsStateWithLifecycle()
-        val conversation by conversation.collectAsStateWithLifecycle()
+        val chatPreviews by chatPreviewsState.collectAsStateWithLifecycle()
+        val conversation by conversationPaneState.collectAsStateWithLifecycle()
 
+        val state = ChatScreenState(
+            chatPreviewsState = chatPreviews,
+            conversationPaneState = conversation,
+        )
+        val chatPreviewsEventHandler = ChatPreviewsEventHandler(
+            onConversationClick = ::onConversationClick,
+            onLastVisiblePreviewChange = ::onLastVisiblePreviewChange,
+        )
+        val conversationPaneEventHandler = ConversationPaneEventHandler(
+            onCall = {},
+            onMessageChange = ::onMessageChange,
+            onSend = ::onSendMessage,
+            onMarkAsRead = {},
+            onClose = ::onConversationClose,
+            onLastVisibleEntryChange = ::onLastVisibleEntryChange,
+        )
+        val eventHandler = ChatScreenEventHandler(
+            chatPreviewsEventHandler = chatPreviewsEventHandler,
+            conversationPaneEventHandler = conversationPaneEventHandler,
+        )
         ChatScreen(
-            state = ChatScreenState(
-                chatPreviews = chatPreviews,
-                conversation = conversation,
-            ),
-            eventHandler = ChatScreenEventHandler(
-                chatPreviewsEventHandler = ChatPreviewsEventHandler(
-                    onConversationClick = ::onConversationClick,
-                    onLastVisiblePreviewChange = ::onLastVisiblePreviewChange,
-                ),
-                conversationPaneEventHandler = ConversationPaneEventHandler(
-                    onCall = {},
-                    onMessageChange = ::onMessageChange,
-                    onSend = ::onSendMessage,
-                    onMarkAsRead = {},
-                    onClose = ::onConversationClose,
-                )
-            ),
+            state = state,
+            eventHandler = eventHandler,
         )
     }
 }

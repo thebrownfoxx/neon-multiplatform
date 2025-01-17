@@ -17,7 +17,7 @@ import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.extension.mirrorTo
+import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -74,7 +74,7 @@ class RemoteMessenger(
         }
 
     override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
-        return messagesCache.getAsFlow(groupId) {
+        return messagesCache.getOrInitialize(groupId) {
             subscriber.subscribeAsFlow(GetMessagesRequest(groupId = groupId)) {
                 map<GetMessagesUnauthorized> { Failure(GetMessagesError.Unauthorized) }
                 map<GetMessagesGroupNotFound> { Failure(GetMessagesError.GroupNotFound) }
@@ -87,7 +87,7 @@ class RemoteMessenger(
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
-        return messageCache.getAsFlow(id) {
+        return messageCache.getOrInitialize(id) {
             subscriber.subscribeAsFlow(GetMessageRequest(id = id)) {
                 map<GetMessageUnauthorized> { Failure(GetMessageError.Unauthorized) }
                 map<GetMessageNotFound> { Failure(GetMessageError.NotFound) }

@@ -1,8 +1,6 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import com.codingfeline.buildkonfig.gradle.TargetConfigDsl
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -126,6 +124,11 @@ android {
 compose.desktop {
     application {
         mainClass = "com.thebrownfoxx.neon.client.application.MainKt"
+
+        buildTypes.release.proguard {
+            version.set("7.6.1")
+            configurationFiles.from(projectDir.resolve("compose-desktop.pro"))
+        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

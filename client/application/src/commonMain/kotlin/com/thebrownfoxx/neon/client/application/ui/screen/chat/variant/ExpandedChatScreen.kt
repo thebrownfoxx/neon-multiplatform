@@ -52,13 +52,13 @@ fun ExpandedChatScreen(
                 TwoPaneLayout(
                     leftPane = {
                         LeftPane(
-                            chatPreviews = chatPreviews,
+                            chatPreviews = chatPreviewsState,
                             chatPreviewsEventHandler = chatPreviewsEventHandler,
                         )
                     },
                     rightPane = {
                         RightPane(
-                            conversation = conversation,
+                            conversation = conversationPaneState,
                             conversationPaneEventHandler = conversationPaneEventHandler,
                         )
                     },

@@ -7,5 +7,5 @@ data class ConversationState(
     val groupId: GroupId = GroupId(),
     val info: Loadable<ConversationInfoState>,
     val entries: List<MessageListEntry>,
-    val loading: Boolean,
+    val loadingEntries: Boolean,
 )

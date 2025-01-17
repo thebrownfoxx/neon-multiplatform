@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.LargeAvatar
 import com.thebrownfoxx.neon.client.application.ui.component.loader.AnimatedLoadableContent
@@ -72,6 +73,8 @@ private fun LoadedConversationTitleBar(
             Text(
                 text = name ?: stringResource(Res.string.deleted_group),
                 style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

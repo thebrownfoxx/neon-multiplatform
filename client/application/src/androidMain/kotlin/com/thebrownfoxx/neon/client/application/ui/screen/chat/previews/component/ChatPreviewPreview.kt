@@ -8,7 +8,6 @@ import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.GroupA
 import com.thebrownfoxx.neon.client.application.ui.component.avatar.state.SingleAvatarState
 import com.thebrownfoxx.neon.client.application.ui.component.delivery.state.DeliveryState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewContentState
-import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.LoadedChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedCommunityChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ReceivedDirectChatPreviewState
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.SentChatPreviewState
@@ -21,7 +20,7 @@ import kotlinx.datetime.Clock
 private fun SentDirectPreview() {
     NeonTheme {
         ChatPreview(
-            state = LoadedChatPreviewState(
+            state = loadedChatPreviewState(
                 avatar = SingleAvatarState(url = null, placeholder = "carlito"),
                 name = "carlito",
                 content = ChatPreviewContentState(
@@ -42,7 +41,7 @@ private fun SentDirectPreview() {
 private fun ReceivedDirectPreview() {
     NeonTheme {
         ChatPreview(
-            state = LoadedChatPreviewState(
+            state = loadedChatPreviewState(
                 avatar = SingleAvatarState(url = null, placeholder = "carlito"),
                 name = "carlito",
                 content = ChatPreviewContentState(
@@ -63,7 +62,7 @@ private fun ReceivedDirectPreview() {
 private fun SentCommunityPreview() {
     NeonTheme {
         ChatPreview(
-            state = LoadedChatPreviewState(
+            state = loadedChatPreviewState(
                 avatar = GroupAvatarState(
                     front = SingleAvatarState(url = null, placeholder = "SharlLeclaire"),
                     back = SingleAvatarState(url = null, placeholder = "little_lando"),
@@ -87,7 +86,7 @@ private fun SentCommunityPreview() {
 private fun ReceivedCommunityPreview() {
     NeonTheme {
         ChatPreview(
-            state = LoadedChatPreviewState(
+            state = loadedChatPreviewState(
                 avatar = GroupAvatarState(
                     front = SingleAvatarState(url = null, placeholder = "SharlLeclaire"),
                     back = SingleAvatarState(url = null, placeholder = "carlito"),
@@ -113,7 +112,7 @@ private fun ReceivedCommunityPreview() {
 private fun UnreadPreview() {
     NeonTheme {
         ChatPreview(
-            state = LoadedChatPreviewState(
+            state = loadedChatPreviewState(
                 avatar = SingleAvatarState(url = null, placeholder = "SharlLeclerc"),
                 name = "SharlLeclerc",
                 content = ChatPreviewContentState(

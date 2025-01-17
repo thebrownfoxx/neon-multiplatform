@@ -104,6 +104,7 @@ class DefaultDependencies : Dependencies {
                 passwordRepository,
                 messageRepository,
                 hasher,
+                logger,
             ).onFailure { logger.logError(it) }
         }
     }

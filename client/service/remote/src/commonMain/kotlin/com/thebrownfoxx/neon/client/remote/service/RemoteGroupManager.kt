@@ -9,7 +9,7 @@ import com.thebrownfoxx.neon.client.service.GroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.extension.mirrorTo
+import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.route.websocket.group.GetGroupMembersGroupNotFound
@@ -36,7 +36,7 @@ class RemoteGroupManager(
         Cache<GroupId, Outcome<Set<MemberId>, GetMembersError>>(externalScope)
 
     override fun getGroup(id: GroupId): Flow<Outcome<LocalGroup, GetGroupError>> {
-        return groupCache.getAsFlow(id) {
+        return groupCache.getOrInitialize(id) {
             subscriber.subscribeAsFlow(GetGroupRequest(id = id)) {
                 map<GetGroupNotFound> { Failure(GetGroupError.NotFound) }
                 map<GetGroupUnexpectedError> { Failure(GetGroupError.UnexpectedError) }
@@ -47,7 +47,7 @@ class RemoteGroupManager(
     }
 
     override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>> {
-        return membersCache.getAsFlow(groupId) {
+        return membersCache.getOrInitialize(groupId) {
             subscriber.subscribeAsFlow(GetGroupMembersRequest(groupId = groupId)) {
                 map<GetGroupMembersGroupNotFound> { Failure(GetMembersError.GroupNotFound) }
                 map<GetGroupMembersUnexpectedError> { Failure(GetMembersError.UnexpectedError) }

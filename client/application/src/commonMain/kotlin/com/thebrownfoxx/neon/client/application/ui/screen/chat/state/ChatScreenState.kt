@@ -4,6 +4,6 @@ import com.thebrownfoxx.neon.client.application.ui.screen.chat.conversation.stat
 import com.thebrownfoxx.neon.client.application.ui.screen.chat.previews.state.ChatPreviewsState
 
 data class ChatScreenState(
-    val chatPreviews: ChatPreviewsState,
-    val conversation: ConversationPaneState?,
+    val chatPreviewsState: ChatPreviewsState,
+    val conversationPaneState: ConversationPaneState?,
 )
