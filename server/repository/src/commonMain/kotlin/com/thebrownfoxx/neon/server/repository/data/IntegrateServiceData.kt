@@ -1,6 +1,8 @@
 package com.thebrownfoxx.neon.server.repository.data
 
 import com.thebrownfoxx.neon.common.data.transaction.transaction
+import com.thebrownfoxx.neon.common.extension.onFailure
+import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.hash.Hasher
 import com.thebrownfoxx.neon.common.logInfo
 import com.thebrownfoxx.neon.server.repository.ConfigurationRepository
@@ -14,8 +16,11 @@ import com.thebrownfoxx.neon.server.repository.data.model.CommunityRecord
 import com.thebrownfoxx.neon.server.repository.data.model.ServiceData
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
+import com.thebrownfoxx.outcome.map.flatMapError
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.onFailure
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 suspend fun ServiceData.integrate(
     configurationRepository: ConfigurationRepository,
@@ -26,48 +31,72 @@ suspend fun ServiceData.integrate(
     passwordRepository: PasswordRepository,
     messageRepository: MessageRepository,
     hasher: Hasher,
-): UnitOutcome<Any> {
-    if (configurationRepository.getInitialized().getOrElse { return Failure(it) })
+): UnitOutcome<IntegrationError> {
+    if (configurationRepository.getInitialized().getOrElse { return Failure(IntegrationError) })
         return UnitSuccess
 
     logInfo("Integrating $this")
-    return transaction {
-        for (groupRecord in groupRecords) {
-            val (group, memberIds) = groupRecord
+    return supervisorScope {
+        transaction {
+            groupRecords.map { groupRecord ->
+                async groupRecords@{
+                    val (group, memberIds) = groupRecord
 
-            groupRepository.add(groupRecord.group).register()
-                .onFailure { return@transaction Failure(it) }
+                    groupRepository.add(groupRecord.group).register()
+                        .onFailure { return@groupRecords Failure(IntegrationError) }
 
-            for (memberId in memberIds) {
-                groupMemberRepository.addMember(group.id, memberId).register()
-                    .onFailure { return@transaction Failure(it) }
-            }
+                    memberIds.map { memberId ->
+                        async {
+                            groupMemberRepository.addMember(group.id, memberId).register()
+                                .onFailure { return@async Failure(IntegrationError) }
 
-            if (groupRecord is CommunityRecord) {
-                val inviteCode = groupRecord.inviteCode
+                            UnitSuccess
+                        }
+                    }
+                        .awaitAll()
+                        .onFailure { return@groupRecords Failure(IntegrationError) }
 
-                if (inviteCode != null) {
+                    if (groupRecord !is CommunityRecord) return@groupRecords UnitSuccess
+
+                    val inviteCode = groupRecord.inviteCode ?: return@groupRecords UnitSuccess
+
                     inviteCodeRepository.set(group.id, inviteCode).register()
-                        .onFailure { return@transaction Failure(it) }
+                        .onFailure { return@groupRecords Failure(IntegrationError) }
+
+                    UnitSuccess
                 }
             }
+                .awaitAll()
+                .onFailure { return@transaction Failure(IntegrationError) }
+
+            memberRecords.map { (member, _, password) ->
+                async {
+                    memberRepository.add(member).register()
+                        .onFailure { return@async Failure(IntegrationError) }
+                    passwordRepository.setHash(member.id, hasher.hash(password)).register()
+                        .onFailure { return@async Failure(IntegrationError) }
+
+                    UnitSuccess
+                }
+            }
+                .awaitAll()
+                .onFailure { return@transaction Failure(IntegrationError) }
+
+            messages.map { message ->
+                async {
+                    messageRepository.add(message).register()
+                        .onFailure { return@async Failure(IntegrationError) }
+                }
+            }
+                .awaitAll()
+                .onFailure { return@transaction Failure(IntegrationError) }
+
+            configurationRepository.setInitialized(true).register()
+                .onFailure { return@transaction Failure(IntegrationError) }
+
+            UnitSuccess
         }
-
-        for ((member, _, password) in memberRecords) {
-            memberRepository.add(member).register()
-                .onFailure { return@transaction Failure(it) }
-            passwordRepository.setHash(member.id, hasher.hash(password)).register()
-                .onFailure { return@transaction Failure(it) }
-        }
-
-        for (message in messages) {
-            messageRepository.add(message).register()
-                .onFailure { return@transaction Failure(it) }
-        }
-
-        configurationRepository.setInitialized(true).register()
-            .onFailure { return@transaction Failure(it) }
-
-        UnitSuccess
-    }
+    }.flatMapError { IntegrationError }
 }
+
+data object IntegrationError
