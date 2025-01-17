@@ -20,7 +20,7 @@ import com.thebrownfoxx.neon.client.application.ui.state.toChatGroupName
 import com.thebrownfoxx.neon.client.application.ui.state.toDeliveryState
 import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
@@ -83,7 +83,7 @@ class ChatPreviewsStateHandler(
         loggedInMemberId: MemberId?,
         lastVisibleGroupId: GroupId?,
     ): Flow<ChatPreviewsState> {
-        return messenger.conversationPreviews.flatMapLatest { previewsOutcome ->
+        return messenger.chatPreviews.flatMapLatest { previewsOutcome ->
             val previews = previewsOutcome.getOrThrow()
             previews.mapToInitialStateIds()
 
@@ -104,11 +104,11 @@ class ChatPreviewsStateHandler(
         }
     }
 
-    private fun LocalConversationPreviews.toFlatList(): List<LocalMessage> {
+    private fun LocalChatPreviews.toFlatList(): List<LocalMessage> {
         return flatListOf(nudgedPreviews, unreadPreviews, readPreviews)
     }
 
-    private fun LocalConversationPreviews.mapToInitialStateIds() {
+    private fun LocalChatPreviews.mapToInitialStateIds() {
         initialState.listItems.forEachIndexed { index, state ->
             if (state !is ChatPreviewState || state.id in idMap.values) return@forEachIndexed
             val groupId = toFlatList().getOrNull(index)?.groupId
@@ -117,7 +117,7 @@ class ChatPreviewsStateHandler(
         }
     }
 
-    private fun LocalConversationPreviews.getNudgedListItems(
+    private fun LocalChatPreviews.getNudgedListItems(
         loggedInMemberId: MemberId?,
         lastIndexToLoad: Int,
     ): Flow<List<ChatPreviewListItem>> {
@@ -129,7 +129,7 @@ class ChatPreviewsStateHandler(
         }.combineToListItems(ChatPreviewHeaderValue.NudgedConversations)
     }
 
-    private fun LocalConversationPreviews.getUnreadListItems(
+    private fun LocalChatPreviews.getUnreadListItems(
         loggedInMemberId: MemberId?,
         lastIndexToLoad: Int,
     ): Flow<List<ChatPreviewListItem>> {
@@ -146,7 +146,7 @@ class ChatPreviewsStateHandler(
         }.combineToListItems(headerValue)
     }
 
-    private fun LocalConversationPreviews.getReadListItems(
+    private fun LocalChatPreviews.getReadListItems(
         loggedInMemberId: MemberId?,
         lastIndexToLoad: Int,
     ): Flow<List<ChatPreviewListItem>> {

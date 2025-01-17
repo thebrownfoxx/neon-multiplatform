@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository.exposed
 
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
@@ -59,8 +59,8 @@ class ExposedMessageRepository(
     private val messagesCache = ReactiveCache(externalScope, ::getMessages)
     private val messageCache = ReactiveCache(externalScope, ::get)
 
-    override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, DataOperationError>> =
+    override val chatPreviews:
+            Flow<Outcome<LocalChatPreviews, DataOperationError>> =
         conversationsCache.getAsFlow()
 
     override val outgoingQueue = Channel<LocalMessage>(Channel.BUFFERED)
@@ -148,17 +148,17 @@ class ExposedMessageRepository(
             }
     }
 
-    private suspend fun getConversations(): Outcome<LocalConversationPreviews, DataOperationError> {
+    private suspend fun getConversations(): Outcome<LocalChatPreviews, DataOperationError> {
         val memberId = getMemberId()
         return dataTransaction {
             val sent = LocalMessageTable.senderId eq memberId.toJavaUuid()
             val conversationRead = LocalMessageTable.delivery eq LocalDelivery.Read.name or sent
 
-            val unreadPreviews = getConversationPreviews()
+            val unreadPreviews = getChatPreviews()
                 .where(not(conversationRead))
                 .map { it.toLocalMessage() }
 
-            val readPreviews = getConversationPreviews()
+            val readPreviews = getChatPreviews()
                 .where(conversationRead)
                 .map { it.toLocalMessage() }
 
@@ -167,7 +167,7 @@ class ExposedMessageRepository(
                 else -> emptyList()
             }
 
-            LocalConversationPreviews(
+            LocalChatPreviews(
                 nudgedPreviews = nudgedPreviews,
                 unreadPreviews = unreadPreviews.filter { unread ->
                     nudgedPreviews.none { it.groupId != unread.groupId }
@@ -177,7 +177,7 @@ class ExposedMessageRepository(
         }.mapOperationTransaction()
     }
 
-    private fun getConversationPreviews(): Query {
+    private fun getChatPreviews(): Query {
         val groupId = LocalMessageTable.groupId.alias("group_id")
         val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
 
@@ -186,7 +186,7 @@ class ExposedMessageRepository(
             .groupBy(LocalMessageTable.groupId)
             .alias("conversations")
 
-        val conversationPreviews = LocalMessageTable
+        val chatPreviews = LocalMessageTable
             .join(
                 conversations,
                 JoinType.INNER,
@@ -195,7 +195,7 @@ class ExposedMessageRepository(
                         (LocalMessageTable.timestamp eq conversations[maxTimestamp])
             }.selectAll()
             .orderBy(column = maxTimestamp, order = SortOrder.DESC)
-        return conversationPreviews
+        return chatPreviews
     }
 
     private suspend fun getMessages(

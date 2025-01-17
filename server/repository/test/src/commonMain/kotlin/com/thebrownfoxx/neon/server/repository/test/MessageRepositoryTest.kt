@@ -156,7 +156,7 @@
 //    }
 //
 //    @Test
-//    fun getConversationPreviewShouldReturnPreview() {
+//    fun getChatPreviewshouldReturnPreview() {
 //        runTest {
 //            val expectedPreview = initialMessages
 //                .sortedByDescending { it.timestamp }
@@ -168,7 +168,7 @@
 //    }
 //
 //    @Test
-//    fun getConversationPreviewShouldReturnNotFoundIfNoPreview() {
+//    fun getChatPreviewshouldReturnNotFoundIfNoPreview() {
 //        runTest {
 //            val actualPreviewOutcome = messageRepository.getConversationPreview(GroupId()).first()
 ////            actualPreviewOutcome mustBe Failure(RepositoryGetConversationPreviewError.NotFound)

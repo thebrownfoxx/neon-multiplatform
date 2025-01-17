@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.service
 
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -11,8 +11,8 @@ import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
-    val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>>
+    val chatPreviews:
+            Flow<Outcome<LocalChatPreviews, GetChatPreviewsError>>
 
     fun getMessages(
         groupId: GroupId,
@@ -26,7 +26,7 @@ interface Messenger {
         content: String,
     ): UnitOutcome<SendMessageError>
 
-    enum class GetConversationPreviewsError {
+    enum class GetChatPreviewsError {
         MemberNotFound,
         UnexpectedError,
     }
@@ -52,9 +52,9 @@ interface Messenger {
     }
 }
 
-fun List<LocalMessage>.toConversationPreviews(
+fun List<LocalMessage>.toChatPreviews(
     loggedInMemberId: MemberId,
-): LocalConversationPreviews {
+): LocalChatPreviews {
     val (allUnreadPreviews, readPreviews) = partition { message ->
         message.senderId != loggedInMemberId || message.delivery != com.thebrownfoxx.neon.client.model.LocalDelivery.Delivered
     }
@@ -68,7 +68,7 @@ fun List<LocalMessage>.toConversationPreviews(
         else -> allUnreadPreviews
     }
 
-    return LocalConversationPreviews(
+    return LocalChatPreviews(
         nudgedPreviews = nudgedPreviews,
         unreadPreviews = unreadPreviews,
         readPreviews = readPreviews,

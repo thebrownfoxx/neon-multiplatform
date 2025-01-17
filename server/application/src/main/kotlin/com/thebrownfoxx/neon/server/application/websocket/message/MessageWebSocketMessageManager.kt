@@ -8,9 +8,9 @@ import com.thebrownfoxx.neon.common.data.websocket.send
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMemberNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -28,7 +28,7 @@ import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessfu
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnexpectedError
 import com.thebrownfoxx.neon.server.service.Messenger
-import com.thebrownfoxx.neon.server.service.Messenger.GetConversationPreviewsError
+import com.thebrownfoxx.neon.server.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
@@ -40,33 +40,33 @@ class MessageWebSocketMessageManager(
     private val messenger: Messenger,
     externalScope: CoroutineScope,
 ) {
-    private val getConversationPreviewsJobManager = SingleJobManager(externalScope)
+    private val getChatPreviewsJobManager = SingleJobManager(externalScope)
     private val getMessagesJobManager = JobManager<GroupId>(externalScope)
     private val getMessageJobManager = JobManager<MessageId>(externalScope)
     private val sendMessageJobManager = JobManager<RequestId>(externalScope)
 
     init {
         externalScope.launch {
-            session.listen<GetConversationPreviewsRequest>(externalScope) { it.fulfill() }
+            session.listen<GetChatPreviewsRequest>(externalScope) { it.fulfill() }
             session.listen<GetMessagesRequest>(externalScope) { it.fulfill() }
             session.listen<GetMessageRequest>(externalScope) { it.fulfill() }
             session.listen<SendMessageRequest>(externalScope) { it.fulfill() }
         }
     }
 
-    private fun GetConversationPreviewsRequest.fulfill() {
-        getConversationPreviewsJobManager.set {
-            messenger.getConversationPreviews(session.memberId).collect { conversationsOutcome ->
+    private fun GetChatPreviewsRequest.fulfill() {
+        getChatPreviewsJobManager.set {
+            messenger.getChatPreviews(session.memberId).collect { conversationsOutcome ->
                 conversationsOutcome.onSuccess { conversations ->
-                    session.send(GetConversationPreviewsSuccessful(requestId, conversations))
+                    session.send(GetChatPreviewsSuccessful(requestId, conversations))
                 }.onFailure { error ->
                     when (error) {
-                        GetConversationPreviewsError.MemberNotFound -> session.send(
-                            GetConversationPreviewsMemberNotFound(requestId, session.memberId)
+                        GetChatPreviewsError.MemberNotFound -> session.send(
+                            GetChatPreviewsMemberNotFound(requestId, session.memberId)
                         )
 
-                        GetConversationPreviewsError.UnexpectedError -> session.send(
-                            GetConversationPreviewsMemberNotFound(requestId, session.memberId)
+                        GetChatPreviewsError.UnexpectedError -> session.send(
+                            GetChatPreviewsMemberNotFound(requestId, session.memberId)
                         )
                     }
                 }

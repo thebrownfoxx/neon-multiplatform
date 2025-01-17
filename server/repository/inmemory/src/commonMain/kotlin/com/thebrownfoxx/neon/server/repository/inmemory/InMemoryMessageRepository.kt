@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.update
 class InMemoryMessageRepository : MessageRepository {
     private val messages = MutableStateFlow<Map<MessageId, Message>>(emptyMap())
 
-    override fun getConversationPreviewsAsFlow(memberId: MemberId): Flow<Outcome<List<Message>, DataOperationError>> {
+    override fun getChatPreviewsAsFlow(memberId: MemberId): Flow<Outcome<List<Message>, DataOperationError>> {
         TODO("Not yet implemented")
     }
 

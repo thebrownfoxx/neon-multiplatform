@@ -18,7 +18,7 @@ import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.neon.server.repository.MemberRepository
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.neon.server.service.Messenger
-import com.thebrownfoxx.neon.server.service.Messenger.GetConversationPreviewsError
+import com.thebrownfoxx.neon.server.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.server.service.Messenger.MarkConversationAsReadError
@@ -46,16 +46,16 @@ class DefaultMessenger(
     private val groupRepository: GroupRepository,
     private val groupMemberRepository: GroupMemberRepository,
 ) : Messenger {
-    override fun getConversationPreviews(
+    override fun getChatPreviews(
         actorId: MemberId,
-    ): Flow<Outcome<List<Message>, GetConversationPreviewsError>> {
+    ): Flow<Outcome<List<Message>, GetChatPreviewsError>> {
         return combine(
             memberRepository.getAsFlow(actorId),
-            messageRepository.getConversationPreviewsAsFlow(actorId),
+            messageRepository.getChatPreviewsAsFlow(actorId),
         ) { memberOutcome, conversationsOutcome ->
             memberOutcome
-                .onFailure { return@combine Failure(it.toGetConversationPreviewsError()) }
-            conversationsOutcome.mapError { GetConversationPreviewsError.UnexpectedError }
+                .onFailure { return@combine Failure(it.toGetChatPreviewsError()) }
+            conversationsOutcome.mapError { GetChatPreviewsError.UnexpectedError }
         }
     }
 
@@ -205,10 +205,10 @@ class DefaultMessenger(
         return Success(unreadMessages)
     }
 
-    private fun GetError.toGetConversationPreviewsError() = when (this) {
-        GetError.NotFound -> GetConversationPreviewsError.MemberNotFound
+    private fun GetError.toGetChatPreviewsError() = when (this) {
+        GetError.NotFound -> GetChatPreviewsError.MemberNotFound
         GetError.ConnectionError, GetError.UnexpectedError ->
-            GetConversationPreviewsError.UnexpectedError
+            GetChatPreviewsError.UnexpectedError
     }
 
     private fun GetError.getGroupErrorToGetMessagesError() = when (this) {

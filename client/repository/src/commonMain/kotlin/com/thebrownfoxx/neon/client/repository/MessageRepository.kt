@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.repository
 
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.common.data.DataOperationError
@@ -13,7 +13,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    val conversationPreviews: Flow<Outcome<LocalConversationPreviews, DataOperationError>>
+    val chatPreviews: Flow<Outcome<LocalChatPreviews, DataOperationError>>
 
     val outgoingQueue: ReceiveChannel<LocalMessage>
 

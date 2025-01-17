@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.application.dummy
 
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
@@ -25,22 +25,22 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class DummyMessenger(
-    private val conversationPreviewsDelay: Duration = 0.seconds,
+    private val chatPreviewsDelay: Duration = 0.seconds,
     private val getMessagesDelay: Duration = 0.seconds,
     private val getMessageDelay: Duration = 0.seconds,
 ) : Messenger {
     private val generatedMessages = mutableListOf<LocalMessage>()
 
-    private val generatedConversationPreviews = run {
-        val nudged = generateConversationPreviews(2)
-        val unread = generateConversationPreviews(10)
-        val read = generateConversationPreviews(500)
-        LocalConversationPreviews(nudged, unread, read)
+    private val generatedChatPreviews = run {
+        val nudged = generateChatPreviews(2)
+        val unread = generateChatPreviews(10)
+        val read = generateChatPreviews(500)
+        LocalChatPreviews(nudged, unread, read)
     }
 
-    override val conversationPreviews: Flow<Success<LocalConversationPreviews>> = flow {
-        delay(conversationPreviewsDelay)
-        emit(Success(generatedConversationPreviews))
+    override val chatPreviews: Flow<Success<LocalChatPreviews>> = flow {
+        delay(chatPreviewsDelay)
+        emit(Success(generatedChatPreviews))
     }
 
     override fun getMessages(
@@ -74,7 +74,7 @@ class DummyMessenger(
         TODO("Not yet implemented")
     }
 
-    private fun generateConversationPreviews(count: Int): List<LocalMessage> {
+    private fun generateChatPreviews(count: Int): List<LocalMessage> {
         val previews = mutableListOf<LocalMessage>()
         for (i in 1..count) {
             val message = generateMessage(MessageId(), GroupId())

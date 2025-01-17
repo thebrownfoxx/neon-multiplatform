@@ -9,7 +9,7 @@ class DummyDependencies : Dependencies {
     override val groupManager = DummyGroupManager(getGroupDelay = 100.milliseconds)
     override val memberManager = DummyMemberManager()
     override val messenger = DummyMessenger(
-        conversationPreviewsDelay = 5.seconds,
+        chatPreviewsDelay = 5.seconds,
         getMessageDelay = 2.seconds,
     )
 }

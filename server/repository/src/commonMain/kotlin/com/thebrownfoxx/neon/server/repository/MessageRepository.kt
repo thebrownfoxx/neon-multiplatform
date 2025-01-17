@@ -14,7 +14,7 @@ import com.thebrownfoxx.outcome.Outcome
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    fun getConversationPreviewsAsFlow(
+    fun getChatPreviewsAsFlow(
         memberId: MemberId,
     ): Flow<Outcome<List<Message>, DataOperationError>>
 

@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.model
 
-data class LocalConversationPreviews(
+data class LocalChatPreviews(
     val nudgedPreviews: List<LocalMessage>,
     val unreadPreviews: List<LocalMessage>,
     val readPreviews: List<LocalMessage>,

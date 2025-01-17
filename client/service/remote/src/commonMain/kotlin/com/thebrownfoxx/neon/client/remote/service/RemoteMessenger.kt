@@ -2,16 +2,16 @@ package com.thebrownfoxx.neon.client.remote.service
 
 import com.thebrownfoxx.neon.client.converter.toLocalMessage
 import com.thebrownfoxx.neon.client.converter.toLocalTimestampedMessageId
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsError
+import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
-import com.thebrownfoxx.neon.client.service.toConversationPreviews
+import com.thebrownfoxx.neon.client.service.toChatPreviews
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
@@ -21,10 +21,10 @@ import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsMemberNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsRequest
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsSuccessful
-import com.thebrownfoxx.neon.server.route.websocket.message.GetConversationPreviewsUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMemberNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -65,12 +65,12 @@ class RemoteMessenger(
     private val messageCache =
         Cache<MessageId, Outcome<LocalMessage, GetMessageError>>(externalScope)
 
-    override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> =
+    override val chatPreviews:
+            Flow<Outcome<LocalChatPreviews, GetChatPreviewsError>> =
         authenticator.loggedInMemberId.flatMapLatest { loggedInMemberId ->
             if (loggedInMemberId == null)
-                return@flatMapLatest flowOf(Failure(GetConversationPreviewsError.MemberNotFound))
-            getConversationPreviews(loggedInMemberId)
+                return@flatMapLatest flowOf(Failure(GetChatPreviewsError.MemberNotFound))
+            getChatPreviews(loggedInMemberId)
         }
 
     override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
@@ -115,26 +115,26 @@ class RemoteMessenger(
         )
     }
 
-    private fun getConversationPreviews(
+    private fun getChatPreviews(
         loggedInMemberId: MemberId,
-    ): Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> {
-        return subscriber.subscribeAsFlow(GetConversationPreviewsRequest()) {
-            map<GetConversationPreviewsMemberNotFound> {
-                Failure(GetConversationPreviewsError.MemberNotFound)
+    ): Flow<Outcome<LocalChatPreviews, GetChatPreviewsError>> {
+        return subscriber.subscribeAsFlow(GetChatPreviewsRequest()) {
+            map<GetChatPreviewsMemberNotFound> {
+                Failure(GetChatPreviewsError.MemberNotFound)
             }
-            map<GetConversationPreviewsUnexpectedError> {
-                Failure(GetConversationPreviewsError.UnexpectedError)
+            map<GetChatPreviewsUnexpectedError> {
+                Failure(GetChatPreviewsError.UnexpectedError)
             }
-            map<GetConversationPreviewsSuccessful> { response ->
-                Success(response.toLocalConversationPreviews(loggedInMemberId))
+            map<GetChatPreviewsSuccessful> { response ->
+                Success(response.toLocalChatPreviews(loggedInMemberId))
             }
         }
     }
 
-    private fun GetConversationPreviewsSuccessful.toLocalConversationPreviews(
+    private fun GetChatPreviewsSuccessful.toLocalChatPreviews(
         loggedInMemberId: MemberId,
-    ): LocalConversationPreviews {
-        return conversationPreviews.map { it.toLocalMessage() }
-            .toConversationPreviews(loggedInMemberId)
+    ): LocalChatPreviews {
+        return chatPreviews.map { it.toLocalMessage() }
+            .toChatPreviews(loggedInMemberId)
     }
 }

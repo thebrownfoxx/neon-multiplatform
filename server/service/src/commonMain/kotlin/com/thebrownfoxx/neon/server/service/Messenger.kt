@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface Messenger {
     // TODO: Benchmark the performance of this if it would require a more modular loading solution
-    fun getConversationPreviews(
+    fun getChatPreviews(
         actorId: MemberId,
-    ): Flow<Outcome<List<Message>, GetConversationPreviewsError>>
+    ): Flow<Outcome<List<Message>, GetChatPreviewsError>>
 
     fun getMessages(
         actorId: MemberId,
@@ -39,7 +39,7 @@ interface Messenger {
         groupId: GroupId,
     ): UnitOutcome<MarkConversationAsReadError>
 
-    enum class GetConversationPreviewsError {
+    enum class GetChatPreviewsError {
         MemberNotFound,
         UnexpectedError,
     }

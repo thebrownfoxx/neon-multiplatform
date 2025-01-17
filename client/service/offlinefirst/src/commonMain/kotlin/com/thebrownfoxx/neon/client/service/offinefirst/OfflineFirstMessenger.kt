@@ -1,13 +1,13 @@
 package com.thebrownfoxx.neon.client.service.offinefirst
 
-import com.thebrownfoxx.neon.client.model.LocalConversationPreviews
+import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.repository.MessageRepository
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsError
+import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
@@ -52,8 +52,8 @@ class OfflineFirstMessenger(
         externalScope.launch { sendOutgoingMessages() }
     }
 
-    private val conversationPreviewsCache =
-        SingleCache<Outcome<LocalConversationPreviews, GetConversationPreviewsError>>(externalScope)
+    private val chatPreviewsCache =
+        SingleCache<Outcome<LocalChatPreviews, GetChatPreviewsError>>(externalScope)
 
     private val getMessagesCache =
         Cache<GroupId, Outcome<List<LocalTimestampedMessageId>, GetMessagesError>>(externalScope)
@@ -61,15 +61,15 @@ class OfflineFirstMessenger(
     private val getMessageCache =
         Cache<MessageId, Outcome<LocalMessage, GetMessageError>>(externalScope)
 
-    override val conversationPreviews:
-            Flow<Outcome<LocalConversationPreviews, GetConversationPreviewsError>> =
-        conversationPreviewsCache.getOrInitialize {
-            val mappedLocalFlow = localMessageRepository.conversationPreviews.map { local ->
-                local.mapError { GetConversationPreviewsError.UnexpectedError }
+    override val chatPreviews:
+            Flow<Outcome<LocalChatPreviews, GetChatPreviewsError>> =
+        chatPreviewsCache.getOrInitialize {
+            val mappedLocalFlow = localMessageRepository.chatPreviews.map { local ->
+                local.mapError { GetChatPreviewsError.UnexpectedError }
             }
             offlineFirst(
                 localFlow = mappedLocalFlow,
-                remoteFlow = remoteMessenger.conversationPreviews,
+                remoteFlow = remoteMessenger.chatPreviews,
             ) {
                 transformLazy(
                     localSucceeded = { it is Success && it.value.isNotEmpty() },
@@ -78,7 +78,7 @@ class OfflineFirstMessenger(
                     remoteSucceeded = { it is Success },
                     remoteNotFound = { it.failedWith(GetMessagesError.GroupNotFound) },
                     remoteFailedUnexpectedly = { it.failedWith(GetMessagesError.UnexpectedError) },
-                    updateLocal = { updateConversationPreviews(it) },
+                    updateLocal = { updateChatPreviews(it) },
                 )
             }
         }
@@ -182,16 +182,16 @@ class OfflineFirstMessenger(
         }
     }
 
-    private fun LocalConversationPreviews.isEmpty(): Boolean {
+    private fun LocalChatPreviews.isEmpty(): Boolean {
         return nudgedPreviews.isEmpty() && unreadPreviews.isEmpty() && readPreviews.isEmpty()
     }
 
-    private fun LocalConversationPreviews.isNotEmpty(): Boolean {
+    private fun LocalChatPreviews.isNotEmpty(): Boolean {
         return !isEmpty()
     }
 
-    private suspend fun updateConversationPreviews(
-        previewsOutcome: Outcome<LocalConversationPreviews, *>,
+    private suspend fun updateChatPreviews(
+        previewsOutcome: Outcome<LocalChatPreviews, *>,
     ) {
         val previews = previewsOutcome.getOrElse { return }
         listOf(

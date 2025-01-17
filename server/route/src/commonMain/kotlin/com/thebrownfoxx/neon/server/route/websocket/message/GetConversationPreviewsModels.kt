@@ -7,35 +7,35 @@ import com.thebrownfoxx.neon.server.model.Message
 import kotlinx.serialization.Serializable
 
 @Serializable
-class GetConversationPreviewsRequest(
+class GetChatPreviewsRequest(
     override val requestId: RequestId = RequestId(),
 ) : WebSocketMessage(
-    kClass = GetConversationPreviewsRequest::class,
+    kClass = GetChatPreviewsRequest::class,
 )
 
 @Serializable
-data class GetConversationPreviewsMemberNotFound(
+data class GetChatPreviewsMemberNotFound(
     override val requestId: RequestId,
     val memberId: MemberId,
 ) : WebSocketMessage(
-    kClass = GetConversationPreviewsMemberNotFound::class,
+    kClass = GetChatPreviewsMemberNotFound::class,
     description = "The member with the given id was not found",
 )
 
 @Serializable
-data class GetConversationPreviewsUnexpectedError(
+data class GetChatPreviewsUnexpectedError(
     override val requestId: RequestId,
     val memberId: MemberId,
 ) : WebSocketMessage(
-    kClass = GetConversationPreviewsUnexpectedError::class,
-    description = "An error occurred while retrieving the conversation previews",
+    kClass = GetChatPreviewsUnexpectedError::class,
+    description = "An error occurred while retrieving the chat previews",
 )
 
 @Serializable
-data class GetConversationPreviewsSuccessful(
+data class GetChatPreviewsSuccessful(
     override val requestId: RequestId,
-    val conversationPreviews: List<Message>,
+    val chatPreviews: List<Message>,
 ) : WebSocketMessage(
-    kClass = GetConversationPreviewsSuccessful::class,
+    kClass = GetChatPreviewsSuccessful::class,
     description = "Successfully retrieved the conversations",
 )

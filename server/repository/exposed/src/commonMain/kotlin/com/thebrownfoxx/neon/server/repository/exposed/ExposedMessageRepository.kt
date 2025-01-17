@@ -53,14 +53,14 @@ class ExposedMessageRepository(
         initializeExposeDatabase(database, MessageTable)
     }
 
-    private val conversationPreviewsCache = ReactiveCache(externalScope, ::getConversationPreviews)
+    private val chatPreviewsCache = ReactiveCache(externalScope, ::getChatPreviews)
     private val messagesCache = ReactiveCache(externalScope, ::getMessages)
     private val messageCache = ReactiveCache(externalScope, ::get)
 
-    override fun getConversationPreviewsAsFlow(
+    override fun getChatPreviewsAsFlow(
         memberId: MemberId,
     ): Flow<Outcome<List<Message>, DataOperationError>> {
-        return conversationPreviewsCache.getAsFlow(memberId)
+        return chatPreviewsCache.getAsFlow(memberId)
     }
 
     override fun getMessagesAsFlow(
@@ -104,7 +104,7 @@ class ExposedMessageRepository(
                         .where(GroupMemberTable.groupId eq message.groupId.toJavaUuid())
                         .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
                 }.onSuccess { memberIds ->
-                    memberIds.forEach { conversationPreviewsCache.update(it) }
+                    memberIds.forEach { chatPreviewsCache.update(it) }
                 }
                 messagesCache.update(message.groupId)
                 messageCache.update(message.id)
@@ -131,7 +131,7 @@ class ExposedMessageRepository(
         TODO("Not yet implemented")
     }
 
-    private suspend fun getConversationPreviews(
+    private suspend fun getChatPreviews(
         memberId: MemberId,
     ): Outcome<List<Message>, DataOperationError> {
         return dataTransaction {
