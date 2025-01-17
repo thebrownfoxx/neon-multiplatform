@@ -194,6 +194,7 @@ class ExposedMessageRepository(
                 (LocalMessageTable.groupId eq conversations[groupId]) and
                         (LocalMessageTable.timestamp eq conversations[maxTimestamp])
             }.selectAll()
+            .orderBy(column = maxTimestamp, order = SortOrder.DESC)
         return conversationPreviews
     }
 
