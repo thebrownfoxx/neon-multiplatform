@@ -10,7 +10,6 @@ import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +21,6 @@ class ChatViewModel(
     groupManager: GroupManager,
     memberManager: MemberManager,
     private val messenger: Messenger,
-    logger: Logger,
 ) : ViewModel() {
     private val chatPreviewIdMap = mutableMapOf<GroupId, ChatPreviewStateId>()
 
@@ -38,7 +36,6 @@ class ChatViewModel(
         idMap = chatPreviewIdMap,
         lastVisibleGroupId = lastVisibleGroupId.asStateFlow(),
         externalScope = viewModelScope,
-        logger = logger,
     )
 
     private val messageIdMap = mutableMapOf<MessageId, MessageListEntryId>()
@@ -57,7 +54,6 @@ class ChatViewModel(
         lastVisibleMessageId = lastVisibleMessageId.asStateFlow(),
         message = message,
         externalScope = viewModelScope,
-        logger = logger,
     )
 
     val chatPreviewsState = chatPreviewsStateHandler.previews

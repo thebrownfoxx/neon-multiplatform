@@ -11,7 +11,6 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetConversationPreviewsErr
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.Cache
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.SingleCache
@@ -19,6 +18,7 @@ import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
 import com.thebrownfoxx.neon.common.extension.failedWith
 import com.thebrownfoxx.neon.common.extension.loop
+import com.thebrownfoxx.neon.common.logError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Failure
@@ -41,7 +41,6 @@ class OfflineFirstMessenger(
     private val remoteMessenger: Messenger,
     private val localMessageRepository: MessageRepository,
     externalScope: CoroutineScope,
-    private val logger: Logger,
 ) : Messenger {
     private val sendMessageExponentialBackoffValues = ExponentialBackoffValues(
         initialDelay = 1.seconds,
@@ -174,7 +173,7 @@ class OfflineFirstMessenger(
         when (error) {
             SendMessageError.Unauthorized, SendMessageError.GroupNotFound -> {
                 val failedMessage = outgoingMessage.copy(delivery = LocalDelivery.Failed)
-                localMessageRepository.upsert(failedMessage).onFailure { logger.logError(it) }
+                localMessageRepository.upsert(failedMessage).onFailure { logError() }
                 onDone()
             }
 
@@ -200,7 +199,7 @@ class OfflineFirstMessenger(
             previews.unreadPreviews,
             previews.readPreviews,
         ).forEach { subList ->
-            localMessageRepository.batchUpsert(subList).onFailure { logger.logError(it) }
+            localMessageRepository.batchUpsert(subList).onFailure { logError() }
         }
     }
 
@@ -209,7 +208,7 @@ class OfflineFirstMessenger(
     ) {
         val timestampedMessageIds = timestampedMessageIdsOutcome.getOrElse { return }
         localMessageRepository.batchUpsertTimestampedIds(timestampedMessageIds)
-            .onFailure { logger.logError(it) }
+            .onFailure { logError() }
     }
 
     private fun GetError.toGetMessageError() = when (this) {
@@ -221,6 +220,6 @@ class OfflineFirstMessenger(
         messageOutcome: Outcome<LocalMessage, *>,
     ) {
         val message = messageOutcome.getOrElse { return }
-        localMessageRepository.upsert(message).onFailure { logger.logError(it) }
+        localMessageRepository.upsert(message).onFailure { logError() }
     }
 }

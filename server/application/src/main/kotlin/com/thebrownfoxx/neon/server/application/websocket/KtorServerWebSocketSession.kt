@@ -1,11 +1,11 @@
 package com.thebrownfoxx.neon.server.application.websocket
 
-import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession.SendError
 import com.thebrownfoxx.neon.common.data.websocket.ktor.KtorSerializedWebSocketMessage
 import com.thebrownfoxx.neon.common.data.websocket.ktor.toKtorTypeInfo
 import com.thebrownfoxx.neon.common.data.websocket.model.SerializedWebSocketMessage
+import com.thebrownfoxx.neon.common.logInfo
 import com.thebrownfoxx.neon.common.type.Type
 import com.thebrownfoxx.neon.common.type.id.Id
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -13,6 +13,7 @@ import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onSuccess
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.converter
@@ -30,15 +31,15 @@ abstract class KtorServerWebSocketSession(
     val id: WebSocketSessionId = WebSocketSessionId(),
     val memberId: MemberId,
     private val session: WebSocketServerSession,
-    private val logger: Logger,
 ) : WebSocketSession {
     override suspend fun send(message: Any?, type: Type): UnitOutcome<SendError> {
         return runFailing {
             withContext(Dispatchers.IO) {
                 session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
-                logger.logInfo("Sent: $message")
             }
-        }.mapError { SendError }
+        }
+            .mapError { SendError }
+            .onSuccess { logInfo("WS SENT: $message") }
     }
 
     override suspend fun close() {
@@ -51,8 +52,7 @@ class MutableKtorServerWebSocketSession(
     id: WebSocketSessionId = WebSocketSessionId(),
     memberId: MemberId,
     private val session: WebSocketServerSession,
-    private val logger: Logger,
-) : KtorServerWebSocketSession(id, memberId, session, logger) {
+) : KtorServerWebSocketSession(id, memberId, session) {
     private val _closed = MutableStateFlow(false)
     override val closed = _closed.asStateFlow()
 
@@ -61,9 +61,9 @@ class MutableKtorServerWebSocketSession(
 
     suspend fun emitFrame(frame: Frame) {
         val message = KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame)
-        val serializedValue = message.serializedValue.getOrElse { "<unknown message>" }
-        logger.logInfo("Received: $serializedValue")
         _incomingMessages.emit(message)
+        val serializedValue = message.serializedValue.getOrElse { "<unknown message>" }
+        logInfo("WS RECEIVED: $serializedValue")
     }
 
     override suspend fun close() {
