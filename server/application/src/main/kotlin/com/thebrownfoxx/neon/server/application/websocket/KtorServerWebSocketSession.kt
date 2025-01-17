@@ -13,6 +13,7 @@ import com.thebrownfoxx.neon.common.type.id.Uuid
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
+import com.thebrownfoxx.outcome.map.onSuccess
 import com.thebrownfoxx.outcome.runFailing
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.converter
@@ -35,9 +36,10 @@ abstract class KtorServerWebSocketSession(
         return runFailing {
             withContext(Dispatchers.IO) {
                 session.sendSerialized(data = message, typeInfo = type.toKtorTypeInfo())
-                logInfo("Sent: $message")
             }
-        }.mapError { SendError }
+        }
+            .mapError { SendError }
+            .onSuccess { logInfo("WS SENT: $message") }
     }
 
     override suspend fun close() {
@@ -59,9 +61,9 @@ class MutableKtorServerWebSocketSession(
 
     suspend fun emitFrame(frame: Frame) {
         val message = KtorSerializedWebSocketMessage(converter = session.converter!!, frame = frame)
-        val serializedValue = message.serializedValue.getOrElse { "<unknown message>" }
-        logInfo("Received: $serializedValue")
         _incomingMessages.emit(message)
+        val serializedValue = message.serializedValue.getOrElse { "<unknown message>" }
+        logInfo("WS RECEIVED: $serializedValue")
     }
 
     override suspend fun close() {

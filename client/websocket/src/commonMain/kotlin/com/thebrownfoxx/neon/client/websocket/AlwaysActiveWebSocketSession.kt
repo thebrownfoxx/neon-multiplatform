@@ -190,7 +190,7 @@ class AlwaysActiveWebSocketSession : WebSocketSession, WebSocketSubscriber, WebS
     private suspend fun WebSocketSession.mirrorIncomingMessages() {
         _incomingMessages.mirror(incomingMessages) {
             val label = it.serializedValue.getOrNull() ?: "<unknown message>"
-            logInfo("Received: $label")
+            logInfo("WS RECEIVED: $label")
             it
         }
     }
@@ -206,7 +206,7 @@ class AlwaysActiveWebSocketSession : WebSocketSession, WebSocketSubscriber, WebS
             )
             loop {
                 send(message.value, message.type).onSuccess {
-                    logInfo("Sent: ${message.value}")
+                    logInfo("WS SENT: ${message.value}")
                     breakLoop()
                 }
                 exponentialBackoff.delay()

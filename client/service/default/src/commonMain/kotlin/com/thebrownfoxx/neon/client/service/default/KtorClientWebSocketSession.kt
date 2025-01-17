@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.logInfo
 import com.thebrownfoxx.neon.common.type.Type
 import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
@@ -32,9 +33,7 @@ class KtorClientWebSocketSession(
 ) : WebSocketSession {
     init {
         externalScope.launch {
-            loop {
-                receiveMessages(onFailure = ::breakLoop)
-            }
+            loop { receiveMessages(onFailure = ::breakLoop) }
         }
     }
 
@@ -51,7 +50,7 @@ class KtorClientWebSocketSession(
             }
         }
             .mapError { SendError }
-            .onSuccess { logInfo("SENT: $message") }
+            .onSuccess { logInfo("WS SENT: $message") }
     }
 
     override suspend fun close() {
@@ -63,7 +62,8 @@ class KtorClientWebSocketSession(
             .onSuccess { frame ->
                 val message = KtorSerializedWebSocketMessage(session.converter!!, frame)
                 _incomingMessages.emit(message)
-                logInfo("RECEIVED: $message")
+                val serializedValue = message.serializedValue.getOrElse { "<unknown message>" }
+                logInfo("WS RECEIVED: $serializedValue")
             }.onFailure {
                 _closed.value = true
                 onFailure()
