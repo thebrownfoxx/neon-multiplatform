@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlin.time.Duration.Companion.seconds
 
+@Deprecated("Use a WebSocketSessionProvider instead")
 class AlwaysActiveWebSocketSession(
     private val logger: Logger,
 ) : WebSocketSession, WebSocketSubscriber, WebSocketRequester {

@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.websocket
+package com.thebrownfoxx.neon.client.service.default
 
 import com.thebrownfoxx.neon.common.Logger
 import com.thebrownfoxx.neon.common.data.websocket.WebSocketSession

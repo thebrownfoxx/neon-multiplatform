@@ -1,6 +1,5 @@
 package com.thebrownfoxx.neon.client.service.default
 
-import com.thebrownfoxx.neon.client.websocket.KtorClientWebSocketSession
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnectionError
 import com.thebrownfoxx.neon.client.websocket.WebSocketConnector
 import com.thebrownfoxx.neon.common.Logger
