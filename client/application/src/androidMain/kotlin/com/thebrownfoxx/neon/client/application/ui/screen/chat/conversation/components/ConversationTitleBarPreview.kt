@@ -19,6 +19,7 @@ private fun Preview() {
                         placeholder = "SharlLeclerc",
                     ),
                     name = "SharlLeclerc",
+                    isCommunity = false,
                 )
             ),
             onClose = {},
