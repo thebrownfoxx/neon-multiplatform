@@ -63,7 +63,6 @@ class ChatPreviewsStateHandler(
     private val logger: Logger,
 ) {
     private val previewValuesMirrorJobManager = JobManager<GroupId>(externalScope)
-
     private val previewValuesCache = Cache<GroupId, Loadable<ChatPreviewStateValues>>(externalScope)
 
     private val groupAggregator = GroupAggregator(groupManager, memberManager)

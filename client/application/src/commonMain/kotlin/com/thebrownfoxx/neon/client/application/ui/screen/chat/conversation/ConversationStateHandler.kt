@@ -27,6 +27,8 @@ import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.common.Logger
+import com.thebrownfoxx.neon.common.data.SingleCache
+import com.thebrownfoxx.neon.common.data.SingleJobManager
 import com.thebrownfoxx.neon.common.extension.coercedSubList
 import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow.flow
@@ -47,7 +49,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -66,14 +67,17 @@ class ConversationStateHandler(
     externalScope: CoroutineScope,
     private val logger: Logger,
 ) {
-    private var loadingInfoEmitted = false
-    private var loadingMessagesEmitted = false
+    private val infoMirrorJobManager = SingleJobManager(externalScope)
+    private val infoCache = SingleCache<Loadable<ConversationInfoState>>(externalScope)
+
+    private val entriesMirrorJobManager = SingleJobManager(externalScope)
+    private val entriesCache = SingleCache<MessageListEntries>(externalScope)
 
     init {
         externalScope.launch {
             selectedConversationGroupId.collect {
-                loadingInfoEmitted = false
-                loadingMessagesEmitted = false
+                infoCache.emit(Loading)
+                entriesCache.emit(MessageListEntries.InitialValue)
             }
         }
     }
@@ -117,7 +121,7 @@ class ConversationStateHandler(
         lastVisibleMessageId: MessageId?,
     ): Flow<ConversationState> {
         val infoFlow = getLoadableInfo(loggedInMemberId)
-        val entriesFlow = getMessageListEntriesWithInitial(loggedInMemberId, lastVisibleMessageId)
+        val entriesFlow = getEntries(loggedInMemberId, lastVisibleMessageId)
         return combine(
             infoFlow,
             entriesFlow,
@@ -134,12 +138,12 @@ class ConversationStateHandler(
     private fun LocalGroup.getLoadableInfo(
         loggedInMemberId: MemberId?,
     ): Flow<Loadable<ConversationInfoState>> {
-        return flow {
-            if (!loadingInfoEmitted) {
-                emit(Loading)
-                loadingInfoEmitted = true
+        return infoCache.getOrInitialize {
+            emit(Loading)
+        }.also {
+            infoMirrorJobManager.set {
+                infoCache.mirror(getInfo(loggedInMemberId)) { Loaded(it) }
             }
-            mirror(getInfo(loggedInMemberId)) { Loaded(it) }
         }
     }
 
@@ -180,16 +184,16 @@ class ConversationStateHandler(
         }
     }
 
-    private fun LocalGroup.getMessageListEntriesWithInitial(
+    private fun LocalGroup.getEntries(
         loggedInMemberId: MemberId?,
         lastVisibleMessageId: MessageId?,
     ): Flow<MessageListEntries> {
-        return flow {
-            if (!loadingMessagesEmitted) {
-                emit(MessageListEntries(value = emptyList(), loading = true))
-                loadingMessagesEmitted = true
+        return entriesCache.getOrInitialize {
+            emit(MessageListEntries.InitialValue)
+        }.also {
+            entriesMirrorJobManager.set {
+                entriesCache.mirror(getMessagesListEntries(loggedInMemberId, lastVisibleMessageId))
             }
-            mirror(getMessagesListEntries(loggedInMemberId, lastVisibleMessageId))
         }
     }
 
@@ -305,5 +309,9 @@ class ConversationStateHandler(
     private data class MessageListEntries(
         val value: List<MessageListEntry>,
         val loading: Boolean,
-    )
+    ) {
+        companion object {
+            val InitialValue = MessageListEntries(value = emptyList(), loading = true)
+        }
+    }
 }
