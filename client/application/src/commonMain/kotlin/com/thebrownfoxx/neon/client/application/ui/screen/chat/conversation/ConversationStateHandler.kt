@@ -265,8 +265,8 @@ class ConversationStateHandler(
         previous: LocalMessageWithSenderState?,
         next: LocalMessageWithSenderState?,
     ): MessageEntry {
-        val previousDifferent = previous == null || previous.sender::class != sender::class
-        val nextDifferent = next == null || next.sender::class != sender::class
+        val previousDifferent = previous == null || previous.sender != sender
+        val nextDifferent = next == null || next.sender != sender
 
         val groupPosition = getGroupPosition(previousDifferent, nextDifferent)
 

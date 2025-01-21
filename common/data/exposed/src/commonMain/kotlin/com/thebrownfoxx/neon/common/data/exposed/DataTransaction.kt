@@ -13,13 +13,18 @@ import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.runFailing
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 suspend fun <T> dataTransaction(
     stackTrace: StackTrace = StackTrace(),
     block: () -> T,
 ): Outcome<T, DataTransactionError> =
-    runFailing(stackTrace) { newSuspendedTransaction(Dispatchers.IO) { block() } }
+    runFailing(stackTrace) { newSuspendedTransaction(Dispatchers.IO) {
+        addLogger(StdOutSqlLogger)
+        block()
+    } }
         .mapError(stackTrace) { error ->
             when (error) {
                 is ExposedSQLException -> DataTransactionError.SqlError
