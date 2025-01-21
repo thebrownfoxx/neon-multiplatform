@@ -29,22 +29,29 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.ExpressionAlias
+import org.jetbrains.exposed.sql.LiteralOp
 import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.QueryAlias
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.rowNumber
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.UUIDColumnType
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
-import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.longLiteral
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.upsert
+import java.util.UUID
 
 class ExposedMessageRepository(
     database: Database,
@@ -55,13 +62,13 @@ class ExposedMessageRepository(
         initializeExposeDatabase(database, LocalMessageTable, LocalTimestampedMessageIdTable)
     }
 
-    private val conversationsCache = SingleReactiveCache(externalScope, ::getConversations)
+    private val chatPreviewsCache = SingleReactiveCache(externalScope, ::getChatPreview)
     private val messagesCache = ReactiveCache(externalScope, ::getMessages)
     private val messageCache = ReactiveCache(externalScope, ::get)
 
     override val chatPreviews:
             Flow<Outcome<LocalChatPreviews, DataOperationError>> =
-        conversationsCache.getAsFlow()
+        chatPreviewsCache.getAsFlow()
 
     override val outgoingQueue = Channel<LocalMessage>(Channel.BUFFERED)
 
@@ -103,7 +110,7 @@ class ExposedMessageRepository(
                 messageCache.update(message.id)
                 if (message.delivery == LocalDelivery.Sending) {
                     outgoingQueue.send(message)
-                    conversationsCache.update()
+                    chatPreviewsCache.update()
                     messagesCache.update(message.groupId)
                 }
             }
@@ -125,7 +132,7 @@ class ExposedMessageRepository(
             .mapUnitOperationTransaction()
             .onSuccess {
                 messages.forEach { messageCache.update(it.id) }
-                conversationsCache.update()
+                chatPreviewsCache.update()
             }
     }
 
@@ -148,20 +155,11 @@ class ExposedMessageRepository(
             }
     }
 
-    private suspend fun getConversations(): Outcome<LocalChatPreviews, DataOperationError> {
+    private suspend fun getChatPreview(): Outcome<LocalChatPreviews, DataOperationError> {
         val memberId = getMemberId()
         return dataTransaction {
-            val sent = LocalMessageTable.senderId eq memberId.toJavaUuid()
-            val conversationRead = LocalMessageTable.delivery eq LocalDelivery.Read.name or sent
-
-            val unreadPreviews = getChatPreviews()
-                .where(not(conversationRead))
-                .map { it.toLocalMessage() }
-
-            val readPreviews = getChatPreviews()
-                .where(conversationRead)
-                .map { it.toLocalMessage() }
-
+            val unreadPreviews = getChatPreviews(memberId, read = false)
+            val readPreviews = getChatPreviews(memberId, read = true)
             val nudgedPreviews = when {
                 unreadPreviews.size > 10 -> unreadPreviews.takeLast(2)
                 else -> emptyList()
@@ -177,25 +175,65 @@ class ExposedMessageRepository(
         }.mapOperationTransaction()
     }
 
-    private fun getChatPreviews(): Query {
-        val groupId = LocalMessageTable.groupId.alias("group_id")
-        val maxTimestamp = LocalMessageTable.timestamp.max().alias("max_timestamp")
+    private fun getChatPreviews(
+        memberId: MemberId,
+        read: Boolean,
+    ): List<LocalMessage> {
+        val rowNumber = rowNumber()
+            .over()
+            .partitionBy(LocalMessageTable.groupId)
+            .orderBy(LocalMessageTable.timestamp, SortOrder.DESC)
+            .alias("row_number")
 
-        val conversations = LocalMessageTable
-            .select(groupId, maxTimestamp)
-            .groupBy(LocalMessageTable.groupId)
-            .alias("conversations")
+        val aliases = LocalMessageAliases.generate("ranked")
 
-        val chatPreviews = LocalMessageTable
-            .join(
-                conversations,
-                JoinType.INNER,
-            ) {
-                (LocalMessageTable.groupId eq conversations[groupId]) and
-                        (LocalMessageTable.timestamp eq conversations[maxTimestamp])
-            }.selectAll()
-            .orderBy(column = maxTimestamp, order = SortOrder.DESC)
-        return chatPreviews
+        val rankedMessages = LocalMessageTable
+            .select(aliases.columns + rowNumber)
+            .alias("ranked_messages")
+
+        val sent = aliases.senderId.aliasOnlyExpression() eq
+                LiteralOp(UUIDColumnType(), memberId.toJavaUuid())
+
+        val conversationRead = aliases.delivery.aliasOnlyExpression() eq
+                stringLiteral(LocalDelivery.Read.name) or sent
+
+        val isFirst = rowNumber.aliasOnlyExpression() eq longLiteral(1L)
+
+        val readModifier = when {
+            read -> conversationRead
+            else -> not(conversationRead)
+        }
+
+        return rankedMessages.selectAll(aliases)
+            .where(isFirst and readModifier)
+            .map { it.toLocalMessage(aliases) }
+    }
+
+    private fun QueryAlias.selectAll(aliases: LocalMessageAliases): Query {
+        return with(aliases) {
+            select(
+                id.aliasOnlyExpression(),
+                groupId.aliasOnlyExpression(),
+                senderId.aliasOnlyExpression(),
+                content.aliasOnlyExpression(),
+                timestamp.aliasOnlyExpression(),
+                delivery.aliasOnlyExpression(),
+            )
+        }
+    }
+
+    private fun ResultRow.toLocalMessage(aliases: LocalMessageAliases): LocalMessage {
+        val row = this
+        return with(aliases) {
+            LocalMessage(
+                id = MessageId(row[id.aliasOnlyExpression()].toCommonUuid()),
+                groupId = GroupId(row[groupId.aliasOnlyExpression()].toCommonUuid()),
+                senderId = MemberId(row[senderId.aliasOnlyExpression()].toCommonUuid()),
+                content = row[content.aliasOnlyExpression()],
+                timestamp = row[timestamp.aliasOnlyExpression()],
+                delivery = LocalDelivery.valueOf(row[delivery.aliasOnlyExpression()]),
+            )
+        }
     }
 
     private suspend fun getMessages(
@@ -235,14 +273,16 @@ class ExposedMessageRepository(
         timestamp = this[LocalTimestampedMessageIdTable.timestamp],
     )
 
-    private fun ResultRow.toLocalMessage() = LocalMessage(
-        id = MessageId(this[LocalMessageTable.id].toCommonUuid()),
-        groupId = GroupId(this[LocalMessageTable.groupId].toCommonUuid()),
-        senderId = MemberId(this[LocalMessageTable.senderId].toCommonUuid()),
-        content = this[LocalMessageTable.content],
-        timestamp = this[LocalMessageTable.timestamp],
-        delivery = LocalDelivery.valueOf(this[LocalMessageTable.delivery]),
-    )
+    private fun ResultRow.toLocalMessage(): LocalMessage {
+        return LocalMessage(
+            id = MessageId(this[LocalMessageTable.id].toCommonUuid()),
+            groupId = GroupId(this[LocalMessageTable.groupId].toCommonUuid()),
+            senderId = MemberId(this[LocalMessageTable.senderId].toCommonUuid()),
+            content = this[LocalMessageTable.content],
+            timestamp = this[LocalMessageTable.timestamp],
+            delivery = LocalDelivery.valueOf(this[LocalMessageTable.delivery]),
+        )
+    }
 }
 
 private object LocalMessageTable : Table("message") {
@@ -267,3 +307,25 @@ private object LocalTimestampedMessageIdTable : Table("timestamped_message_id") 
 
     override val primaryKey = PrimaryKey(id)
 } // TODO: Merge this with LocalMessageTable and just make things nullable
+
+data class LocalMessageAliases(
+    val id: ExpressionAlias<UUID>,
+    val groupId: ExpressionAlias<UUID>,
+    val senderId: ExpressionAlias<UUID>,
+    val content: ExpressionAlias<String>,
+    val timestamp: ExpressionAlias<Instant>,
+    val delivery: ExpressionAlias<String>,
+) {
+    companion object {
+        fun generate(prefix: String) = LocalMessageAliases(
+            id = LocalMessageTable.id.alias("${prefix}_id"),
+            groupId = LocalMessageTable.groupId.alias("${prefix}_group_id"),
+            senderId = LocalMessageTable.senderId.alias("${prefix}_sender_id"),
+            content = LocalMessageTable.content.alias("${prefix}_content"),
+            timestamp = LocalMessageTable.timestamp.alias("${prefix}_timestamp"),
+            delivery = LocalMessageTable.delivery.alias("${prefix}_delivery"),
+        )
+    }
+
+    val columns = listOf(id, groupId, senderId, content, timestamp, delivery)
+}

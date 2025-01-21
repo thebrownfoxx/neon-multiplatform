@@ -33,6 +33,7 @@ import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
 import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
+import com.thebrownfoxx.neon.common.logDebug
 import com.thebrownfoxx.neon.common.logError
 import com.thebrownfoxx.neon.common.type.Loadable
 import com.thebrownfoxx.neon.common.type.Loaded
@@ -48,8 +49,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ThrowingApi::class, ExperimentalCoroutinesApi::class)
 class ChatPreviewsStateHandler(
@@ -76,8 +79,17 @@ class ChatPreviewsStateHandler(
             getPreviews(loggedInMemberId, lastVisiblePreviewId)
         }
     }
+        .map { it.also { logDebug(it) } }
         .catch { logError(it) }
         .stateIn(externalScope, SharingStarted.Eagerly, initialState)
+
+    init {
+        externalScope.launch {
+            previews.collect {
+                logDebug(it)
+            }
+        }
+    }
 
     private fun getPreviews(
         loggedInMemberId: MemberId?,

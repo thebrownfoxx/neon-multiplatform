@@ -1,8 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import java.io.FileInputStream
-import java.util.Properties
-
 rootProject.name = "Neon"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
@@ -30,18 +27,6 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.github.com/the-brown-foxx/outcome")
-            credentials {
-                val propertiesFile = file("local.properties")
-                val properties = Properties()
-                if (propertiesFile.exists()) {
-                    properties.load(FileInputStream(propertiesFile))
-                }
-                username = properties.getProperty("gpr.user") ?: System.getenv("USERNAME")
-                password = properties.getProperty("gpr.key") ?: System.getenv("TOKEN")
-            }
-        }
     }
 }
 
