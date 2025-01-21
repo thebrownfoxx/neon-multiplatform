@@ -20,11 +20,14 @@ import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.map.getOrElse
 import com.thebrownfoxx.outcome.map.map
 import com.thebrownfoxx.outcome.map.onSuccess
+import com.thebrownfoxx.outcome.map.transform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -59,7 +62,7 @@ class ExposedMessageRepository(
     externalScope: CoroutineScope,
 ) : MessageRepository {
     init {
-        initializeExposeDatabase(database, LocalMessageTable, LocalTimestampedMessageIdTable)
+        initializeExposeDatabase(database, LocalMessageTable)
     }
 
     private val chatPreviewsCache = SingleReactiveCache(externalScope, ::getChatPreview)
@@ -99,11 +102,6 @@ class ExposedMessageRepository(
                 it[timestamp] = message.timestamp
                 it[delivery] = message.delivery.name
             }
-            LocalTimestampedMessageIdTable.upsert {
-                it[id] = message.id.toJavaUuid()
-                it[groupId] = message.groupId.toJavaUuid()
-                it[timestamp] = message.timestamp
-            }
         }
             .mapUnitOperationTransaction()
             .onSuccess {
@@ -140,10 +138,17 @@ class ExposedMessageRepository(
         messageIds: List<LocalTimestampedMessageId>,
     ): UnitOutcome<DataOperationError> {
         return dataTransaction {
-            LocalTimestampedMessageIdTable.batchUpsert(messageIds) { messageId ->
-                this[LocalTimestampedMessageIdTable.id] = messageId.id.toJavaUuid()
-                this[LocalTimestampedMessageIdTable.groupId] = messageId.groupId.toJavaUuid()
-                this[LocalTimestampedMessageIdTable.timestamp] = messageId.timestamp
+            LocalMessageTable.batchUpsert(
+                messageIds,
+                onUpdateExclude = listOf(
+                    LocalMessageTable.senderId,
+                    LocalMessageTable.content,
+                    LocalMessageTable.delivery,
+                ),
+            ) { messageId ->
+                this[LocalMessageTable.id] = messageId.id.toJavaUuid()
+                this[LocalMessageTable.groupId] = messageId.groupId.toJavaUuid()
+                this[LocalMessageTable.timestamp] = messageId.timestamp
             }
         }
             .mapUnitOperationTransaction()
@@ -207,6 +212,7 @@ class ExposedMessageRepository(
         return rankedMessages.selectAll(aliases)
             .where(isFirst and readModifier)
             .map { it.toLocalMessage(aliases) }
+            .filterNotNull()
     }
 
     private fun QueryAlias.selectAll(aliases: LocalMessageAliases): Query {
@@ -222,16 +228,22 @@ class ExposedMessageRepository(
         }
     }
 
-    private fun ResultRow.toLocalMessage(aliases: LocalMessageAliases): LocalMessage {
+    private fun ResultRow.toLocalMessage(aliases: LocalMessageAliases): LocalMessage? {
         val row = this
         return with(aliases) {
+            val senderIdValue = row[senderId.aliasOnlyExpression()]
+                ?.let { MemberId(it.toCommonUuid()) }
+            val contentValue = row[content.aliasOnlyExpression()]
+            val deliveryValue = row[delivery.aliasOnlyExpression()]
+                ?.let { LocalDelivery.valueOf(it) }
+            if (senderIdValue == null || contentValue == null || deliveryValue == null) return null
             LocalMessage(
                 id = MessageId(row[id.aliasOnlyExpression()].toCommonUuid()),
                 groupId = GroupId(row[groupId.aliasOnlyExpression()].toCommonUuid()),
-                senderId = MemberId(row[senderId.aliasOnlyExpression()].toCommonUuid()),
-                content = row[content.aliasOnlyExpression()],
+                senderId = senderIdValue,
+                content = contentValue,
                 timestamp = row[timestamp.aliasOnlyExpression()],
-                delivery = LocalDelivery.valueOf(row[delivery.aliasOnlyExpression()]),
+                delivery = deliveryValue,
             )
         }
     }
@@ -240,10 +252,10 @@ class ExposedMessageRepository(
         groupId: GroupId,
     ): Outcome<List<LocalTimestampedMessageId>, DataOperationError> {
         return dataTransaction {
-            LocalTimestampedMessageIdTable
+            LocalMessageTable
                 .selectAll()
-                .orderBy(LocalTimestampedMessageIdTable.timestamp to SortOrder.DESC)
-                .where(LocalTimestampedMessageIdTable.groupId eq groupId.toJavaUuid())
+                .orderBy(LocalMessageTable.timestamp to SortOrder.DESC)
+                .where(LocalMessageTable.groupId eq groupId.toJavaUuid())
                 .map { it.toLocalTimestampedMessageId() }
         }.mapOperationTransaction()
     }
@@ -255,7 +267,12 @@ class ExposedMessageRepository(
                 .where(LocalMessageTable.id eq id.toJavaUuid())
                 .firstOrNotFound()
                 .map { it.toLocalMessage() }
-        }.mapGetTransaction()
+        }
+            .mapGetTransaction()
+            .transform(
+                onSuccess = { it?.let { Success(it) } ?: Failure(GetError.NotFound) },
+                onFailure = { Failure(it) },
+            )
     }
 
     private suspend fun getOutgoingMessages(): Outcome<List<LocalMessage>, DataOperationError> {
@@ -264,23 +281,28 @@ class ExposedMessageRepository(
                 .selectAll()
                 .where(LocalMessageTable.delivery eq LocalDelivery.Sending.name)
                 .map { it.toLocalMessage() }
+                .filterNotNull()
         }.mapOperationTransaction()
     }
 
     private fun ResultRow.toLocalTimestampedMessageId() = LocalTimestampedMessageId(
-        id = MessageId(this[LocalTimestampedMessageIdTable.id].toCommonUuid()),
-        groupId = GroupId(this[LocalTimestampedMessageIdTable.groupId].toCommonUuid()),
-        timestamp = this[LocalTimestampedMessageIdTable.timestamp],
+        id = MessageId(this[LocalMessageTable.id].toCommonUuid()),
+        groupId = GroupId(this[LocalMessageTable.groupId].toCommonUuid()),
+        timestamp = this[LocalMessageTable.timestamp],
     )
 
-    private fun ResultRow.toLocalMessage(): LocalMessage {
+    private fun ResultRow.toLocalMessage(): LocalMessage? {
+        val senderId = this[LocalMessageTable.senderId]?.let { MemberId(it.toCommonUuid()) }
+        val content = this[LocalMessageTable.content]
+        val delivery = this[LocalMessageTable.delivery]?.let { LocalDelivery.valueOf(it) }
+        if (senderId == null || content == null || delivery == null) return null
         return LocalMessage(
             id = MessageId(this[LocalMessageTable.id].toCommonUuid()),
             groupId = GroupId(this[LocalMessageTable.groupId].toCommonUuid()),
-            senderId = MemberId(this[LocalMessageTable.senderId].toCommonUuid()),
-            content = this[LocalMessageTable.content],
+            senderId = senderId,
+            content = content,
             timestamp = this[LocalMessageTable.timestamp],
-            delivery = LocalDelivery.valueOf(this[LocalMessageTable.delivery]),
+            delivery = delivery,
         )
     }
 }
@@ -288,33 +310,25 @@ class ExposedMessageRepository(
 private object LocalMessageTable : Table("message") {
     val id = uuid("id")
     val groupId = uuid("group_id")
-    val senderId = uuid("sender_id")
-    val content = text("content")
+    val senderId = uuid("sender_id").nullable()
+    val content = text("content").nullable()
     val timestamp = timestamp("timestamp")
 
     // We could make like a Postgres mapping but it's too complicated and bound to Postgres
     // (at least with Exposed's current implementation)
     // So I'm just gonna save it as a string and parse it later
-    val delivery = varchar("delivery", 32)
+    val delivery = varchar("delivery", 32).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
 
-private object LocalTimestampedMessageIdTable : Table("timestamped_message_id") {
-    val id = uuid("id")
-    val groupId = uuid("group_id")
-    val timestamp = timestamp("timestamp")
-
-    override val primaryKey = PrimaryKey(id)
-} // TODO: Merge this with LocalMessageTable and just make things nullable
-
 data class LocalMessageAliases(
     val id: ExpressionAlias<UUID>,
     val groupId: ExpressionAlias<UUID>,
-    val senderId: ExpressionAlias<UUID>,
-    val content: ExpressionAlias<String>,
+    val senderId: ExpressionAlias<UUID?>,
+    val content: ExpressionAlias<String?>,
     val timestamp: ExpressionAlias<Instant>,
-    val delivery: ExpressionAlias<String>,
+    val delivery: ExpressionAlias<String?>,
 ) {
     companion object {
         fun generate(prefix: String) = LocalMessageAliases(

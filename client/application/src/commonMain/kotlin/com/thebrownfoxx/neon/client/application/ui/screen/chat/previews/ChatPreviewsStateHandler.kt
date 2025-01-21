@@ -19,8 +19,8 @@ import com.thebrownfoxx.neon.client.application.ui.state.toAvatarState
 import com.thebrownfoxx.neon.client.application.ui.state.toChatGroupName
 import com.thebrownfoxx.neon.client.application.ui.state.toDeliveryState
 import com.thebrownfoxx.neon.client.model.LocalChatGroup
-import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalChatPreviews
+import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
@@ -52,7 +52,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 @OptIn(ThrowingApi::class, ExperimentalCoroutinesApi::class)
 class ChatPreviewsStateHandler(
@@ -82,14 +81,6 @@ class ChatPreviewsStateHandler(
         .map { it.also { logDebug(it) } }
         .catch { logError(it) }
         .stateIn(externalScope, SharingStarted.Eagerly, initialState)
-
-    init {
-        externalScope.launch {
-            previews.collect {
-                logDebug(it)
-            }
-        }
-    }
 
     private fun getPreviews(
         loggedInMemberId: MemberId?,

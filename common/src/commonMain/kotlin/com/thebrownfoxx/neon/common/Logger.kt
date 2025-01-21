@@ -39,6 +39,6 @@ object PrintLogger : Logger {
     }
 }
 
-fun FailureMapScope.logError() {
-    logError(log)
+fun FailureMapScope.logError(stackTrace: StackTrace = StackTrace()) {
+    logError(log, stackTrace)
 }
