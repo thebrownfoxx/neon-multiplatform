@@ -6,12 +6,14 @@ import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import kotlinx.serialization.Serializable
 
+@Deprecated("Use UpdateDelivery instead")
 @Serializable
 data class MarkAsReadRequest(
     override val requestId: RequestId = RequestId(),
     val groupId: GroupId,
 ) : WebSocketMessage(kClass = MarkAsReadRequest::class)
 
+@Deprecated("Use UpdateDelivery instead")
 @Serializable
 data class MarkAsReadUnauthorized(
     override val requestId: RequestId,
@@ -22,6 +24,7 @@ data class MarkAsReadUnauthorized(
     description = "The member with the given id is not authorized to mark this conversation as read",
 )
 
+@Deprecated("Use UpdateDelivery instead")
 @Serializable
 data class MarkAsReadAlreadyRead(
     override val requestId: RequestId,
@@ -32,6 +35,7 @@ data class MarkAsReadAlreadyRead(
     description = "The conversation with the given id has already been marked as read",
 )
 
+@Deprecated("Use UpdateDelivery instead")
 @Serializable
 data class MarkAsReadGroupNotFound(
     override val requestId: RequestId,
@@ -41,6 +45,7 @@ data class MarkAsReadGroupNotFound(
     description = "The group with the given id was not found",
 )
 
+@Deprecated("Use UpdateDelivery instead")
 @Serializable
 data class MarkAsReadUnexpectedError(
     override val requestId: RequestId,
@@ -51,6 +56,7 @@ data class MarkAsReadUnexpectedError(
     description = "An error occurred while marking the conversation as read",
 )
 
+@Deprecated("Use UpdateDelivery instead")
 @Serializable
 data class MarkAsReadSuccessful(
     override val requestId: RequestId,

@@ -14,6 +14,11 @@ interface DeliveryRepository {
         memberId: MemberId,
     ): Flow<Outcome<Delivery, DataOperationError>>
 
+    suspend fun get(
+        messageId: MessageId,
+        memberId: MemberId,
+    ): Outcome<Delivery, DataOperationError>
+
     suspend fun set(
         messageId: MessageId,
         memberId: MemberId,

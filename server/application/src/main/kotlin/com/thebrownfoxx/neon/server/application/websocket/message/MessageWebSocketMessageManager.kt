@@ -38,6 +38,13 @@ import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryAlreadySet
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryMessageNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryReverseDelivery
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliverySuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryUnexpectedError
 import com.thebrownfoxx.neon.server.service.Messenger
 import com.thebrownfoxx.neon.server.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
@@ -54,9 +61,10 @@ class MessageWebSocketMessageManager(
     private val getChatPreviewsJobManager = SingleJobManager(externalScope)
     private val getMessagesJobManager = JobManager<GroupId>(externalScope)
     private val getMessageJobManager = JobManager<MessageId>(externalScope)
-    private val getDeliveryJobManager = JobManager<GetDeliveryKey>(externalScope)
+    private val getDeliveryJobManager = JobManager<DeliveryKey>(externalScope)
     private val sendMessageJobManager = JobManager<MessageId>(externalScope)
     private val markAsReadJobManager = JobManager<MarkAsReadKey>(externalScope)
+    private val updateDeliveryJobManager = JobManager<DeliveryKey>(externalScope)
 
     init {
         externalScope.launch {
@@ -66,6 +74,7 @@ class MessageWebSocketMessageManager(
             session.listen<GetDeliveryRequest>(externalScope) { it.fulfill() }
             session.listen<SendMessageRequest>(externalScope) { it.fulfill() }
             session.listen<MarkAsReadRequest>(externalScope) { it.fulfill() }
+            session.listen<UpdateDeliveryRequest>(externalScope) { it.fulfill() }
         }
     }
 
@@ -134,7 +143,7 @@ class MessageWebSocketMessageManager(
 
     private fun GetDeliveryRequest.fulfill() {
         val memberId = session.memberId
-        getDeliveryJobManager[GetDeliveryKey(messageId, memberId)] = {
+        getDeliveryJobManager[DeliveryKey(messageId, memberId)] = {
             messenger.getDelivery(session.memberId, messageId).collect { deliveryOutcome ->
                 deliveryOutcome.onSuccess { delivery ->
                     session.send(GetDeliverySuccessful(requestId, delivery))
@@ -203,7 +212,39 @@ class MessageWebSocketMessageManager(
         }
     }
 
-    private data class GetDeliveryKey(
+    private fun UpdateDeliveryRequest.fulfill() {
+        val memberId = session.memberId
+        updateDeliveryJobManager[DeliveryKey(messageId, memberId)] = {
+            messenger.updateDelivery(memberId, messageId, delivery).onSuccess {
+                session.send(UpdateDeliverySuccessful(requestId, messageId, delivery))
+            }.onFailure { error ->
+                when (error) {
+                    Messenger.UpdateDeliveryError.Unauthorized ->
+                        session.send(UpdateDeliveryUnauthorized(requestId, messageId, memberId))
+
+                    Messenger.UpdateDeliveryError.MessageNotFound ->
+                        session.send(UpdateDeliveryMessageNotFound(requestId, messageId))
+
+                    is Messenger.UpdateDeliveryError.ReverseDelivery -> session.send(
+                        UpdateDeliveryReverseDelivery(
+                            requestId,
+                            messageId,
+                            error.oldDelivery,
+                            delivery,
+                        )
+                    )
+
+                    Messenger.UpdateDeliveryError.DeliveryAlreadySet ->
+                        session.send(UpdateDeliveryAlreadySet(requestId, messageId, delivery))
+
+                    Messenger.UpdateDeliveryError.UnexpectedError ->
+                        session.send(UpdateDeliveryUnexpectedError(requestId, messageId, delivery))
+                }
+            }
+        }
+    }
+
+    private data class DeliveryKey(
         val messageId: MessageId,
         val memberId: MemberId,
     )

@@ -27,6 +27,7 @@ import com.thebrownfoxx.neon.server.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.server.service.Messenger.MarkAsReadError
 import com.thebrownfoxx.neon.server.service.Messenger.NewConversationError
 import com.thebrownfoxx.neon.server.service.Messenger.SendMessageError
+import com.thebrownfoxx.neon.server.service.Messenger.UpdateDeliveryError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -196,6 +197,7 @@ class DefaultMessenger(
         }
     }
 
+    @Deprecated("Use update delivery instead")
     override suspend fun markAsRead(
         actorId: MemberId,
         groupId: GroupId,
@@ -220,6 +222,33 @@ class DefaultMessenger(
             }
             UnitSuccess
         }
+    }
+
+    override suspend fun updateDelivery(
+        actorId: MemberId,
+        messageId: MessageId,
+        delivery: Delivery,
+    ): UnitOutcome<UpdateDeliveryError> {     
+        val message = messageRepository.get(messageId)
+            .getOrElse { return Failure(it.getMessageErrorToUpdateDeliveryError()) }
+
+        val groupMemberIds = groupMemberRepository.getMembers(message.groupId)
+            .getOrElse { return Failure(UpdateDeliveryError.UnexpectedError) }
+
+        if (actorId !in groupMemberIds)
+            return Failure(UpdateDeliveryError.Unauthorized)
+
+        val oldDelivery = deliveryRepository.get(messageId, actorId)
+            .getOrElse { return Failure(UpdateDeliveryError.UnexpectedError) }
+
+        if (delivery.ordinal < oldDelivery.ordinal)
+            return Failure(UpdateDeliveryError.ReverseDelivery(oldDelivery))
+
+        if (delivery == oldDelivery)
+            return Failure(UpdateDeliveryError.DeliveryAlreadySet)
+
+        return deliveryRepository.set(messageId, actorId, delivery).finalize()
+            .mapError { UpdateDeliveryError.UnexpectedError }
     }
 
     private suspend fun List<Message>.markAsRead(
@@ -272,10 +301,15 @@ class DefaultMessenger(
         AddError.ConnectionError, AddError.UnexpectedError -> SendMessageError.UnexpectedError
     }
 
-    private fun GetError.getGroupErrorToMarkAsReadError() =
-        when (this) {
-            GetError.NotFound -> MarkAsReadError.GroupNotFound
-            GetError.ConnectionError, GetError.UnexpectedError ->
-                MarkAsReadError.UnexpectedError
-        }
+    private fun GetError.getGroupErrorToMarkAsReadError() = when (this) {
+        GetError.NotFound -> MarkAsReadError.GroupNotFound
+        GetError.ConnectionError, GetError.UnexpectedError ->
+            MarkAsReadError.UnexpectedError
+    }
+
+    private fun GetError.getMessageErrorToUpdateDeliveryError() = when (this) {
+        GetError.NotFound -> UpdateDeliveryError.MessageNotFound
+        GetError.ConnectionError, GetError.UnexpectedError ->
+            UpdateDeliveryError.UnexpectedError
+    }
 }

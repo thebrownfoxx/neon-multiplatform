@@ -40,10 +40,17 @@ interface Messenger {
         content: String,
     ): UnitOutcome<SendMessageError>
 
+    @Deprecated("Use update delivery instead")
     suspend fun markAsRead(
         actorId: MemberId,
         groupId: GroupId,
     ): UnitOutcome<MarkAsReadError>
+
+    suspend fun updateDelivery(
+        actorId: MemberId,
+        messageId: MessageId,
+        delivery: Delivery,
+    ): UnitOutcome<UpdateDeliveryError>
 
     enum class GetChatPreviewsError {
         MemberNotFound,
@@ -85,5 +92,13 @@ interface Messenger {
         AlreadyRead,
         GroupNotFound,
         UnexpectedError,
+    }
+
+    sealed interface UpdateDeliveryError {
+        data object Unauthorized : UpdateDeliveryError
+        data object MessageNotFound : UpdateDeliveryError
+        data class ReverseDelivery(val oldDelivery: Delivery) : UpdateDeliveryError
+        data object DeliveryAlreadySet : UpdateDeliveryError
+        data object UnexpectedError : UpdateDeliveryError
     }
 }

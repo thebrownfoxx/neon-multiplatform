@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.server.repository.exposed
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.ReactiveCache
 import com.thebrownfoxx.neon.common.data.exposed.dataTransaction
+import com.thebrownfoxx.neon.common.data.exposed.initializeExposeDatabase
 import com.thebrownfoxx.neon.common.data.exposed.mapOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.mapUnitOperationTransaction
 import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
@@ -29,6 +30,10 @@ class ExposedDeliveryRepository(
     database: Database,
     externalScope: CoroutineScope,
 ) : DeliveryRepository {
+    init {
+        initializeExposeDatabase(database, DeliveryTable)
+    }
+
     private val deliveryCache = ReactiveCache(externalScope, ::get)
 
     override fun getAsFlow(
@@ -36,6 +41,13 @@ class ExposedDeliveryRepository(
         memberId: MemberId,
     ): Flow<Outcome<Delivery, DataOperationError>> {
         return deliveryCache.getAsFlow(DeliveryKey(messageId, memberId))
+    }
+
+    override suspend fun get(
+        messageId: MessageId,
+        memberId: MemberId,
+    ): Outcome<Delivery, DataOperationError> {
+        return get(DeliveryKey(messageId, memberId))
     }
 
     override suspend fun set(
