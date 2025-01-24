@@ -24,6 +24,11 @@ class DirectConversationBuilderScope internal constructor() {
         }
     }
 
+    fun member(id: MemberId): MemberId {
+        memberIds.add(id)
+        return id
+    }
+
     internal fun build(): DirectConversationRecord {
         val chatGroupRecord = ChatGroupRecord(
             group = ChatGroup(),

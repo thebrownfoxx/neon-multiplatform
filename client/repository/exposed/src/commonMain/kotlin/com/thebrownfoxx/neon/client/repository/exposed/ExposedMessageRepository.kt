@@ -173,7 +173,7 @@ class ExposedMessageRepository(
             LocalChatPreviews(
                 nudgedPreviews = nudgedPreviews,
                 unreadPreviews = unreadPreviews.filter { unread ->
-                    nudgedPreviews.none { it.groupId != unread.groupId }
+                    nudgedPreviews.none { it.groupId == unread.groupId }
                 },
                 readPreviews = readPreviews,
             )

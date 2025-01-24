@@ -32,7 +32,7 @@ class DummyMessenger(
     private val generatedMessages = mutableListOf<LocalMessage>()
 
     private val generatedChatPreviews = run {
-        val nudged = generateChatPreviews(2)
+        val  nudged = generateChatPreviews(2)
         val unread = generateChatPreviews(10)
         val read = generateChatPreviews(500)
         LocalChatPreviews(nudged, unread, read)
