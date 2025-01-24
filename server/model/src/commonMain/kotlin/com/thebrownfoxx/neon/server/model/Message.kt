@@ -13,6 +13,8 @@ data class Message(
     val senderId: MemberId,
     val content: String,
     val timestamp: Instant,
+
+    @Deprecated("Stop using this. Fetch delivery for each member.")
     val delivery: Delivery,
 )
 

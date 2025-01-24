@@ -3,7 +3,6 @@ package com.thebrownfoxx.neon.server.service.default
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.UpdateError
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.flatMap
 import com.thebrownfoxx.neon.common.data.transaction.transaction
@@ -15,15 +14,17 @@ import com.thebrownfoxx.neon.server.model.ChatGroup
 import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.model.TimestampedMessageId
+import com.thebrownfoxx.neon.server.repository.DeliveryRepository
 import com.thebrownfoxx.neon.server.repository.GroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.GroupRepository
 import com.thebrownfoxx.neon.server.repository.MemberRepository
 import com.thebrownfoxx.neon.server.repository.MessageRepository
 import com.thebrownfoxx.neon.server.service.Messenger
 import com.thebrownfoxx.neon.server.service.Messenger.GetChatPreviewsError
+import com.thebrownfoxx.neon.server.service.Messenger.GetDeliveryError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessagesError
-import com.thebrownfoxx.neon.server.service.Messenger.MarkConversationAsReadError
+import com.thebrownfoxx.neon.server.service.Messenger.MarkAsReadError
 import com.thebrownfoxx.neon.server.service.Messenger.NewConversationError
 import com.thebrownfoxx.neon.server.service.Messenger.SendMessageError
 import com.thebrownfoxx.outcome.Failure
@@ -44,6 +45,7 @@ import kotlinx.datetime.Clock
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultMessenger(
     private val messageRepository: MessageRepository,
+    private val deliveryRepository: DeliveryRepository,
     private val memberRepository: MemberRepository,
     private val groupRepository: GroupRepository,
     private val groupMemberRepository: GroupMemberRepository,
@@ -86,20 +88,43 @@ class DefaultMessenger(
         id: MessageId,
     ): Flow<Outcome<Message, GetMessageError>> {
         return messageRepository.getAsFlow(id).flatMapLatest { messageOutcome ->
-            val message = messageOutcome.getOrElse {
-                return@flatMapLatest Failure(it.toGetMessageError()).flow()
+            val message = messageOutcome.getOrElse { error ->
+                return@flatMapLatest Failure(error.toGetMessageError()).flow()
             }
+            val groupMembers = groupMemberRepository.getMembersAsFlow(message.groupId)
+            groupMembers.mapLatest { groupMemberIdsOutcome ->
+                val groupMemberId = groupMemberIdsOutcome
+                    .getOrElse { return@mapLatest Failure(GetMessageError.UnexpectedError) }
 
-            groupMemberRepository.getMembersAsFlow(message.groupId)
-                .mapLatest { groupMemberIdsOutcome ->
-                    val groupMemberId = groupMemberIdsOutcome
-                        .getOrElse { return@mapLatest Failure(GetMessageError.UnexpectedError) }
+                if (actorId !in groupMemberId)
+                    return@mapLatest Failure(GetMessageError.Unauthorized)
 
-                    if (actorId !in groupMemberId)
-                        return@mapLatest Failure(GetMessageError.Unauthorized)
+                Success(message)
+            }
+        }
+    }
 
-                    Success(message)
+    override fun getDelivery(
+        actorId: MemberId,
+        messageId: MessageId,
+    ): Flow<Outcome<Delivery, GetDeliveryError>> {
+        return messageRepository.getAsFlow(messageId).flatMapLatest { messageOutcome ->
+            val message = messageOutcome.getOrElse { error ->
+                return@flatMapLatest Failure(error.getMessageErrorToGetDeliveryError()).flow()
+            }
+            val groupMembers = groupMemberRepository.getMembersAsFlow(message.groupId)
+            groupMembers.flatMapLatest groupMembers@{ groupMemberIdsOutcome ->
+                val groupMemberId = groupMemberIdsOutcome.getOrElse {
+                    return@groupMembers Failure(GetDeliveryError.UnexpectedError).flow()
                 }
+
+                if (actorId !in groupMemberId)
+                    return@groupMembers Failure(GetDeliveryError.Unauthorized).flow()
+
+                deliveryRepository.getAsFlow(messageId, actorId).mapLatest { deliveryOutcome ->
+                    deliveryOutcome.mapError { GetDeliveryError.UnexpectedError }
+                }
+            }
         }
     }
 
@@ -160,7 +185,7 @@ class DefaultMessenger(
             .getOrElse { return Failure(SendMessageError.UnexpectedError) }
 
         return transaction {
-            unreadMessages.markAsRead().register().onFailure {
+            unreadMessages.markAsRead(actorId).register().onFailure {
                 return@transaction Failure(SendMessageError.UnexpectedError)
             }
 
@@ -171,35 +196,37 @@ class DefaultMessenger(
         }
     }
 
-    override suspend fun markConversationAsRead(
+    override suspend fun markAsRead(
         actorId: MemberId,
         groupId: GroupId,
-    ): UnitOutcome<MarkConversationAsReadError> {
+    ): UnitOutcome<MarkAsReadError> {
         groupRepository.get(groupId)
-            .onFailure { return Failure(it.getGroupErrorToMarkConversationAsReadError()) }
+            .onFailure { return Failure(it.getGroupErrorToMarkAsReadError()) }
 
         val groupMemberIds = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
+            .getOrElse { return Failure(MarkAsReadError.UnexpectedError) }
 
         if (actorId !in groupMemberIds)
-            return Failure(MarkConversationAsReadError.Unauthorized)
+            return Failure(MarkAsReadError.Unauthorized)
 
         val unreadMessages = messageRepository.getUnreadMessages(actorId, groupId)
-            .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
+            .getOrElse { return Failure(MarkAsReadError.UnexpectedError) }
 
-        if (unreadMessages.isEmpty()) return Failure(MarkConversationAsReadError.AlreadyRead)
+        if (unreadMessages.isEmpty()) return Failure(MarkAsReadError.AlreadyRead)
 
         return transaction {
-            unreadMessages.markAsRead().register().onFailure {
-                return@transaction Failure(MarkConversationAsReadError.UnexpectedError)
+            unreadMessages.markAsRead(actorId).register().onFailure {
+                return@transaction Failure(MarkAsReadError.UnexpectedError)
             }
             UnitSuccess
         }
     }
 
-    private suspend fun List<Message>.markAsRead(): ReversibleUnitOutcome<UpdateError> {
+    private suspend fun List<Message>.markAsRead(
+        actorId: MemberId,
+    ): ReversibleUnitOutcome<DataOperationError> {
         return map { message ->
-            messageRepository.update(message.copy(delivery = Delivery.Read))
+            deliveryRepository.set(message.id, actorId, Delivery.Read)
         }.flatMap {}
     }
 
@@ -225,6 +252,11 @@ class DefaultMessenger(
         GetError.ConnectionError, GetError.UnexpectedError -> GetMessageError.UnexpectedError
     }
 
+    private fun GetError.getMessageErrorToGetDeliveryError() = when (this) {
+        GetError.NotFound -> GetDeliveryError.MessageNotFound
+        GetError.ConnectionError, GetError.UnexpectedError -> GetDeliveryError.UnexpectedError
+    }
+
     private fun GetError.getMemberErrorToNewConversationError() = when (this) {
         GetError.NotFound -> NewConversationError.MemberNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> NewConversationError.UnexpectedError
@@ -240,10 +272,10 @@ class DefaultMessenger(
         AddError.ConnectionError, AddError.UnexpectedError -> SendMessageError.UnexpectedError
     }
 
-    private fun GetError.getGroupErrorToMarkConversationAsReadError() =
+    private fun GetError.getGroupErrorToMarkAsReadError() =
         when (this) {
-            GetError.NotFound -> MarkConversationAsReadError.GroupNotFound
+            GetError.NotFound -> MarkAsReadError.GroupNotFound
             GetError.ConnectionError, GetError.UnexpectedError ->
-                MarkConversationAsReadError.UnexpectedError
+                MarkAsReadError.UnexpectedError
         }
 }

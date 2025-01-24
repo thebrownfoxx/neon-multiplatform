@@ -10,7 +10,7 @@ import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
-import com.thebrownfoxx.neon.client.service.Messenger.MarkConversationAsReadError
+import com.thebrownfoxx.neon.client.service.Messenger.MarkAsReadError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.client.service.toChatPreviews
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
@@ -36,11 +36,11 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadAlreadyRead
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadGroupNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadRequest
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadUnauthorized
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadAlreadyRead
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
@@ -121,25 +121,25 @@ class RemoteMessenger(
         )
     }
 
-    override suspend fun markConversationAsRead(
+    override suspend fun markAsRead(
         groupId: GroupId,
-    ): UnitOutcome<MarkConversationAsReadError> {
-        return requester.request(MarkConversationAsReadRequest(groupId = groupId)) {
-            map<MarkConversationAsReadUnauthorized> {
-                Failure(MarkConversationAsReadError.Unauthorized)
+    ): UnitOutcome<MarkAsReadError> {
+        return requester.request(MarkAsReadRequest(groupId = groupId)) {
+            map<MarkAsReadUnauthorized> {
+                Failure(MarkAsReadError.Unauthorized)
             }
-            map<MarkConversationAsReadAlreadyRead> {
-                Failure(MarkConversationAsReadError.AlreadyRead)
+            map<MarkAsReadAlreadyRead> {
+                Failure(MarkAsReadError.AlreadyRead)
             }
-            map<MarkConversationAsReadGroupNotFound> {
-                Failure(MarkConversationAsReadError.GroupNotFound)
+            map<MarkAsReadGroupNotFound> {
+                Failure(MarkAsReadError.GroupNotFound)
             }
-            map<MarkConversationAsReadUnexpectedError> {
-                Failure(MarkConversationAsReadError.UnexpectedError)
+            map<MarkAsReadUnexpectedError> {
+                Failure(MarkAsReadError.UnexpectedError)
             }
         }.flatMapError(
             onInnerFailure = { it },
-            onOuterFailure = { MarkConversationAsReadError.RequestTimeout },
+            onOuterFailure = { MarkAsReadError.RequestTimeout },
         )
     }
 

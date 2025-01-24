@@ -5,6 +5,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
+// TODO: Handle memory leak from completed coroutines
+
 class JobManager<in K>(private val externalScope: CoroutineScope) {
     private val jobs = ConcurrentHashMap<K, Job>()
 

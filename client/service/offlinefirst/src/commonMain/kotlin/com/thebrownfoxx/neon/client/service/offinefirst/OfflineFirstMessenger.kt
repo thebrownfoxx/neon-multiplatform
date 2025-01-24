@@ -203,7 +203,7 @@ class OfflineFirstMessenger(
         }
     }
 
-    override suspend fun markConversationAsRead(groupId: GroupId): UnitOutcome<Messenger.MarkConversationAsReadError> {
+    override suspend fun markAsRead(groupId: GroupId): UnitOutcome<Messenger.MarkAsReadError> {
         TODO("Not yet implemented")
     }
 

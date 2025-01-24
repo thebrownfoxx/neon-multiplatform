@@ -38,9 +38,9 @@ class DummyMessenger(
         LocalChatPreviews(nudged, unread, read)
     }
 
-    override suspend fun markConversationAsRead(
+    override suspend fun markAsRead(
         groupId: GroupId,
-    ): UnitOutcome<Messenger.MarkConversationAsReadError> {
+    ): UnitOutcome<Messenger.MarkAsReadError> {
         TODO("Not yet implemented")
     }
 

@@ -20,7 +20,7 @@ data class GetMessageUnauthorized(
     val memberId: MemberId,
 ) : WebSocketMessage(
     kClass = GetMessageUnauthorized::class,
-    description = "The member with the given id is not authorized to access the group",
+    description = "The member with the given id is not authorized to access the message",
 )
 
 @Serializable

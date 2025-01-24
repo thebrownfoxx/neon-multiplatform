@@ -7,56 +7,56 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MarkConversationAsReadRequest(
+data class MarkAsReadRequest(
     override val requestId: RequestId = RequestId(),
     val groupId: GroupId,
-) : WebSocketMessage(kClass = MarkConversationAsReadRequest::class)
+) : WebSocketMessage(kClass = MarkAsReadRequest::class)
 
 @Serializable
-data class MarkConversationAsReadUnauthorized(
+data class MarkAsReadUnauthorized(
     override val requestId: RequestId,
     val groupId: GroupId,
     val memberId: MemberId,
 ) : WebSocketMessage(
-    kClass = MarkConversationAsReadUnauthorized::class,
+    kClass = MarkAsReadUnauthorized::class,
     description = "The member with the given id is not authorized to mark this conversation as read",
 )
 
 @Serializable
-data class MarkConversationAsReadAlreadyRead(
+data class MarkAsReadAlreadyRead(
     override val requestId: RequestId,
     val groupId: GroupId,
     val memberId: MemberId,
 ) : WebSocketMessage(
-    kClass = MarkConversationAsReadAlreadyRead::class,
+    kClass = MarkAsReadAlreadyRead::class,
     description = "The conversation with the given id has already been marked as read",
 )
 
 @Serializable
-data class MarkConversationAsReadGroupNotFound(
+data class MarkAsReadGroupNotFound(
     override val requestId: RequestId,
     val groupId: GroupId,
 ) : WebSocketMessage(
-    kClass = MarkConversationAsReadGroupNotFound::class,
+    kClass = MarkAsReadGroupNotFound::class,
     description = "The group with the given id was not found",
 )
 
 @Serializable
-data class MarkConversationAsReadUnexpectedError(
+data class MarkAsReadUnexpectedError(
     override val requestId: RequestId,
     val groupId: GroupId,
     val memberId: MemberId,
 ) : WebSocketMessage(
-    kClass = MarkConversationAsReadUnexpectedError::class,
+    kClass = MarkAsReadUnexpectedError::class,
     description = "An error occurred while marking the conversation as read",
 )
 
 @Serializable
-data class MarkConversationAsReadSuccessful(
+data class MarkAsReadSuccessful(
     override val requestId: RequestId,
     val groupId: GroupId,
     val memberId: MemberId,
 ) : WebSocketMessage(
-    kClass = MarkConversationAsReadSuccessful::class,
+    kClass = MarkAsReadSuccessful::class,
     description = "The conversation was successfully marked as read",
 )

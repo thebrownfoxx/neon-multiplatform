@@ -26,7 +26,7 @@ interface Messenger {
         content: String,
     ): UnitOutcome<SendMessageError>
 
-    suspend fun markConversationAsRead(groupId: GroupId): UnitOutcome<MarkConversationAsReadError>
+    suspend fun markAsRead(groupId: GroupId): UnitOutcome<MarkAsReadError>
 
     enum class GetChatPreviewsError {
         MemberNotFound,
@@ -53,7 +53,7 @@ interface Messenger {
         RequestTimeout,
     }
 
-    enum class MarkConversationAsReadError {
+    enum class MarkAsReadError {
         Unauthorized,
         AlreadyRead,
         GroupNotFound,

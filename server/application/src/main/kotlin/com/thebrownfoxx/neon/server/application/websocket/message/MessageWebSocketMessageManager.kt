@@ -3,14 +3,19 @@ package com.thebrownfoxx.neon.server.application.websocket.message
 import com.thebrownfoxx.neon.common.data.JobManager
 import com.thebrownfoxx.neon.common.data.SingleJobManager
 import com.thebrownfoxx.neon.common.data.websocket.listen
-import com.thebrownfoxx.neon.common.data.websocket.model.RequestId
 import com.thebrownfoxx.neon.common.data.websocket.send
 import com.thebrownfoxx.neon.common.type.id.GroupId
+import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryMessageNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliverySuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -21,12 +26,12 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadAlreadyRead
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadGroupNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadRequest
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadSuccessful
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadUnauthorized
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadAlreadyRead
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
@@ -49,16 +54,18 @@ class MessageWebSocketMessageManager(
     private val getChatPreviewsJobManager = SingleJobManager(externalScope)
     private val getMessagesJobManager = JobManager<GroupId>(externalScope)
     private val getMessageJobManager = JobManager<MessageId>(externalScope)
-    private val sendMessageJobManager = JobManager<RequestId>(externalScope)
-    private val markConversationAsReadJobManager = JobManager<RequestId>(externalScope)
+    private val getDeliveryJobManager = JobManager<GetDeliveryKey>(externalScope)
+    private val sendMessageJobManager = JobManager<MessageId>(externalScope)
+    private val markAsReadJobManager = JobManager<MarkAsReadKey>(externalScope)
 
     init {
         externalScope.launch {
             session.listen<GetChatPreviewsRequest>(externalScope) { it.fulfill() }
             session.listen<GetMessagesRequest>(externalScope) { it.fulfill() }
             session.listen<GetMessageRequest>(externalScope) { it.fulfill() }
+            session.listen<GetDeliveryRequest>(externalScope) { it.fulfill() }
             session.listen<SendMessageRequest>(externalScope) { it.fulfill() }
-            session.listen<MarkConversationAsReadRequest>(externalScope) { it.fulfill() }
+            session.listen<MarkAsReadRequest>(externalScope) { it.fulfill() }
         }
     }
 
@@ -125,8 +132,30 @@ class MessageWebSocketMessageManager(
         }
     }
 
+    private fun GetDeliveryRequest.fulfill() {
+        val memberId = session.memberId
+        getDeliveryJobManager[GetDeliveryKey(messageId, memberId)] = {
+            messenger.getDelivery(session.memberId, messageId).collect { deliveryOutcome ->
+                deliveryOutcome.onSuccess { delivery ->
+                    session.send(GetDeliverySuccessful(requestId, delivery))
+                }.onFailure { error ->
+                    when (error) {
+                        Messenger.GetDeliveryError.Unauthorized ->
+                            session.send(GetDeliveryUnauthorized(requestId, messageId, memberId))
+
+                        Messenger.GetDeliveryError.MessageNotFound ->
+                            session.send(GetDeliveryMessageNotFound(requestId, messageId))
+
+                        Messenger.GetDeliveryError.UnexpectedError ->
+                            session.send(GetDeliveryUnexpectedError(requestId, messageId))
+                    }
+                }
+            }
+        }
+    }
+
     private fun SendMessageRequest.fulfill() {
-        sendMessageJobManager[requestId] = {
+        sendMessageJobManager[id] = {
             messenger.sendMessage(id, session.memberId, groupId, content).onSuccess {
                 session.send(SendMessageSuccessful(requestId, id))
             }.onFailure { error ->
@@ -147,30 +176,40 @@ class MessageWebSocketMessageManager(
         }
     }
 
-    private fun MarkConversationAsReadRequest.fulfill() {
-        markConversationAsReadJobManager[requestId] = {
-            val memberId = session.memberId
-            messenger.markConversationAsRead(memberId, groupId).onSuccess {
-                session.send(MarkConversationAsReadSuccessful(requestId, groupId, memberId))
+    private fun MarkAsReadRequest.fulfill() {
+        val memberId = session.memberId
+        markAsReadJobManager[MarkAsReadKey(groupId, memberId)] = {
+            messenger.markAsRead(memberId, groupId).onSuccess {
+                session.send(MarkAsReadSuccessful(requestId, groupId, memberId))
             }.onFailure { error ->
                 when (error) {
-                    Messenger.MarkConversationAsReadError.Unauthorized -> session.send(
-                        MarkConversationAsReadUnauthorized(requestId, groupId, memberId),
+                    Messenger.MarkAsReadError.Unauthorized -> session.send(
+                        MarkAsReadUnauthorized(requestId, groupId, memberId),
                     )
 
-                    Messenger.MarkConversationAsReadError.AlreadyRead -> session.send(
-                        MarkConversationAsReadAlreadyRead(requestId, groupId, memberId)
+                    Messenger.MarkAsReadError.AlreadyRead -> session.send(
+                        MarkAsReadAlreadyRead(requestId, groupId, memberId)
                     )
 
-                    Messenger.MarkConversationAsReadError.GroupNotFound -> session.send(
-                        MarkConversationAsReadGroupNotFound(requestId, groupId),
+                    Messenger.MarkAsReadError.GroupNotFound -> session.send(
+                        MarkAsReadGroupNotFound(requestId, groupId),
                     )
 
-                    Messenger.MarkConversationAsReadError.UnexpectedError -> session.send(
-                        MarkConversationAsReadUnexpectedError(requestId, groupId, memberId),
+                    Messenger.MarkAsReadError.UnexpectedError -> session.send(
+                        MarkAsReadUnexpectedError(requestId, groupId, memberId),
                     )
                 }
             }
         }
     }
+
+    private data class GetDeliveryKey(
+        val messageId: MessageId,
+        val memberId: MemberId,
+    )
+
+    private data class MarkAsReadKey(
+        val groupId: GroupId,
+        val memberId: MemberId,
+    )
 }
