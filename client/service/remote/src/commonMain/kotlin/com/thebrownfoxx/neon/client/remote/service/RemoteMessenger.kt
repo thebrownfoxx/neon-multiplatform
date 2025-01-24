@@ -10,6 +10,7 @@ import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
+import com.thebrownfoxx.neon.client.service.Messenger.MarkConversationAsReadError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.client.service.toChatPreviews
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
@@ -35,6 +36,11 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadAlreadyRead
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.MarkConversationAsReadUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
@@ -104,14 +110,36 @@ class RemoteMessenger(
     ): UnitOutcome<SendMessageError> {
         val request = SendMessageRequest(id = id, groupId = groupId, content = content)
         return requester.request(request) {
-            map { _: SendMessageUnauthorized -> Failure(SendMessageError.Unauthorized) }
-            map { _: SendMessageGroupNotFound -> Failure(SendMessageError.GroupNotFound) }
-            map { _: SendMessageDuplicateId -> Failure(SendMessageError.DuplicateId) }
-            map { _: SendMessageUnexpectedError -> Failure(SendMessageError.UnexpectedError) }
-            map { _: SendMessageSuccessful -> UnitSuccess }
+            map<SendMessageUnauthorized> { Failure(SendMessageError.Unauthorized) }
+            map<SendMessageGroupNotFound> { Failure(SendMessageError.GroupNotFound) }
+            map<SendMessageDuplicateId> { Failure(SendMessageError.DuplicateId) }
+            map<SendMessageUnexpectedError> { Failure(SendMessageError.UnexpectedError) }
+            map<SendMessageSuccessful> { UnitSuccess }
         }.flatMapError(
             onInnerFailure = { it },
             onOuterFailure = { SendMessageError.RequestTimeout },
+        )
+    }
+
+    override suspend fun markConversationAsRead(
+        groupId: GroupId,
+    ): UnitOutcome<MarkConversationAsReadError> {
+        return requester.request(MarkConversationAsReadRequest(groupId = groupId)) {
+            map<MarkConversationAsReadUnauthorized> {
+                Failure(MarkConversationAsReadError.Unauthorized)
+            }
+            map<MarkConversationAsReadAlreadyRead> {
+                Failure(MarkConversationAsReadError.AlreadyRead)
+            }
+            map<MarkConversationAsReadGroupNotFound> {
+                Failure(MarkConversationAsReadError.GroupNotFound)
+            }
+            map<MarkConversationAsReadUnexpectedError> {
+                Failure(MarkConversationAsReadError.UnexpectedError)
+            }
+        }.flatMapError(
+            onInnerFailure = { it },
+            onOuterFailure = { MarkConversationAsReadError.RequestTimeout },
         )
     }
 

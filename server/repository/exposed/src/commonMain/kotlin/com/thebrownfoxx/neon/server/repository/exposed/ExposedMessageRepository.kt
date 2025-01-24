@@ -43,6 +43,8 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.not
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 
 class ExposedMessageRepository(
@@ -127,8 +129,18 @@ class ExposedMessageRepository(
             }
     }
 
-    override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, DataOperationError> {
-        TODO("Not yet implemented")
+    override suspend fun getUnreadMessages(
+        memberId: MemberId,
+        groupId: GroupId,
+    ): Outcome<List<Message>, DataOperationError> {
+        return dataTransaction {
+            val sent = MessageTable.senderId eq memberId.toJavaUuid()
+            val read = MessageTable.delivery eq Delivery.Read.name or sent
+            MessageTable
+                .selectAll()
+                .where(MessageTable.groupId eq groupId.toJavaUuid() and not(read))
+                .map { it.toMessage() }
+        }.mapOperationTransaction()
     }
 
     private suspend fun getChatPreviews(

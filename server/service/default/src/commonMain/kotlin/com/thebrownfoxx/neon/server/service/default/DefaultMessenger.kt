@@ -3,9 +3,11 @@ package com.thebrownfoxx.neon.server.service.default
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.data.UpdateError
+import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
+import com.thebrownfoxx.neon.common.data.transaction.flatMap
 import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.extension.flow.flow
-import com.thebrownfoxx.neon.common.type.UnexpectedError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
@@ -154,10 +156,19 @@ class DefaultMessenger(
             delivery = Delivery.Sent,
         )
 
-        messageRepository.add(message).finalize()
-            .onFailure { return Failure(it.toSendMessageError()) }
+        val unreadMessages = messageRepository.getUnreadMessages(actorId, groupId)
+            .getOrElse { return Failure(SendMessageError.UnexpectedError) }
 
-        return UnitSuccess
+        return transaction {
+            unreadMessages.markAsRead().register().onFailure {
+                return@transaction Failure(SendMessageError.UnexpectedError)
+            }
+
+            messageRepository.add(message).register()
+                .onFailure { return@transaction Failure(it.toSendMessageError()) }
+
+            UnitSuccess
+        }
     }
 
     override suspend fun markConversationAsRead(
@@ -173,36 +184,23 @@ class DefaultMessenger(
         if (actorId !in groupMemberIds)
             return Failure(MarkConversationAsReadError.Unauthorized)
 
-        val unreadMessages = getUnreadMessages(groupId)
+        val unreadMessages = messageRepository.getUnreadMessages(actorId, groupId)
             .getOrElse { return Failure(MarkConversationAsReadError.UnexpectedError) }
 
         if (unreadMessages.isEmpty()) return Failure(MarkConversationAsReadError.AlreadyRead)
 
         return transaction {
-            for (message in unreadMessages) {
-                messageRepository.update(message.copy(delivery = Delivery.Read))
-                    .register()
-                    .onFailure {
-                        return@transaction Failure(MarkConversationAsReadError.UnexpectedError)
-                    }
+            unreadMessages.markAsRead().register().onFailure {
+                return@transaction Failure(MarkConversationAsReadError.UnexpectedError)
             }
-
             UnitSuccess
         }
     }
 
-    private suspend fun getUnreadMessages(
-        groupId: GroupId,
-    ): Outcome<List<Message>, UnexpectedError> {
-        val unreadMessageIds =
-            messageRepository.getUnreadMessages(groupId)
-                .getOrElse { return Failure(UnexpectedError) }
-
-        val unreadMessages = unreadMessageIds.map { id ->
-            messageRepository.get(id).getOrElse { return Failure(UnexpectedError) }
-        }
-
-        return Success(unreadMessages)
+    private suspend fun List<Message>.markAsRead(): ReversibleUnitOutcome<UpdateError> {
+        return map { message ->
+            messageRepository.update(message.copy(delivery = Delivery.Read))
+        }.flatMap {}
     }
 
     private fun GetError.toGetChatPreviewsError() = when (this) {

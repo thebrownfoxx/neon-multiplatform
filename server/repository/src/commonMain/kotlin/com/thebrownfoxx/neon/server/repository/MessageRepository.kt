@@ -31,6 +31,7 @@ interface MessageRepository {
     suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
 
     suspend fun getUnreadMessages(
+        memberId: MemberId,
         groupId: GroupId,
-    ): Outcome<Set<MessageId>, DataOperationError>
+    ): Outcome<List<Message>, DataOperationError>
 }

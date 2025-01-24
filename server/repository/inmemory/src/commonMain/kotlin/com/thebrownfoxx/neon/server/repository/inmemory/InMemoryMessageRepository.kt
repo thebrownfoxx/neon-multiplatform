@@ -9,7 +9,6 @@ import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
-import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.neon.server.repository.MessageRepository
@@ -76,16 +75,9 @@ class InMemoryMessageRepository : MessageRepository {
     }
 
     override suspend fun getUnreadMessages(
+        memberId: MemberId,
         groupId: GroupId,
-    ): Outcome<Set<MessageId>, DataOperationError> {
-        return messages.mapLatest { messages ->
-            val messageIds = messages.values
-                .filter { it.groupId == groupId && it.delivery != Delivery.Read }
-                .sortedByDescending { it.timestamp }
-                .map { it.id }
-                .toSet()
-
-            Success(messageIds)
-        }.first()
+    ): Outcome<List<Message>, DataOperationError> {
+        TODO()
     }
 }

@@ -38,6 +38,12 @@ class DummyMessenger(
         LocalChatPreviews(nudged, unread, read)
     }
 
+    override suspend fun markConversationAsRead(
+        groupId: GroupId,
+    ): UnitOutcome<Messenger.MarkConversationAsReadError> {
+        TODO("Not yet implemented")
+    }
+
     override val chatPreviews: Flow<Success<LocalChatPreviews>> = flow {
         delay(chatPreviewsDelay)
         emit(Success(generatedChatPreviews))
