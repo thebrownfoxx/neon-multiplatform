@@ -129,6 +129,13 @@ class DefaultMessenger(
         }
     }
 
+    override suspend fun getUnreadMessages(
+        actorId: MemberId,
+        messageId: MessageId,
+    ): Outcome<Set<MessageId>, Messenger.GetUnreadMessagesError> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun newConversation(
         memberIds: Set<MemberId>,
     ): UnitOutcome<NewConversationError> {
@@ -193,33 +200,6 @@ class DefaultMessenger(
             messageRepository.add(message).register()
                 .onFailure { return@transaction Failure(it.toSendMessageError()) }
 
-            UnitSuccess
-        }
-    }
-
-    @Deprecated("Use update delivery instead")
-    override suspend fun markAsRead(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): UnitOutcome<MarkAsReadError> {
-        groupRepository.get(groupId)
-            .onFailure { return Failure(it.getGroupErrorToMarkAsReadError()) }
-
-        val groupMemberIds = groupMemberRepository.getMembers(groupId)
-            .getOrElse { return Failure(MarkAsReadError.UnexpectedError) }
-
-        if (actorId !in groupMemberIds)
-            return Failure(MarkAsReadError.Unauthorized)
-
-        val unreadMessages = messageRepository.getUnreadMessages(actorId, groupId)
-            .getOrElse { return Failure(MarkAsReadError.UnexpectedError) }
-
-        if (unreadMessages.isEmpty()) return Failure(MarkAsReadError.AlreadyRead)
-
-        return transaction {
-            unreadMessages.markAsRead(actorId).register().onFailure {
-                return@transaction Failure(MarkAsReadError.UnexpectedError)
-            }
             UnitSuccess
         }
     }

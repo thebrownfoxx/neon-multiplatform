@@ -1,6 +1,6 @@
-package com.thebrownfoxx.neon.client.service.offinefirst
+package com.thebrownfoxx.neon.client.service.offinefirst.old
 
-fun <T> OfflineFirstScope<T>.transformLazyRemote(
+internal fun <T> OfflineFirstScope<T>.transformLazyRemote(
     localNotFound: (T) -> Boolean,
     remoteSucceeded: (T) -> Boolean,
     remoteFailedUnexpectedly: (T) -> Boolean,
@@ -15,7 +15,7 @@ fun <T> OfflineFirstScope<T>.transformLazyRemote(
     }
 }
 
-fun <T> OfflineFirstScope<T>.transformLazy(
+internal fun <T> OfflineFirstScope<T>.transformLazy(
     localSucceeded: (T) -> Boolean,
     localNotFound: (T) -> Boolean,
     localFailedUnexpectedly: (T) -> Boolean,
@@ -38,7 +38,7 @@ fun <T> OfflineFirstScope<T>.transformLazy(
     )
 }
 
-fun <T> OfflineFirstScope<T>.transformLazy(
+internal fun <T> OfflineFirstScope<T>.transformLazy(
     succeeded: (T) -> Boolean,
     notFound: (T) -> Boolean,
     failedUnexpectedly: (T) -> Boolean,

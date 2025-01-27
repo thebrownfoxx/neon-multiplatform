@@ -10,6 +10,7 @@ import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
+import com.thebrownfoxx.neon.client.service.Messenger.GetUnreadMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.MarkAsReadError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.client.service.toChatPreviews
@@ -18,10 +19,13 @@ import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
 import com.thebrownfoxx.neon.common.data.Cache
+import com.thebrownfoxx.neon.common.extension.flatMap
 import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
+import com.thebrownfoxx.neon.common.extension.supervisorScope
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMemberNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsSuccessful
@@ -36,25 +40,30 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadAlreadyRead
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadGroupNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadRequest
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnauthorized
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryAlreadySet
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryMessageNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryReverseDelivery
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliverySuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryUnexpectedError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
 import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.flatMapError
+import com.thebrownfoxx.outcome.map.getOrElse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -79,7 +88,9 @@ class RemoteMessenger(
             getChatPreviews(loggedInMemberId)
         }
 
-    override fun getMessages(groupId: GroupId): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
+    override fun getMessages(
+        groupId: GroupId,
+    ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
         return messagesCache.getOrInitialize(groupId) {
             subscriber.subscribeAsFlow(GetMessagesRequest(groupId = groupId)) {
                 map<GetMessagesUnauthorized> { Failure(GetMessagesError.Unauthorized) }
@@ -103,6 +114,12 @@ class RemoteMessenger(
         }
     }
 
+    override suspend fun getUnreadMessages(
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, GetUnreadMessagesError> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun sendMessage(
         id: MessageId,
         groupId: GroupId,
@@ -124,22 +141,15 @@ class RemoteMessenger(
     override suspend fun markAsRead(
         groupId: GroupId,
     ): UnitOutcome<MarkAsReadError> {
-        return requester.request(MarkAsReadRequest(groupId = groupId)) {
-            map<MarkAsReadUnauthorized> {
-                Failure(MarkAsReadError.Unauthorized)
-            }
-            map<MarkAsReadAlreadyRead> {
-                Failure(MarkAsReadError.AlreadyRead)
-            }
-            map<MarkAsReadGroupNotFound> {
-                Failure(MarkAsReadError.GroupNotFound)
-            }
-            map<MarkAsReadUnexpectedError> {
-                Failure(MarkAsReadError.UnexpectedError)
-            }
+        val unreadMessageIds = getUnreadMessages(groupId)
+            .getOrElse { return Failure(it.toMarkAsReadError()) }
+        return supervisorScope {
+            unreadMessageIds.map { async { markAsRead(it) } }
+                .awaitAll()
+                .flatMap {}
         }.flatMapError(
             onInnerFailure = { it },
-            onOuterFailure = { MarkAsReadError.RequestTimeout },
+            onOuterFailure = { MarkAsReadError.UnexpectedError },
         )
     }
 
@@ -164,5 +174,26 @@ class RemoteMessenger(
     ): LocalChatPreviews {
         return chatPreviews.map { it.toLocalMessage() }
             .toChatPreviews(loggedInMemberId)
+    }
+
+    private fun GetUnreadMessagesError.toMarkAsReadError() = when (this) {
+        GetUnreadMessagesError.Unauthorized -> MarkAsReadError.Unauthorized
+        GetUnreadMessagesError.GroupNotFound -> MarkAsReadError.GroupNotFound
+        GetUnreadMessagesError.UnexpectedError -> MarkAsReadError.UnexpectedError
+    }
+
+    private suspend fun markAsRead(messageId: MessageId): UnitOutcome<MarkAsReadError> {
+        val request = UpdateDeliveryRequest(messageId = messageId, delivery = Delivery.Read)
+        return requester.request(request) {
+            map<UpdateDeliveryUnauthorized> { Failure(MarkAsReadError.Unauthorized) }
+            map<UpdateDeliveryReverseDelivery> { Failure(MarkAsReadError.UnexpectedError) }
+            map<UpdateDeliveryAlreadySet> { Failure(MarkAsReadError.AlreadyRead) }
+            map<UpdateDeliveryMessageNotFound> { Failure(MarkAsReadError.UnexpectedError) }
+            map<UpdateDeliveryUnexpectedError> { Failure(MarkAsReadError.UnexpectedError) }
+            map<UpdateDeliverySuccessful> { UnitSuccess }
+        }.flatMapError(
+            onInnerFailure = { it },
+            onOuterFailure = { MarkAsReadError.RequestTimeout },
+        )
     }
 }

@@ -129,6 +129,7 @@ class ExposedMessageRepository(
             }
     }
 
+    @Deprecated("Use DeliveryRepository instead")
     override suspend fun getUnreadMessages(
         memberId: MemberId,
         groupId: GroupId,
@@ -210,7 +211,7 @@ class ExposedMessageRepository(
     }
 }
 
-private object MessageTable : Table("message") {
+internal object MessageTable : Table("message") {
     val id = uuid("id")
     val groupId = uuid("group_id")
     val senderId = uuid("sender_id")

@@ -1,6 +1,6 @@
-package com.thebrownfoxx.neon.client.service.offinefirst
+package com.thebrownfoxx.neon.client.service.offinefirst.old
 
-fun <T> OfflineFirstScope<T>.defaultTransformLocal(
+internal fun <T> OfflineFirstScope<T>.defaultTransformLocal(
     localSucceeded: (T) -> Boolean,
     localNotFound: (T) -> Boolean,
     localFailedUnexpectedly: (T) -> Boolean,
@@ -14,7 +14,7 @@ fun <T> OfflineFirstScope<T>.defaultTransformLocal(
     }
 }
 
-fun <T> OfflineFirstScope<T>.defaultTransformLocal(
+internal fun <T> OfflineFirstScope<T>.defaultTransformLocal(
     succeeded: (T) -> Boolean,
     notFound: (T) -> Boolean,
     failedUnexpectedly: (T) -> Boolean,
@@ -27,7 +27,7 @@ fun <T> OfflineFirstScope<T>.defaultTransformLocal(
     )
 }
 
-fun <T> OfflineFirstScope<T>.defaultTransformRemote(
+internal fun <T> OfflineFirstScope<T>.defaultTransformRemote(
     localNotFound: (T) -> Boolean,
     remoteSucceeded: (T) -> Boolean,
     remoteNotFound: (T) -> Boolean,
@@ -45,7 +45,7 @@ fun <T> OfflineFirstScope<T>.defaultTransformRemote(
     }
 }
 
-fun <T> OfflineFirstScope<T>.defaultTransformRemote(
+internal fun <T> OfflineFirstScope<T>.defaultTransformRemote(
     succeeded: (T) -> Boolean,
     notFound: (T) -> Boolean,
     failedUnexpectedly: (T) -> Boolean,
@@ -62,7 +62,7 @@ fun <T> OfflineFirstScope<T>.defaultTransformRemote(
     }
 }
 
-fun <T> OfflineFirstScope<T>.defaultTransform(
+internal fun <T> OfflineFirstScope<T>.defaultTransform(
     localSucceeded: (T) -> Boolean,
     localNotFound: (T) -> Boolean,
     localFailedUnexpectedly: (T) -> Boolean,
@@ -88,7 +88,7 @@ fun <T> OfflineFirstScope<T>.defaultTransform(
     )
 }
 
-fun <T> OfflineFirstScope<T>.defaultTransform(
+internal fun <T> OfflineFirstScope<T>.defaultTransform(
     succeeded: (T) -> Boolean,
     notFound: (T) -> Boolean,
     failedUnexpectedly: (T) -> Boolean,

@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.service.offinefirst
+package com.thebrownfoxx.neon.client.service.offinefirst.old
 
 import com.thebrownfoxx.neon.client.model.LocalMember
 import com.thebrownfoxx.neon.client.repository.MemberRepository
@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class OfflineFirstMemberManager(
+class OldOfflineFirstMemberManager(
     private val remoteMemberManager: MemberManager,
     private val localMemberRepository: MemberRepository,
     externalScope: CoroutineScope,

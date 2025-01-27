@@ -1,10 +1,10 @@
 package com.thebrownfoxx.neon.common.data.transaction
 
+import com.thebrownfoxx.neon.common.extension.flatMap
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.UnitOutcome
-import com.thebrownfoxx.outcome.map.mapError
 
 typealias ReversibleOutcome<T, E> = Reversible<Outcome<T, E>>
 
@@ -21,16 +21,8 @@ fun <T, E, RT, RE> List<ReversibleOutcome<T, E>>.flatMap(
     onSuccess:  (List<T>) -> RT,
     onFailure: (E) -> RE,
 ): ReversibleOutcome<RT, RE> {
-    return when {
-        all { it.result is Success } -> {
-            val values = map { (it.result as Success).value }
-            Success(onSuccess(values))
-        }
-        else -> {
-            val firstFailure = first { it.result is Failure }.result as Failure
-            firstFailure.mapError { onFailure(it) }
-        }
-    }
+    return map { it.result }
+        .flatMap(onSuccess, onFailure)
         .asReversible { forEach { it.reverse() } }
         .onFinalize { forEach { it.finalize() } }
 }

@@ -20,6 +20,10 @@ interface Messenger {
 
     fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>>
 
+    suspend fun getUnreadMessages(
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, GetUnreadMessagesError>
+
     suspend fun sendMessage(
         id: MessageId = MessageId(),
         groupId: GroupId,
@@ -34,6 +38,12 @@ interface Messenger {
     }
 
     enum class GetMessagesError {
+        Unauthorized,
+        GroupNotFound,
+        UnexpectedError,
+    }
+
+    enum class GetUnreadMessagesError {
         Unauthorized,
         GroupNotFound,
         UnexpectedError,

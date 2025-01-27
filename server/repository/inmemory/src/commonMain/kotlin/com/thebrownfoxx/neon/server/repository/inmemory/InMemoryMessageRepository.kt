@@ -74,6 +74,7 @@ class InMemoryMessageRepository : MessageRepository {
         return UnitSuccess.asReversible { messages.update { it - message.id } }
     }
 
+    @Deprecated("Use DeliveryRepository instead")
     override suspend fun getUnreadMessages(
         memberId: MemberId,
         groupId: GroupId,

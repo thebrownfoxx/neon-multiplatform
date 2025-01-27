@@ -26,12 +26,6 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadAlreadyRead
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadGroupNotFound
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadRequest
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadSuccessful
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnauthorized
-import com.thebrownfoxx.neon.server.route.websocket.message.MarkAsReadUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
@@ -63,7 +57,6 @@ class MessageWebSocketMessageManager(
     private val getMessageJobManager = JobManager<MessageId>(externalScope)
     private val getDeliveryJobManager = JobManager<DeliveryKey>(externalScope)
     private val sendMessageJobManager = JobManager<MessageId>(externalScope)
-    private val markAsReadJobManager = JobManager<MarkAsReadKey>(externalScope)
     private val updateDeliveryJobManager = JobManager<DeliveryKey>(externalScope)
 
     init {
@@ -73,7 +66,6 @@ class MessageWebSocketMessageManager(
             session.listen<GetMessageRequest>(externalScope) { it.fulfill() }
             session.listen<GetDeliveryRequest>(externalScope) { it.fulfill() }
             session.listen<SendMessageRequest>(externalScope) { it.fulfill() }
-            session.listen<MarkAsReadRequest>(externalScope) { it.fulfill() }
             session.listen<UpdateDeliveryRequest>(externalScope) { it.fulfill() }
         }
     }
@@ -185,33 +177,6 @@ class MessageWebSocketMessageManager(
         }
     }
 
-    private fun MarkAsReadRequest.fulfill() {
-        val memberId = session.memberId
-        markAsReadJobManager[MarkAsReadKey(groupId, memberId)] = {
-            messenger.markAsRead(memberId, groupId).onSuccess {
-                session.send(MarkAsReadSuccessful(requestId, groupId, memberId))
-            }.onFailure { error ->
-                when (error) {
-                    Messenger.MarkAsReadError.Unauthorized -> session.send(
-                        MarkAsReadUnauthorized(requestId, groupId, memberId),
-                    )
-
-                    Messenger.MarkAsReadError.AlreadyRead -> session.send(
-                        MarkAsReadAlreadyRead(requestId, groupId, memberId)
-                    )
-
-                    Messenger.MarkAsReadError.GroupNotFound -> session.send(
-                        MarkAsReadGroupNotFound(requestId, groupId),
-                    )
-
-                    Messenger.MarkAsReadError.UnexpectedError -> session.send(
-                        MarkAsReadUnexpectedError(requestId, groupId, memberId),
-                    )
-                }
-            }
-        }
-    }
-
     private fun UpdateDeliveryRequest.fulfill() {
         val memberId = session.memberId
         updateDeliveryJobManager[DeliveryKey(messageId, memberId)] = {
@@ -246,11 +211,6 @@ class MessageWebSocketMessageManager(
 
     private data class DeliveryKey(
         val messageId: MessageId,
-        val memberId: MemberId,
-    )
-
-    private data class MarkAsReadKey(
-        val groupId: GroupId,
         val memberId: MemberId,
     )
 }

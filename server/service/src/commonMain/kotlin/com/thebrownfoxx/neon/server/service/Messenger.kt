@@ -31,6 +31,11 @@ interface Messenger {
         messageId: MessageId,
     ): Flow<Outcome<Delivery, GetDeliveryError>>
 
+    suspend fun getUnreadMessages(
+        actorId: MemberId,
+        messageId: MessageId,
+    ): Outcome<Set<MessageId>, GetUnreadMessagesError>
+
     suspend fun newConversation(memberIds: Set<MemberId>): UnitOutcome<NewConversationError>
 
     suspend fun sendMessage(
@@ -39,12 +44,6 @@ interface Messenger {
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError>
-
-    @Deprecated("Use update delivery instead")
-    suspend fun markAsRead(
-        actorId: MemberId,
-        groupId: GroupId,
-    ): UnitOutcome<MarkAsReadError>
 
     suspend fun updateDelivery(
         actorId: MemberId,
@@ -72,6 +71,12 @@ interface Messenger {
     enum class GetMessageError {
         Unauthorized,
         NotFound,
+        UnexpectedError,
+    }
+
+    enum class GetUnreadMessagesError {
+        Unauthorized,
+        GroupNotFound,
         UnexpectedError,
     }
 

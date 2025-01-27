@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.server.repository
 
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
+import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
@@ -24,4 +25,9 @@ interface DeliveryRepository {
         memberId: MemberId,
         delivery: Delivery,
     ): ReversibleUnitOutcome<DataOperationError>
+
+    suspend fun getUnreadMessages(
+        memberId: MemberId,
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, DataOperationError>
 }

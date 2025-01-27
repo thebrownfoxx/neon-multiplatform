@@ -30,6 +30,7 @@ interface MessageRepository {
 
     suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
 
+    @Deprecated("Use DeliveryRepository instead")
     suspend fun getUnreadMessages(
         memberId: MemberId,
         groupId: GroupId,

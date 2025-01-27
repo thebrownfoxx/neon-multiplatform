@@ -13,6 +13,7 @@ import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.repository.data.integrate
 import com.thebrownfoxx.neon.server.repository.data.serviceData
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedConfigurationRepository
+import com.thebrownfoxx.neon.server.repository.exposed.ExposedDeliveryRepository
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedGroupMemberRepository
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedGroupRepository
 import com.thebrownfoxx.neon.server.repository.exposed.ExposedInviteCodeRepository
@@ -65,6 +66,7 @@ class DefaultDependencies : Dependencies {
     private val inviteCodeRepository = ExposedInviteCodeRepository(database, applicationScope)
     private val passwordRepository = ExposedPasswordRepository(database)
     private val messageRepository = ExposedMessageRepository(database, applicationScope)
+    private val deliveryRepository = ExposedDeliveryRepository(database, applicationScope)
     private val hasher = MultiplatformHasher()
     private val permissionChecker = DefaultPermissionChecker(groupMemberRepository)
 
@@ -88,6 +90,7 @@ class DefaultDependencies : Dependencies {
 
     override val messenger = DefaultMessenger(
         messageRepository,
+        deliveryRepository,
         memberRepository,
         groupRepository,
         groupMemberRepository,

@@ -1,4 +1,4 @@
-package com.thebrownfoxx.neon.client.service.offinefirst
+package com.thebrownfoxx.neon.client.service.offinefirst.old
 
 import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.seconds
 
-class OfflineFirstMessenger(
+class OldOfflineFirstMessenger(
     private val authenticator: Authenticator,
     private val remoteMessenger: Messenger,
     private val localMessageRepository: MessageRepository,
@@ -125,6 +125,10 @@ class OfflineFirstMessenger(
                 )
             }
         }
+    }
+
+    override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, Messenger.GetUnreadMessagesError> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun sendMessage(

@@ -12,9 +12,9 @@ import com.thebrownfoxx.neon.client.repository.exposed.ExposedTokenRepository
 import com.thebrownfoxx.neon.client.service.Dependencies
 import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.client.service.default.KtorClientWebSocketConnector
-import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstGroupManager
-import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMemberManager
-import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstMessenger
+import com.thebrownfoxx.neon.client.service.offinefirst.group.OfflineFirstGroupManager
+import com.thebrownfoxx.neon.client.service.offinefirst.member.OfflineFirstMemberManager
+import com.thebrownfoxx.neon.client.service.offinefirst.old.OldOfflineFirstMessenger
 import com.thebrownfoxx.neon.client.websocket.AutoConnectWebSocketSessionProvider
 import com.thebrownfoxx.neon.client.websocket.AutoRetryWebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.AutoRetryWebSocketSubscriber
@@ -100,7 +100,7 @@ class AppDependencies(
             getMemberId = { authenticator.loggedInMemberId.filterNotNull().first() },
             externalScope = externalScope,
         )
-        OfflineFirstMessenger(
+        OldOfflineFirstMessenger(
             authenticator = authenticator,
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
