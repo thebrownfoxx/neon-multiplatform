@@ -47,6 +47,7 @@ interface Messenger {
         Unauthorized,
         GroupNotFound,
         UnexpectedError,
+        RequestTimeout,
     }
 
     enum class GetMessageError {

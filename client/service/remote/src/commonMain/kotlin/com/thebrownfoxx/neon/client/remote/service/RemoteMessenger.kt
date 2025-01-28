@@ -40,6 +40,10 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
@@ -117,7 +121,15 @@ class RemoteMessenger(
     override suspend fun getUnreadMessages(
         groupId: GroupId,
     ): Outcome<Set<MessageId>, GetUnreadMessagesError> {
-        TODO("Not yet implemented")
+        val request = GetUnreadMessagesRequest(groupId = groupId)
+        return requester.request(request) {
+            map<GetUnreadMessagesUnauthorized> { Failure(GetUnreadMessagesError.Unauthorized) }
+            map<GetUnreadMessagesGroupNotFound> { Failure(GetUnreadMessagesError.GroupNotFound) }
+            map<GetUnreadMessagesUnexpectedError> { Failure(GetUnreadMessagesError.UnexpectedError) }
+        }.flatMapError(
+            onInnerFailure = { it },
+            onOuterFailure = { GetUnreadMessagesError.RequestTimeout },
+        )
     }
 
     override suspend fun sendMessage(
@@ -180,6 +192,7 @@ class RemoteMessenger(
         GetUnreadMessagesError.Unauthorized -> MarkAsReadError.Unauthorized
         GetUnreadMessagesError.GroupNotFound -> MarkAsReadError.GroupNotFound
         GetUnreadMessagesError.UnexpectedError -> MarkAsReadError.UnexpectedError
+        GetUnreadMessagesError.RequestTimeout -> MarkAsReadError.RequestTimeout
     }
 
     private suspend fun markAsRead(messageId: MessageId): UnitOutcome<MarkAsReadError> {
