@@ -107,10 +107,6 @@ class ChatPreviewsStateHandler(
         }
     }
 
-    private fun LocalChatPreviews.toFlatList(): List<LocalMessage> {
-        return flatListOf(nudgedPreviews, unreadPreviews, readPreviews)
-    }
-
     private fun LocalChatPreviews.mapToInitialStateIds() {
         initialState.listItems.forEachIndexed { index, state ->
             if (state !is ChatPreviewState || state.id in idMap.values) return@forEachIndexed

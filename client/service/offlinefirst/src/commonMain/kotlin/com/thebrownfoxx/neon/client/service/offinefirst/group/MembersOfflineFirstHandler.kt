@@ -39,12 +39,12 @@ class MembersOfflineFirstHandler(
     }
 
     private suspend fun onRemoteSuccess(
-        remoteMembers: Set<MemberId>,
+        remoteMemberIds: Set<MemberId>,
         oldLocal: RepositoryMembers,
     ) {
-        localGroupMemberRepository.batchUpsert(groupId, remoteMembers)
+        localGroupMemberRepository.batchUpsert(groupId, remoteMemberIds)
         if (oldLocal !is Success) return
-        val removedMembers = oldLocal.value.filter { it !in remoteMembers }
+        val removedMembers = oldLocal.value.filter { it !in remoteMemberIds }
         if (removedMembers.isNotEmpty()) TODO("Remove $removedMembers")
     }
 
