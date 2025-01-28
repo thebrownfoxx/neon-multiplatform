@@ -8,15 +8,10 @@ import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.map.mapError
 
 class MemberOfflineFirstHandler(
     private val localMemberRepository: MemberRepository,
-) : OfflineFirstHandler<RepositoryMember, ServiceMember, ServiceMember> {
-    override fun mapLocal(local: RepositoryMember): ServiceMember {
-        return local.mapError { it.toGetMemberError() }
-    }
-
+) : OfflineFirstHandler<RepositoryMember, ServiceMember> {
     override fun hasLocalFailed(local: RepositoryMember): Boolean {
         return local is Failure
     }
@@ -34,11 +29,6 @@ class MemberOfflineFirstHandler(
     ) {
         if (remoteError != GetMemberError.NotFound || oldLocal !is Success) return
         TODO("Delete ${oldLocal.value}")
-    }
-
-    private fun GetError.toGetMemberError() = when (this) {
-        GetError.NotFound -> GetMemberError.NotFound
-        GetError.ConnectionError, GetError.UnexpectedError -> GetMemberError.UnexpectedError
     }
 }
 

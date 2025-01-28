@@ -8,10 +8,13 @@ import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.client.service.GroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.service.offinefirst.offlineFirstFlow
 import com.thebrownfoxx.neon.common.data.Cache
+import com.thebrownfoxx.neon.common.data.DataOperationError
+import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
+import com.thebrownfoxx.outcome.map.mapError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
@@ -31,7 +34,9 @@ class OfflineFirstGroupManager(
                 localFlow = localGroupRepository.getAsFlow(id),
                 remoteFlow = remoteGroupManager.getGroup(id),
                 handler = GroupOfflineFirstHandler(localGroupRepository),
-            ).mirrorTo(this)
+            ).mirrorTo(this) { groupOutcome ->
+                groupOutcome.mapError { it.toGetGroupError() }
+            }
         }
     }
 
@@ -41,7 +46,19 @@ class OfflineFirstGroupManager(
                 localFlow = localGroupMemberRepository.getMembersAsFlow(groupId),
                 remoteFlow = remoteGroupManager.getMembers(groupId),
                 handler = MembersOfflineFirstHandler(groupId, localGroupMemberRepository),
-            ).mirrorTo(this)
+            ).mirrorTo(this) { membersOutcome ->
+                membersOutcome.mapError { it.toGetMembersError() }
+            }
         }
+    }
+
+    private fun GetError.toGetGroupError() = when (this) {
+        GetError.NotFound -> GetGroupError.NotFound
+        GetError.ConnectionError, GetError.UnexpectedError -> GetGroupError.UnexpectedError
+    }
+
+    private fun DataOperationError.toGetMembersError() = when (this) {
+        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
+            GetMembersError.UnexpectedError
     }
 }

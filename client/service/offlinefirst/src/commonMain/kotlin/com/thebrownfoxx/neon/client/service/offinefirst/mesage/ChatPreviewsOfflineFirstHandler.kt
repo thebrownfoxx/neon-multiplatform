@@ -10,15 +10,10 @@ import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.map.mapError
 
 class ChatPreviewsOfflineFirstHandler(
     private val localMessageRepository: MessageRepository,
-) : OfflineFirstHandler<RepositoryChatPreviews, ServiceChatPreviews, ServiceChatPreviews> {
-    override fun mapLocal(local: RepositoryChatPreviews): ServiceChatPreviews {
-        return local.mapError { it.toGetChatPreviewsError() }
-    }
-
+) : OfflineFirstHandler<RepositoryChatPreviews, ServiceChatPreviews> {
     override fun hasLocalFailed(local: RepositoryChatPreviews): Boolean {
         return local !is Success || local.value.toFlatList().isEmpty()
     }
@@ -50,11 +45,6 @@ class ChatPreviewsOfflineFirstHandler(
         val removedChatPreviews = oldLocal.value.toFlatList()
             .filter { it.delivery != LocalDelivery.Sending && it !in remoteChatPreviews }
         if (removedChatPreviews.isNotEmpty()) TODO("Removed $removedChatPreviews")
-    }
-
-    private fun DataOperationError.toGetChatPreviewsError() = when (this) {
-        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
-            GetChatPreviewsError.UnexpectedError
     }
 }
 

@@ -8,15 +8,10 @@ import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
-import com.thebrownfoxx.outcome.map.mapError
 
 class MessagesOfflineFirstHandler(
     private val localMessageRepository: MessageRepository,
-) : OfflineFirstHandler<RepositoryMessages, ServiceMessages, ServiceMessages> {
-    override fun mapLocal(local: RepositoryMessages): ServiceMessages {
-        return local.mapError { it.toGetMessagesError() }
-    }
-
+) : OfflineFirstHandler<RepositoryMessages, ServiceMessages> {
     override fun hasLocalFailed(local: RepositoryMessages): Boolean {
         return local !is Success || local.value.isEmpty()
     }
@@ -44,11 +39,6 @@ class MessagesOfflineFirstHandler(
         if (oldLocal !is Success) return
         val removedMessages = oldLocal.value.filter { it !in remoteMessages }
         if (removedMessages.isNotEmpty()) TODO("Removed $removedMessages")
-    }
-
-    private fun DataOperationError.toGetMessagesError() = when (this) {
-        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
-            GetMessagesError.UnexpectedError
     }
 }
 

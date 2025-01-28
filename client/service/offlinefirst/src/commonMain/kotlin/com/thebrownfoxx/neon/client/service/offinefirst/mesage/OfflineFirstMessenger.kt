@@ -13,12 +13,14 @@ import com.thebrownfoxx.neon.client.service.Messenger.MarkAsReadError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.client.service.offinefirst.offlineFirstFlow
 import com.thebrownfoxx.neon.common.data.Cache
+import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
+import com.thebrownfoxx.outcome.map.mapError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
@@ -38,7 +40,9 @@ class OfflineFirstMessenger(
                 localFlow = localMessageRepository.chatPreviews,
                 remoteFlow = remoteMessenger.chatPreviews,
                 handler = ChatPreviewsOfflineFirstHandler(localMessageRepository),
-            ).mirrorTo(this)
+            ).mirrorTo(this) { chatPreviewsOutcome ->
+                chatPreviewsOutcome.mapError { it.toGetChatPreviewsError() }
+            }
         }
 
     override fun getMessages(
@@ -49,7 +53,9 @@ class OfflineFirstMessenger(
                 localFlow = localMessageRepository.getMessagesAsFlow(groupId),
                 remoteFlow = remoteMessenger.getMessages(groupId),
                 handler = MessagesOfflineFirstHandler(localMessageRepository),
-            ).mirrorTo(this)
+            ).mirrorTo(this) { messagesOutcome ->
+                messagesOutcome.mapError { it.toGetMessagesError() }
+            }
         }
     }
 
@@ -73,5 +79,15 @@ class OfflineFirstMessenger(
 
     override suspend fun markAsRead(groupId: GroupId): UnitOutcome<MarkAsReadError> {
         TODO("Not yet implemented")
+    }
+
+    private fun DataOperationError.toGetChatPreviewsError() = when (this) {
+        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
+            GetChatPreviewsError.UnexpectedError
+    }
+
+    private fun DataOperationError.toGetMessagesError() = when (this) {
+        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
+            GetMessagesError.UnexpectedError
     }
 }

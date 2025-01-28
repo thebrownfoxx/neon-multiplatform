@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+@Deprecated("Use OfflineFFirstMemberManager instead")
 class OldOfflineFirstMemberManager(
     private val remoteMemberManager: MemberManager,
     private val localMemberRepository: MemberRepository,

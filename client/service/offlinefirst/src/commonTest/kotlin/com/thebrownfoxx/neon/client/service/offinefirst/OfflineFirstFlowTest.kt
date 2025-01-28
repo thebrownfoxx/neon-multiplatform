@@ -14,13 +14,13 @@ import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-class OfflineFirstTest {
+class OfflineFirstFlowTest {
     @Test
     fun localAndRemoteSucceededEqualValues_mustEmitSuccessOnce() = runTest {
         offlineFirstTest {
             emitLocal(Success(1))
             emitRemote(Success(1f))
-        }.takeAsList(2) contentMustEqual listOf(Success(1.0))
+        }.takeAsList(2) contentMustEqual listOf(Success(1))
     }
 
     @Test
@@ -29,8 +29,8 @@ class OfflineFirstTest {
             emitLocal(Success(1))
             emitRemote(Success(2f))
         }.takeAsList(2) contentMustEqual listOf(
-            Success(1.0),
-            Success(2.0),
+            Success(1),
+            Success(2),
         )
     }
 
@@ -39,7 +39,7 @@ class OfflineFirstTest {
         offlineFirstTest {
             emitLocal(Success(2))
             emitRemote(Success(1f))
-        }.takeAsList(2) contentMustEqual listOf(Success(2.0))
+        }.takeAsList(2) contentMustEqual listOf(Success(2))
     }
 
     @Test
@@ -47,7 +47,7 @@ class OfflineFirstTest {
         offlineFirstTest {
             emitLocal(UnitFailure)
             emitRemote(Success(1f))
-        }.takeAsList(2) contentMustEqual listOf(Success(1.0))
+        }.takeAsList(2) contentMustEqual listOf(Success(1))
     }
 
     @Test
@@ -56,7 +56,7 @@ class OfflineFirstTest {
             emitLocal(Success(1))
             emitRemote(UnitFailure)
         }.takeAsList(2) contentMustEqual listOf(
-            Success(1.0),
+            Success(1),
             UnitFailure,
         )
     }
@@ -70,7 +70,7 @@ class OfflineFirstTest {
     }
 }
 
-inline fun offlineFirstTest(block: OfflineFirstTestScope.() -> Unit): Flow<DoubleOutcome> {
+inline fun offlineFirstTest(block: OfflineFirstTestScope.() -> Unit): Flow<IntOutcome> {
     val localFlow = MutableSharedFlow<IntOutcome>(replay = 1)
     val remoteFlow = MutableSharedFlow<FloatOutcome>(replay = 1)
     return offlineFirstFlow(
@@ -88,13 +88,8 @@ class OfflineFirstTestScope(
     suspend fun emitRemote(remote: FloatOutcome) = remoteFlow.emit(remote)
 }
 
-fun interface OfflineFirstTestHandler :
-    OfflineFirstHandler<IntOutcome, FloatOutcome, DoubleOutcome> {
+fun interface OfflineFirstTestHandler : OfflineFirstHandler<IntOutcome, FloatOutcome> {
     suspend fun updateLocal(newLocal: IntOutcome)
-
-    override fun mapLocal(local: IntOutcome): DoubleOutcome {
-        return local.toDoubleOutcome()
-    }
 
     override fun hasLocalFailed(local: IntOutcome): Boolean {
         return local is Failure
@@ -125,13 +120,11 @@ fun interface OfflineFirstTestHandler :
         }
     }
 
-    private fun IntOutcome.toDoubleOutcome() = map { it.toDouble() }
     private fun FloatOutcome.toIntOutcome() = map { it.toInt() }
 }
 
 private typealias IntOutcome = Outcome<Int, Unit>
 private typealias FloatOutcome = Outcome<Float, Unit>
-private typealias DoubleOutcome = Outcome<Double, Unit>
 private val UnitFailure = Failure(Unit)
 
 private suspend fun <T> Flow<T>.takeAsList(

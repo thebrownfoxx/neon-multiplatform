@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+@Deprecated("Use OfflineFirstGroupManager instead")
 class OldOfflineFirstGroupManager(
     private val remoteGroupManager: GroupManager,
     private val localGroupRepository: GroupRepository,
