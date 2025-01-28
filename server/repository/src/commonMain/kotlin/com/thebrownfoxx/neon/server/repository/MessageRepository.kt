@@ -26,13 +26,12 @@ interface MessageRepository {
 
     suspend fun get(id: MessageId): Outcome<Message, GetError>
 
-    suspend fun add(message: Message): ReversibleUnitOutcome<AddError>
-
-    suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
-
-    @Deprecated("Use DeliveryRepository instead")
     suspend fun getUnreadMessages(
         memberId: MemberId,
         groupId: GroupId,
-    ): Outcome<List<Message>, DataOperationError>
+    ): Outcome<Set<MessageId>, DataOperationError>
+
+    suspend fun add(message: Message): ReversibleUnitOutcome<AddError>
+
+    suspend fun update(message: Message): ReversibleUnitOutcome<UpdateError>
 }

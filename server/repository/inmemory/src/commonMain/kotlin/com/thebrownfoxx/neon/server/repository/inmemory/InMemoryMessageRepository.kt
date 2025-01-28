@@ -57,6 +57,13 @@ class InMemoryMessageRepository : MessageRepository {
         return getAsFlow(id).first()
     }
 
+    override suspend fun getUnreadMessages(
+        memberId: MemberId,
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, DataOperationError> {
+        TODO()
+    }
+
     override suspend fun add(message: Message): ReversibleUnitOutcome<AddError> {
         return when {
             messages.value.containsKey(message.id) -> Failure(AddError.Duplicate)
@@ -72,13 +79,5 @@ class InMemoryMessageRepository : MessageRepository {
             return Failure(UpdateError.NotFound).asReversible()
         messages.update { it + (message.id to message) }
         return UnitSuccess.asReversible { messages.update { it - message.id } }
-    }
-
-    @Deprecated("Use DeliveryRepository instead")
-    override suspend fun getUnreadMessages(
-        memberId: MemberId,
-        groupId: GroupId,
-    ): Outcome<List<Message>, DataOperationError> {
-        TODO()
     }
 }

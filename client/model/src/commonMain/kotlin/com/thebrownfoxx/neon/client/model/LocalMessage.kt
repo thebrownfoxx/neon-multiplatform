@@ -13,6 +13,8 @@ data class LocalMessage(
     val senderId: MemberId,
     val content: String,
     val timestamp: Instant,
+
+    @Deprecated("Use delivery for each member")
     val delivery: LocalDelivery,
 )
 

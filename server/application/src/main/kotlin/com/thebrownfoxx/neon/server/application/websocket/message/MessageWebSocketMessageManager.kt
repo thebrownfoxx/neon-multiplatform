@@ -5,7 +5,6 @@ import com.thebrownfoxx.neon.common.data.SingleJobManager
 import com.thebrownfoxx.neon.common.data.websocket.listen
 import com.thebrownfoxx.neon.common.data.websocket.send
 import com.thebrownfoxx.neon.common.type.id.GroupId
-import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.application.websocket.KtorServerWebSocketSession
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMemberNotFound
@@ -26,6 +25,11 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessagesUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesGroupNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesSuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.GetUnreadMessagesUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageDuplicateId
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageGroupNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
@@ -55,9 +59,10 @@ class MessageWebSocketMessageManager(
     private val getChatPreviewsJobManager = SingleJobManager(externalScope)
     private val getMessagesJobManager = JobManager<GroupId>(externalScope)
     private val getMessageJobManager = JobManager<MessageId>(externalScope)
-    private val getDeliveryJobManager = JobManager<DeliveryKey>(externalScope)
+    private val getDeliveryJobManager = JobManager<MessageId>(externalScope)
+    private val getUnreadMessagesJobManager = JobManager<GroupId>(externalScope)
     private val sendMessageJobManager = JobManager<MessageId>(externalScope)
-    private val updateDeliveryJobManager = JobManager<DeliveryKey>(externalScope)
+    private val updateDeliveryJobManager = JobManager<MessageId>(externalScope)
 
     init {
         externalScope.launch {
@@ -65,6 +70,7 @@ class MessageWebSocketMessageManager(
             session.listen<GetMessagesRequest>(externalScope) { it.fulfill() }
             session.listen<GetMessageRequest>(externalScope) { it.fulfill() }
             session.listen<GetDeliveryRequest>(externalScope) { it.fulfill() }
+            session.listen<GetUnreadMessagesRequest>(externalScope) { it.fulfill() }
             session.listen<SendMessageRequest>(externalScope) { it.fulfill() }
             session.listen<UpdateDeliveryRequest>(externalScope) { it.fulfill() }
         }
@@ -135,7 +141,7 @@ class MessageWebSocketMessageManager(
 
     private fun GetDeliveryRequest.fulfill() {
         val memberId = session.memberId
-        getDeliveryJobManager[DeliveryKey(messageId, memberId)] = {
+        getDeliveryJobManager[messageId] = {
             messenger.getDelivery(session.memberId, messageId).collect { deliveryOutcome ->
                 deliveryOutcome.onSuccess { delivery ->
                     session.send(GetDeliverySuccessful(requestId, delivery))
@@ -150,6 +156,26 @@ class MessageWebSocketMessageManager(
                         Messenger.GetDeliveryError.UnexpectedError ->
                             session.send(GetDeliveryUnexpectedError(requestId, messageId))
                     }
+                }
+            }
+        }
+    }
+
+    private fun GetUnreadMessagesRequest.fulfill() {
+        val memberId = session.memberId
+        getUnreadMessagesJobManager[groupId] = {
+            messenger.getUnreadMessages(memberId, groupId).onSuccess { messageIds ->
+                session.send(GetUnreadMessagesSuccessful(requestId, groupId, memberId, messageIds))
+            }.onFailure { error ->
+                when (error) {
+                    Messenger.GetUnreadMessagesError.Unauthorized ->
+                        session.send(GetUnreadMessagesUnauthorized(requestId, groupId, memberId))
+
+                    Messenger.GetUnreadMessagesError.GroupNotFound ->
+                        session.send(GetUnreadMessagesGroupNotFound(requestId, groupId))
+
+                    Messenger.GetUnreadMessagesError.UnexpectedError ->
+                        session.send(GetUnreadMessagesUnexpectedError(requestId, groupId, memberId))
                 }
             }
         }
@@ -179,7 +205,7 @@ class MessageWebSocketMessageManager(
 
     private fun UpdateDeliveryRequest.fulfill() {
         val memberId = session.memberId
-        updateDeliveryJobManager[DeliveryKey(messageId, memberId)] = {
+        updateDeliveryJobManager[messageId] = {
             messenger.updateDelivery(memberId, messageId, delivery).onSuccess {
                 session.send(UpdateDeliverySuccessful(requestId, messageId, delivery))
             }.onFailure { error ->
@@ -208,9 +234,4 @@ class MessageWebSocketMessageManager(
             }
         }
     }
-
-    private data class DeliveryKey(
-        val messageId: MessageId,
-        val memberId: MemberId,
-    )
 }

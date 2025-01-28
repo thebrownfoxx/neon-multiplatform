@@ -24,19 +24,23 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
 
     override fun getMembersAsFlow(
         groupId: GroupId,
-    ): Flow<Outcome<List<MemberId>, DataOperationError>> {
+    ): Flow<Outcome<Set<MemberId>, DataOperationError>> {
         return groupMembers.mapLatest { groupMembers ->
-            Success(groupMembers[groupId]?.map { it.id } ?: emptyList())
+            val groupMemberIds = groupMembers[groupId]
+                ?.map { it.id }
+                ?.toSet()
+                ?: emptySet()
+            Success(groupMemberIds)
         }
     }
 
     override fun getGroupsAsFlow(
         memberId: MemberId,
-    ): Flow<Outcome<List<GroupId>, DataOperationError>> {
+    ): Flow<Outcome<Set<GroupId>, DataOperationError>> {
         return groupMembers.mapLatest { groupMembers ->
             val groups = groupMembers.filter { (_, members) ->
                 members.any { it.id == memberId }
-            }.map { it.key }
+            }.map { it.key }.toSet()
 
             Success(groups)
         }
@@ -44,22 +48,26 @@ class InMemoryGroupMemberRepository : GroupMemberRepository {
 
     override fun getAdminsAsFlow(
         groupId: GroupId,
-    ): Flow<Outcome<List<MemberId>, DataOperationError>> {
+    ): Flow<Outcome<Set<MemberId>, DataOperationError>> {
         return groupMembers.mapLatest { groupMembers ->
-            val admins = groupMembers[groupId]?.filter { it.isAdmin }?.map { it.id } ?: emptyList()
+            val admins = groupMembers[groupId]
+                ?.filter { it.isAdmin }
+                ?.map { it.id }
+                ?.toSet()
+                ?: emptySet()
             Success(admins)
         }
     }
 
-    override suspend fun getMembers(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
+    override suspend fun getMembers(groupId: GroupId): Outcome<Set<MemberId>, DataOperationError> {
         return getMembersAsFlow(groupId).first()
     }
 
-    override suspend fun getGroups(memberId: MemberId): Outcome<List<GroupId>, DataOperationError> {
+    override suspend fun getGroups(memberId: MemberId): Outcome<Set<GroupId>, DataOperationError> {
         return getGroupsAsFlow(memberId).first()
     }
 
-    override suspend fun getAdmins(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
+    override suspend fun getAdmins(groupId: GroupId): Outcome<Set<MemberId>, DataOperationError> {
         return getAdminsAsFlow(groupId).first()
     }
 

@@ -23,6 +23,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.map.onInnerSuccess
 import com.thebrownfoxx.outcome.map.onOuterFailure
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -44,39 +45,53 @@ class ExposedGroupMemberRepository(
     private val groupsCache = ReactiveCache(externalScope, ::getGroups)
     private val adminsCache = ReactiveCache(externalScope, ::getAdmins)
 
-    override fun getMembersAsFlow(groupId: GroupId) = membersCache.getAsFlow(groupId)
+    override fun getMembersAsFlow(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<MemberId>, DataOperationError>> {
+        return membersCache.getAsFlow(groupId)
+    }
 
-    override fun getGroupsAsFlow(memberId: MemberId) = groupsCache.getAsFlow(memberId)
+    override fun getGroupsAsFlow(
+        memberId: MemberId,
+    ): Flow<Outcome<Set<GroupId>, DataOperationError>> {
+        return groupsCache.getAsFlow(memberId)
+    }
 
-    override fun getAdminsAsFlow(groupId: GroupId) = adminsCache.getAsFlow(groupId)
+    override fun getAdminsAsFlow(
+        groupId: GroupId,
+    ): Flow<Outcome<Set<MemberId>, DataOperationError>> {
+        return adminsCache.getAsFlow(groupId)
+    }
 
-    override suspend fun getMembers(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
+    override suspend fun getMembers(groupId: GroupId): Outcome<Set<MemberId>, DataOperationError> {
         return dataTransaction {
             GroupMemberTable
                 .selectAll()
                 .where(GroupMemberTable.groupId eq groupId.toJavaUuid())
                 .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
+                .toSet()
         }.mapOperationTransaction()
     }
 
-    override suspend fun getGroups(memberId: MemberId): Outcome<List<GroupId>, DataOperationError> {
+    override suspend fun getGroups(memberId: MemberId): Outcome<Set<GroupId>, DataOperationError> {
         return dataTransaction {
             GroupMemberTable
                 .selectAll()
                 .where(GroupMemberTable.memberId eq memberId.toJavaUuid())
                 .map { GroupId(it[GroupMemberTable.groupId].toCommonUuid()) }
+                .toSet()
         }.mapOperationTransaction()
     }
 
-    override suspend fun getAdmins(groupId: GroupId): Outcome<List<MemberId>, DataOperationError> {
+    override suspend fun getAdmins(groupId: GroupId): Outcome<Set<MemberId>, DataOperationError> {
         return dataTransaction {
+            val groupIdMatches = GroupMemberTable.groupId eq groupId.toJavaUuid()
+            val isAdmin = GroupMemberTable.isAdmin eq true
             GroupMemberTable
                 .selectAll()
-                .where(
-                    (GroupMemberTable.groupId eq groupId.toJavaUuid()) and
-                            (GroupMemberTable.isAdmin eq true)
-                )
+                .where(groupIdMatches and isAdmin)
                 .map { MemberId(it[GroupMemberTable.memberId].toCommonUuid()) }
+                .toSet()
         }.mapOperationTransaction()
     }
 
@@ -112,12 +127,11 @@ class ExposedGroupMemberRepository(
         groupId: GroupId,
         memberId: MemberId,
     ): Outcome<ResultRow, GetError> {
+        val groupIdMatches = GroupMemberTable.groupId eq groupId.toJavaUuid()
+        val memberIdMatches = GroupMemberTable.memberId eq memberId.toJavaUuid()
         return GroupMemberTable
             .selectAll()
-            .where(
-                (GroupMemberTable.groupId eq groupId.toJavaUuid()) and
-                        (GroupMemberTable.memberId eq memberId.toJavaUuid())
-            )
+            .where(groupIdMatches and memberIdMatches)
             .firstOrNotFound()
     }
 }

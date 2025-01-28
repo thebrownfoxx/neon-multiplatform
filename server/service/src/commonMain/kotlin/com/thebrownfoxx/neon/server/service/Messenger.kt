@@ -33,7 +33,7 @@ interface Messenger {
 
     suspend fun getUnreadMessages(
         actorId: MemberId,
-        messageId: MessageId,
+        groupId: GroupId,
     ): Outcome<Set<MessageId>, GetUnreadMessagesError>
 
     suspend fun newConversation(memberIds: Set<MemberId>): UnitOutcome<NewConversationError>
@@ -89,13 +89,6 @@ interface Messenger {
         Unauthorized,
         GroupNotFound,
         DuplicateId,
-        UnexpectedError,
-    }
-
-    enum class MarkAsReadError {
-        Unauthorized,
-        AlreadyRead,
-        GroupNotFound,
         UnexpectedError,
     }
 

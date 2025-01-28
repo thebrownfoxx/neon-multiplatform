@@ -3,8 +3,6 @@ package com.thebrownfoxx.neon.server.service.default
 import com.thebrownfoxx.neon.common.data.AddError
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
-import com.thebrownfoxx.neon.common.data.transaction.flatMap
 import com.thebrownfoxx.neon.common.data.transaction.transaction
 import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -24,7 +22,7 @@ import com.thebrownfoxx.neon.server.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.server.service.Messenger.GetDeliveryError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.server.service.Messenger.GetMessagesError
-import com.thebrownfoxx.neon.server.service.Messenger.MarkAsReadError
+import com.thebrownfoxx.neon.server.service.Messenger.GetUnreadMessagesError
 import com.thebrownfoxx.neon.server.service.Messenger.NewConversationError
 import com.thebrownfoxx.neon.server.service.Messenger.SendMessageError
 import com.thebrownfoxx.neon.server.service.Messenger.UpdateDeliveryError
@@ -131,9 +129,19 @@ class DefaultMessenger(
 
     override suspend fun getUnreadMessages(
         actorId: MemberId,
-        messageId: MessageId,
-    ): Outcome<Set<MessageId>, Messenger.GetUnreadMessagesError> {
-        TODO("Not yet implemented")
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, GetUnreadMessagesError> {
+        groupRepository.get(groupId)
+            .onFailure { return Failure(it.getGroupErrorToGetUnreadMessagesError()) }
+
+        val groupMemberIds = groupMemberRepository.getMembers(groupId)
+            .getOrElse { return Failure(GetUnreadMessagesError.UnexpectedError) }
+
+        if (actorId !in groupMemberIds)
+            return Failure(GetUnreadMessagesError.Unauthorized)
+
+        return messageRepository.getUnreadMessages(actorId, groupId)
+            .mapError { GetUnreadMessagesError.UnexpectedError }
     }
 
     override suspend fun newConversation(
@@ -189,12 +197,13 @@ class DefaultMessenger(
             delivery = Delivery.Sent,
         )
 
-        val unreadMessages = messageRepository.getUnreadMessages(actorId, groupId)
+        val unreadMessageIds = messageRepository.getUnreadMessages(actorId, groupId)
             .getOrElse { return Failure(SendMessageError.UnexpectedError) }
 
         return transaction {
-            unreadMessages.markAsRead(actorId).register().onFailure {
-                return@transaction Failure(SendMessageError.UnexpectedError)
+            unreadMessageIds.forEach { messageId ->
+                deliveryRepository.set(messageId, actorId, Delivery.Read).register()
+                    .onFailure { return@transaction Failure(SendMessageError.UnexpectedError) }
             }
 
             messageRepository.add(message).register()
@@ -208,7 +217,7 @@ class DefaultMessenger(
         actorId: MemberId,
         messageId: MessageId,
         delivery: Delivery,
-    ): UnitOutcome<UpdateDeliveryError> {     
+    ): UnitOutcome<UpdateDeliveryError> {
         val message = messageRepository.get(messageId)
             .getOrElse { return Failure(it.getMessageErrorToUpdateDeliveryError()) }
 
@@ -229,14 +238,6 @@ class DefaultMessenger(
 
         return deliveryRepository.set(messageId, actorId, delivery).finalize()
             .mapError { UpdateDeliveryError.UnexpectedError }
-    }
-
-    private suspend fun List<Message>.markAsRead(
-        actorId: MemberId,
-    ): ReversibleUnitOutcome<DataOperationError> {
-        return map { message ->
-            deliveryRepository.set(message.id, actorId, Delivery.Read)
-        }.flatMap {}
     }
 
     private fun GetError.toGetChatPreviewsError() = when (this) {
@@ -266,6 +267,12 @@ class DefaultMessenger(
         GetError.ConnectionError, GetError.UnexpectedError -> GetDeliveryError.UnexpectedError
     }
 
+    private fun GetError.getGroupErrorToGetUnreadMessagesError() = when (this) {
+        GetError.NotFound -> GetUnreadMessagesError.GroupNotFound
+        GetError.ConnectionError, GetError.UnexpectedError ->
+            GetUnreadMessagesError.UnexpectedError
+    }
+
     private fun GetError.getMemberErrorToNewConversationError() = when (this) {
         GetError.NotFound -> NewConversationError.MemberNotFound
         GetError.ConnectionError, GetError.UnexpectedError -> NewConversationError.UnexpectedError
@@ -279,12 +286,6 @@ class DefaultMessenger(
     private fun AddError.toSendMessageError() = when (this) {
         AddError.Duplicate -> SendMessageError.DuplicateId
         AddError.ConnectionError, AddError.UnexpectedError -> SendMessageError.UnexpectedError
-    }
-
-    private fun GetError.getGroupErrorToMarkAsReadError() = when (this) {
-        GetError.NotFound -> MarkAsReadError.GroupNotFound
-        GetError.ConnectionError, GetError.UnexpectedError ->
-            MarkAsReadError.UnexpectedError
     }
 
     private fun GetError.getMessageErrorToUpdateDeliveryError() = when (this) {

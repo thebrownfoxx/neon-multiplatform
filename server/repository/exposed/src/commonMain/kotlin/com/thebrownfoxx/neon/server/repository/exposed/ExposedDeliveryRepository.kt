@@ -10,7 +10,6 @@ import com.thebrownfoxx.neon.common.data.exposed.toJavaUuid
 import com.thebrownfoxx.neon.common.data.transaction.ReversibleUnitOutcome
 import com.thebrownfoxx.neon.common.data.transaction.asReversible
 import com.thebrownfoxx.neon.common.data.transaction.onFinalize
-import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Delivery
@@ -24,8 +23,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.not
-import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
@@ -65,20 +62,6 @@ class ExposedDeliveryRepository(
             .onFinalize { deliveryCache.update(key) }
     }
 
-    override suspend fun getUnreadMessages(
-        memberId: MemberId,
-        groupId: GroupId,
-    ): Outcome<Set<MessageId>, DataOperationError> {
-        val x = dataTransaction {
-            val sent = MessageTable.senderId eq memberId.toJavaUuid()
-            val read = DeliveryTable.delivery eq Delivery.Read.name or sent
-            MessageTable
-                .selectAll()
-                .where(not(read))
-        }
-        TODO()
-    }
-
     private suspend fun get(key: DeliveryKey): Outcome<Delivery, DataOperationError> {
         val (messageId, memberId) = key
         return dataTransaction {
@@ -114,7 +97,7 @@ class ExposedDeliveryRepository(
     )
 }
 
-private object DeliveryTable : Table("delivery") {
+internal object DeliveryTable : Table("delivery") {
     val messageId = uuid("message_id")
     val memberId = uuid("member_id")
     val delivery = varchar("delivery", 32)

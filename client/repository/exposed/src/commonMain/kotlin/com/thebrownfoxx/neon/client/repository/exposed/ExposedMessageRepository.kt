@@ -30,6 +30,7 @@ import com.thebrownfoxx.outcome.map.onSuccess
 import com.thebrownfoxx.outcome.map.transform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -69,17 +70,26 @@ class ExposedMessageRepository(
     private val messagesCache = ReactiveCache(externalScope, ::getMessages)
     private val messageCache = ReactiveCache(externalScope, ::get)
 
-    override val chatPreviews:
-            Flow<Outcome<LocalChatPreviews, DataOperationError>> =
-        chatPreviewsCache.getAsFlow()
-
-    override val outgoingQueue = Channel<LocalMessage>(Channel.BUFFERED)
-
     init {
         externalScope.launch {
             val outgoingMessages = getOutgoingMessages().getOrElse { return@launch }
             outgoingMessages.forEach { outgoingQueue.send(it) }
         }
+    }
+
+    @Deprecated("Use getChatPreviews instead")
+    override val chatPreviews:
+            Flow<Outcome<LocalChatPreviews, DataOperationError>> =
+        chatPreviewsCache.getAsFlow()
+
+    override fun getChatPreviews(memberId: MemberId): Flow<Outcome<LocalChatPreviews, DataOperationError>> {
+        TODO("Not yet implemented")
+    }
+    @Deprecated("Use getOutgoingQueue instead")
+    override val outgoingQueue = Channel<LocalMessage>(Channel.BUFFERED)
+
+    override fun getOutgoingQueue(memberId: MemberId): ReceiveChannel<LocalMessage> {
+        TODO("Not yet implemented")
     }
 
     override fun getMessagesAsFlow(

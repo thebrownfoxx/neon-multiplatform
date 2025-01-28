@@ -85,6 +85,21 @@ class ExposedMessageRepository(
         }.mapGetTransaction()
     }
 
+    override suspend fun getUnreadMessages(
+        memberId: MemberId,
+        groupId: GroupId,
+    ): Outcome<Set<MessageId>, DataOperationError> {
+        return dataTransaction {
+            val sent = MessageTable.senderId eq memberId.toJavaUuid()
+            val read = DeliveryTable.delivery eq Delivery.Read.name or sent
+            MessageTable
+                .selectAll()
+                .where(MessageTable.groupId eq groupId.toJavaUuid() and not(read))
+                .map { MessageId(it[MessageTable.id].toCommonUuid()) }
+                .toSet()
+        }.mapOperationTransaction()
+    }
+
     override suspend fun add(message: Message): ReversibleUnitOutcome<AddError> {
         return dataTransaction {
             MessageTable.tryAdd {
@@ -127,21 +142,6 @@ class ExposedMessageRepository(
             }.onFinalize {
                 messageCache.update(message.id)
             }
-    }
-
-    @Deprecated("Use DeliveryRepository instead")
-    override suspend fun getUnreadMessages(
-        memberId: MemberId,
-        groupId: GroupId,
-    ): Outcome<List<Message>, DataOperationError> {
-        return dataTransaction {
-            val sent = MessageTable.senderId eq memberId.toJavaUuid()
-            val read = MessageTable.delivery eq Delivery.Read.name or sent
-            MessageTable
-                .selectAll()
-                .where(MessageTable.groupId eq groupId.toJavaUuid() and not(read))
-                .map { it.toMessage() }
-        }.mapOperationTransaction()
     }
 
     private suspend fun getChatPreviews(
@@ -211,7 +211,7 @@ class ExposedMessageRepository(
     }
 }
 
-internal object MessageTable : Table("message") {
+private object MessageTable : Table("message") {
     val id = uuid("id")
     val groupId = uuid("group_id")
     val senderId = uuid("sender_id")
