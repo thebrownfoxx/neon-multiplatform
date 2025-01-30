@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.client.service.offinefirst.mesage
 import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
-import com.thebrownfoxx.neon.client.repository.MessageRepository
+import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.Flow
 
 class OfflineFirstMessenger(
     private val remoteMessenger: Messenger,
-    private val localMessageRepository: MessageRepository,
+    private val localMessageRepository: LocalMessageRepository,
     externalScope: CoroutineScope,
 ) : Messenger {
     // TODO: Maybe type-alias the Outcome<x, y>s? Something like GetChatPreviewsOutcome

@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.member
 
 import com.thebrownfoxx.neon.client.model.LocalMember
-import com.thebrownfoxx.neon.client.repository.MemberRepository
+import com.thebrownfoxx.neon.client.repository.LocalMemberRepository
 import com.thebrownfoxx.neon.client.service.MemberManager.GetMemberError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.GetError
@@ -10,7 +10,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 
 class MemberOfflineFirstHandler(
-    private val localMemberRepository: MemberRepository,
+    private val localMemberRepository: LocalMemberRepository,
 ) : OfflineFirstHandler<RepositoryMember, ServiceMember> {
     override fun hasLocalFailed(local: RepositoryMember): Boolean {
         return local is Failure

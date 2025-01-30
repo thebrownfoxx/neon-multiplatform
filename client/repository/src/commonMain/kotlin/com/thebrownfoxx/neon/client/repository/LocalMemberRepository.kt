@@ -8,7 +8,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.flow.Flow
 
-interface MemberRepository {
+interface LocalMemberRepository {
     fun getAsFlow(id: MemberId): Flow<Outcome<LocalMember, GetError>>
     suspend fun upsert(member: LocalMember): UnitOutcome<DataOperationError>
 }

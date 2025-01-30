@@ -13,7 +13,7 @@ import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 
-interface MessageRepository {
+interface LocalMessageRepository {
     @Deprecated("Use getChatPreviews instead")
     val chatPreviews: Flow<Outcome<LocalChatPreviews, DataOperationError>>
 

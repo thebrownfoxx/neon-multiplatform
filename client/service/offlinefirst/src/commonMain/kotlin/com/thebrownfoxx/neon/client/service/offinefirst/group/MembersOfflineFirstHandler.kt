@@ -1,6 +1,6 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.group
 
-import com.thebrownfoxx.neon.client.repository.GroupMemberRepository
+import com.thebrownfoxx.neon.client.repository.LocalGroupMemberRepository
 import com.thebrownfoxx.neon.client.service.GroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.DataOperationError
@@ -13,7 +13,7 @@ import com.thebrownfoxx.outcome.map.onSuccess
 
 class MembersOfflineFirstHandler(
     private val groupId: GroupId,
-    private val localGroupMemberRepository: GroupMemberRepository,
+    private val localGroupMemberRepository: LocalGroupMemberRepository,
 ) : OfflineFirstHandler<RepositoryMembers, ServiceMembers> {
     override fun hasLocalFailed(local: RepositoryMembers): Boolean {
         return local !is Success || local.value.isEmpty()

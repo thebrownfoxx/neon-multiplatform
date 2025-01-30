@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.old
 
 import com.thebrownfoxx.neon.client.model.LocalMember
-import com.thebrownfoxx.neon.client.repository.MemberRepository
+import com.thebrownfoxx.neon.client.repository.LocalMemberRepository
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.MemberManager.GetMemberError
 import com.thebrownfoxx.neon.common.data.Cache
@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
 @Deprecated("Use OfflineFFirstMemberManager instead")
 class OldOfflineFirstMemberManager(
     private val remoteMemberManager: MemberManager,
-    private val localMemberRepository: MemberRepository,
+    private val localMemberRepository: LocalMemberRepository,
     externalScope: CoroutineScope,
 ) : MemberManager {
     private val getMemberCache =

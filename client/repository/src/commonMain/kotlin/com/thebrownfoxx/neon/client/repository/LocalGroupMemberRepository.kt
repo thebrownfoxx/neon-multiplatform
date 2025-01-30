@@ -7,7 +7,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.flow.Flow
 
-interface GroupMemberRepository {
+interface LocalGroupMemberRepository {
     fun getMembersAsFlow(groupId: GroupId): Flow<Outcome<Set<MemberId>, DataOperationError>>
 
     suspend fun batchUpsert(

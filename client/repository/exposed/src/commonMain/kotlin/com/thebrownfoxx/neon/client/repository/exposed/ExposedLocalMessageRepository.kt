@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
-import com.thebrownfoxx.neon.client.repository.MessageRepository
+import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.ReactiveCache
@@ -57,11 +57,11 @@ import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.upsert
 import java.util.UUID
 
-class ExposedMessageRepository(
+class ExposedLocalMessageRepository(
     database: Database,
     private val getMemberId: suspend () -> MemberId, // TODO: This should be bound to authenticator? idk man
     externalScope: CoroutineScope,
-) : MessageRepository {
+) : LocalMessageRepository {
     init {
         initializeExposeDatabase(database, LocalMessageTable)
     }

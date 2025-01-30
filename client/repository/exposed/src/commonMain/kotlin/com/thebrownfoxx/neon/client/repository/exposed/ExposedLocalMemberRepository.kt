@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.repository.exposed
 
 import com.thebrownfoxx.neon.client.model.LocalMember
-import com.thebrownfoxx.neon.client.repository.MemberRepository
+import com.thebrownfoxx.neon.client.repository.LocalMemberRepository
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.ReactiveCache
@@ -26,10 +26,10 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
-class ExposedMemberRepository(
+class ExposedLocalMemberRepository(
     database: Database,
     externalScope: CoroutineScope,
-) : MemberRepository {
+) : LocalMemberRepository {
     init {
         initializeExposeDatabase(database, LocalMemberTable)
     }

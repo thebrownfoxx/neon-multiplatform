@@ -4,10 +4,10 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.thebrownfoxx.neon.client.remote.service.RemoteGroupManager
 import com.thebrownfoxx.neon.client.remote.service.RemoteMemberManager
 import com.thebrownfoxx.neon.client.remote.service.RemoteMessenger
-import com.thebrownfoxx.neon.client.repository.exposed.ExposedGroupMemberRepository
-import com.thebrownfoxx.neon.client.repository.exposed.ExposedGroupRepository
-import com.thebrownfoxx.neon.client.repository.exposed.ExposedMemberRepository
-import com.thebrownfoxx.neon.client.repository.exposed.ExposedMessageRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalGroupMemberRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalGroupRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalMemberRepository
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalMessageRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedTokenRepository
 import com.thebrownfoxx.neon.client.service.Dependencies
 import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
@@ -65,8 +65,8 @@ class AppDependencies(
             subscriber = webSocketSubscriber,
             externalScope = externalScope,
         )
-        val localGroupRepository = ExposedGroupRepository(database, externalScope)
-        val localGroupMemberRepository = ExposedGroupMemberRepository(database, externalScope)
+        val localGroupRepository = ExposedLocalGroupRepository(database, externalScope)
+        val localGroupMemberRepository = ExposedLocalGroupMemberRepository(database, externalScope)
         OfflineFirstGroupManager(
             remoteGroupManager = remoteGroupManager,
             localGroupRepository = localGroupRepository,
@@ -80,7 +80,7 @@ class AppDependencies(
             subscriber = webSocketSubscriber,
             externalScope = externalScope,
         )
-        val localMemberRepository = ExposedMemberRepository(database, externalScope)
+        val localMemberRepository = ExposedLocalMemberRepository(database, externalScope)
         OfflineFirstMemberManager(
             remoteMemberManager = remoteMemberManager,
             localMemberRepository = localMemberRepository,
@@ -95,7 +95,7 @@ class AppDependencies(
             requester = webSocketRequester,
             externalScope = externalScope,
         )
-        val localMessageRepository = ExposedMessageRepository(
+        val localMessageRepository = ExposedLocalMessageRepository(
             database = database,
             getMemberId = { authenticator.loggedInMemberId.filterNotNull().first() },
             externalScope = externalScope,

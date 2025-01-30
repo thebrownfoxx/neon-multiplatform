@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.client.repository.exposed
 import com.thebrownfoxx.neon.client.model.LocalChatGroup
 import com.thebrownfoxx.neon.client.model.LocalCommunity
 import com.thebrownfoxx.neon.client.model.LocalGroup
-import com.thebrownfoxx.neon.client.repository.GroupRepository
+import com.thebrownfoxx.neon.client.repository.LocalGroupRepository
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
 import com.thebrownfoxx.neon.common.data.ReactiveCache
@@ -28,10 +28,10 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 
-class ExposedGroupRepository(
+class ExposedLocalGroupRepository(
     database: Database,
     externalScope: CoroutineScope,
-) : GroupRepository {
+) : LocalGroupRepository {
     init {
         initializeExposeDatabase(database, LocalGroupTable)
     }

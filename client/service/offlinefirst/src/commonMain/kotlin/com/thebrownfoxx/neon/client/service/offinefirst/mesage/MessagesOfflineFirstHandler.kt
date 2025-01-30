@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.mesage
 
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
-import com.thebrownfoxx.neon.client.repository.MessageRepository
+import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.DataOperationError
@@ -11,7 +11,7 @@ import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.map.onSuccess
 
 class MessagesOfflineFirstHandler(
-    private val localMessageRepository: MessageRepository,
+    private val localMessageRepository: LocalMessageRepository,
 ) : OfflineFirstHandler<RepositoryMessages, ServiceMessages> {
     override fun hasLocalFailed(local: RepositoryMessages): Boolean {
         return local !is Success || local.value.isEmpty()

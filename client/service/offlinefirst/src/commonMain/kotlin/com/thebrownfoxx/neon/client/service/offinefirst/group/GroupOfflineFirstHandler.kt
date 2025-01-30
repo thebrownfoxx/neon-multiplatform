@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.group
 
 import com.thebrownfoxx.neon.client.model.LocalGroup
-import com.thebrownfoxx.neon.client.repository.GroupRepository
+import com.thebrownfoxx.neon.client.repository.LocalGroupRepository
 import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.GetError
@@ -10,7 +10,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 
 internal class GroupOfflineFirstHandler(
-    private val localGroupRepository: GroupRepository,
+    private val localGroupRepository: LocalGroupRepository,
 ) : OfflineFirstHandler<RepositoryGroup, ServiceGroup> {
     override fun hasLocalFailed(local: RepositoryGroup): Boolean {
         return local is Failure

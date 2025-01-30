@@ -1,8 +1,8 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.old
 
 import com.thebrownfoxx.neon.client.model.LocalGroup
-import com.thebrownfoxx.neon.client.repository.GroupMemberRepository
-import com.thebrownfoxx.neon.client.repository.GroupRepository
+import com.thebrownfoxx.neon.client.repository.LocalGroupMemberRepository
+import com.thebrownfoxx.neon.client.repository.LocalGroupRepository
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.client.service.GroupManager.GetMembersError
@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.map
 @Deprecated("Use OfflineFirstGroupManager instead")
 class OldOfflineFirstGroupManager(
     private val remoteGroupManager: GroupManager,
-    private val localGroupRepository: GroupRepository,
-    private val localGroupMemberRepository: GroupMemberRepository,
+    private val localGroupRepository: LocalGroupRepository,
+    private val localGroupMemberRepository: LocalGroupMemberRepository,
     externalScope: CoroutineScope,
 ) : GroupManager {
     private val getGroupCache = Cache<GroupId, Outcome<LocalGroup, GetGroupError>>(externalScope)

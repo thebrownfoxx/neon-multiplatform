@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.client.service.offinefirst.mesage
 import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
-import com.thebrownfoxx.neon.client.repository.MessageRepository
+import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.DataOperationError
@@ -13,7 +13,7 @@ import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.map.onSuccess
 
 class ChatPreviewsOfflineFirstHandler(
-    private val localMessageRepository: MessageRepository,
+    private val localMessageRepository: LocalMessageRepository,
 ) : OfflineFirstHandler<RepositoryChatPreviews, ServiceChatPreviews> {
     override fun hasLocalFailed(local: RepositoryChatPreviews): Boolean {
         return local !is Success || local.value.toFlatList().isEmpty()

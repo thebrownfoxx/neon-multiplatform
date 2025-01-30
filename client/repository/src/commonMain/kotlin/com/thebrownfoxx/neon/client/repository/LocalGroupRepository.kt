@@ -8,7 +8,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.UnitOutcome
 import kotlinx.coroutines.flow.Flow
 
-interface GroupRepository {
+interface LocalGroupRepository {
     fun getAsFlow(id: GroupId): Flow<Outcome<LocalGroup, GetError>>
     suspend fun upsert(group: LocalGroup): UnitOutcome<DataOperationError>
 }

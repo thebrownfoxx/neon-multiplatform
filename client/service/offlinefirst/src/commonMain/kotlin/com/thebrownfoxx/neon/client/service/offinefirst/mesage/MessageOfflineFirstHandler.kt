@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.mesage
 
 import com.thebrownfoxx.neon.client.model.LocalMessage
-import com.thebrownfoxx.neon.client.repository.MessageRepository
+import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.GetError
@@ -10,7 +10,7 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 
 class MessageOfflineFirstHandler(
-    private val localMessageRepository: MessageRepository,
+    private val localMessageRepository: LocalMessageRepository,
 ) : OfflineFirstHandler<RepositoryMessage, ServiceMessage> {
     override fun hasLocalFailed(local: RepositoryMessage): Boolean {
         return local is Failure

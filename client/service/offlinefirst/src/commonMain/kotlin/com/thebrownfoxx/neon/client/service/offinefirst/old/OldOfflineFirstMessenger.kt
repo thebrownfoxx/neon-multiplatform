@@ -4,7 +4,7 @@ import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
-import com.thebrownfoxx.neon.client.repository.MessageRepository
+import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Messenger
 import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.seconds
 class OldOfflineFirstMessenger(
     private val authenticator: Authenticator,
     private val remoteMessenger: Messenger,
-    private val localMessageRepository: MessageRepository,
+    private val localMessageRepository: LocalMessageRepository,
     externalScope: CoroutineScope,
 ) : Messenger {
     private val sendMessageExponentialBackoffValues = ExponentialBackoffValues(
