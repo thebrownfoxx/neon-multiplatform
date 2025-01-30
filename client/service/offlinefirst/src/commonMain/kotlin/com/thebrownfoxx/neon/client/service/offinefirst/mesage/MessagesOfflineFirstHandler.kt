@@ -8,6 +8,7 @@ import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.map.onSuccess
 
 class MessagesOfflineFirstHandler(
     private val localMessageRepository: MessageRepository,
@@ -27,8 +28,9 @@ class MessagesOfflineFirstHandler(
         remoteError: GetMessagesError,
         oldLocal: RepositoryMessages,
     ) {
-        if (remoteError != GetMessagesError.GroupNotFound || oldLocal !is Success) return
-        TODO("Delete ${oldLocal.value}")
+        if (remoteError == GetMessagesError.GroupNotFound && oldLocal is Success) {
+            TODO("Delete ${oldLocal.value}")
+        }
     }
 
     private suspend fun onRemoteSuccess(
@@ -36,9 +38,10 @@ class MessagesOfflineFirstHandler(
         oldLocal: RepositoryMessages,
     ) {
         localMessageRepository.batchUpsertTimestampedIds(remoteMessages)
-        if (oldLocal !is Success) return
-        val removedMessages = oldLocal.value.filter { it !in remoteMessages }
-        if (removedMessages.isNotEmpty()) TODO("Removed $removedMessages")
+        oldLocal.onSuccess { localMessageIds ->
+            val removedMessages = localMessageIds.filter { it !in remoteMessages }
+            if (removedMessages.isNotEmpty()) TODO("Removed $removedMessages")
+        }
     }
 }
 

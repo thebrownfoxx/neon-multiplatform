@@ -9,6 +9,7 @@ import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.map.onSuccess
 
 class MembersOfflineFirstHandler(
     private val groupId: GroupId,
@@ -29,8 +30,9 @@ class MembersOfflineFirstHandler(
         remoteError: GetMembersError,
         oldLocal: RepositoryMembers,
     ) {
-        if (remoteError != GetMembersError.GroupNotFound || oldLocal !is Success) return
-        TODO("Delete ${oldLocal.value}")
+        if (remoteError == GetMembersError.GroupNotFound && oldLocal is Success) {
+            TODO("Delete ${oldLocal.value}")
+        }
     }
 
     private suspend fun onRemoteSuccess(
@@ -38,9 +40,10 @@ class MembersOfflineFirstHandler(
         oldLocal: RepositoryMembers,
     ) {
         localGroupMemberRepository.batchUpsert(groupId, remoteMemberIds)
-        if (oldLocal !is Success) return
-        val removedMembers = oldLocal.value.filter { it !in remoteMemberIds }
-        if (removedMembers.isNotEmpty()) TODO("Remove $removedMembers")
+        oldLocal.onSuccess { localMemberIds ->
+            val removedMembers = localMemberIds.filter { it !in remoteMemberIds }
+            if (removedMembers.isNotEmpty()) TODO("Remove $removedMembers")
+        }
     }
 }
 

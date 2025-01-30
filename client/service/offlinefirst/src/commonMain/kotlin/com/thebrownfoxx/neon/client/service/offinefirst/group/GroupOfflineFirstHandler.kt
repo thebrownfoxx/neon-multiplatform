@@ -27,8 +27,9 @@ internal class GroupOfflineFirstHandler(
         remoteError: GetGroupError,
         oldLocal: RepositoryGroup,
     ) {
-        if (remoteError != GetGroupError.NotFound || oldLocal !is Success) return
-        TODO("Delete ${oldLocal.value}")
+        if (remoteError == GetGroupError.NotFound && oldLocal is Success) {
+            TODO("Delete ${oldLocal.value}")
+        }
     }
 }
 

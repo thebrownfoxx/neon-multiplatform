@@ -10,6 +10,7 @@ import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
+import com.thebrownfoxx.outcome.map.onSuccess
 
 class ChatPreviewsOfflineFirstHandler(
     private val localMessageRepository: MessageRepository,
@@ -32,8 +33,9 @@ class ChatPreviewsOfflineFirstHandler(
         remoteError: GetChatPreviewsError,
         oldLocal: RepositoryChatPreviews,
     ) {
-        if (remoteError != GetChatPreviewsError.MemberNotFound || oldLocal !is Success) return
-        TODO("Delete ${oldLocal.value.toFlatList()}")
+        if (remoteError == GetChatPreviewsError.MemberNotFound && oldLocal is Success) {
+            TODO("Delete ${oldLocal.value.toFlatList()}")
+        }
     }
 
     private suspend fun onRemoteSuccess(
@@ -41,10 +43,11 @@ class ChatPreviewsOfflineFirstHandler(
         oldLocal: RepositoryChatPreviews,
     ) {
         localMessageRepository.batchUpsert(remoteChatPreviews)
-        if (oldLocal !is Success) return
-        val removedChatPreviews = oldLocal.value.toFlatList()
-            .filter { it.delivery != LocalDelivery.Sending && it !in remoteChatPreviews }
-        if (removedChatPreviews.isNotEmpty()) TODO("Removed $removedChatPreviews")
+        oldLocal.onSuccess { localChatPreviews ->
+            val removedChatPreviews = localChatPreviews.toFlatList()
+                .filter { it.delivery != LocalDelivery.Sending && it !in remoteChatPreviews }
+            if (removedChatPreviews.isNotEmpty()) TODO("Removed $removedChatPreviews")
+        }
     }
 }
 

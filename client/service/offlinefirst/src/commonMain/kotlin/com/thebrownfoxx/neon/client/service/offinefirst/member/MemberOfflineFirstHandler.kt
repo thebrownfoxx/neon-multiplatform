@@ -27,8 +27,9 @@ class MemberOfflineFirstHandler(
         remoteError: GetMemberError,
         oldLocal: RepositoryMember,
     ) {
-        if (remoteError != GetMemberError.NotFound || oldLocal !is Success) return
-        TODO("Delete ${oldLocal.value}")
+        if (remoteError == GetMemberError.NotFound && oldLocal is Success) {
+            TODO("Delete ${oldLocal.value}")
+        }
     }
 }
 
