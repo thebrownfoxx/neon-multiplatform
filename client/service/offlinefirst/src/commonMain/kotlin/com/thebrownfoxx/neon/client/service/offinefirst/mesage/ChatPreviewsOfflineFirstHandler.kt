@@ -1,12 +1,13 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.mesage
 
+import com.thebrownfoxx.neon.client.converter.toLocalMessage
 import com.thebrownfoxx.neon.client.model.LocalChatPreviews
 import com.thebrownfoxx.neon.client.model.LocalDelivery
-import com.thebrownfoxx.neon.client.model.LocalMessage
+import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
-import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.DataOperationError
+import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -25,7 +26,7 @@ class ChatPreviewsOfflineFirstHandler(
     ) {
         when (newRemote) {
             is Failure -> onRemoteFailure(newRemote.error, oldLocal)
-            is Success -> onRemoteSuccess(newRemote.value.toFlatList(), oldLocal)
+            is Success -> onRemoteSuccess(newRemote.value, oldLocal)
         }
     }
 
@@ -39,17 +40,19 @@ class ChatPreviewsOfflineFirstHandler(
     }
 
     private suspend fun onRemoteSuccess(
-        remoteChatPreviews: List<LocalMessage>,
+        remoteChatPreviews: List<Message>,
         oldLocal: RepositoryChatPreviews,
     ) {
-        localMessageRepository.batchUpsert(remoteChatPreviews)
+        localMessageRepository.batchUpsert(remoteChatPreviews.map { it.toLocalMessage() })
         oldLocal.onSuccess { localChatPreviews ->
-            val removedChatPreviews = localChatPreviews.toFlatList()
-                .filter { it.delivery != LocalDelivery.Sending && it !in remoteChatPreviews }
+            val removedChatPreviews = localChatPreviews.toFlatList().filter { localMessage ->
+                val notInRemote = remoteChatPreviews.none { it.id == localMessage.id }
+                localMessage.delivery != LocalDelivery.Sending && notInRemote
+            }
             if (removedChatPreviews.isNotEmpty()) TODO("Removed $removedChatPreviews")
         }
     }
 }
 
 private typealias RepositoryChatPreviews = Outcome<LocalChatPreviews, DataOperationError>
-private typealias ServiceChatPreviews = Outcome<LocalChatPreviews, GetChatPreviewsError>
+private typealias ServiceChatPreviews = Outcome<List<Message>, GetChatPreviewsError>

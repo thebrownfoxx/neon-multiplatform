@@ -67,6 +67,8 @@ kotlin {
             implementation(projects.client.websocket)
             implementation(projects.client.repository)
             implementation(projects.client.repository.exposed)
+            implementation(projects.client.remote)
+            implementation(projects.client.remote.websocket)
             implementation(projects.client.service)
             implementation(projects.client.service.default)
             implementation(projects.client.service.remote)

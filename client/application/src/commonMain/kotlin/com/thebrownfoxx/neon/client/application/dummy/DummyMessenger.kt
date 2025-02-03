@@ -72,10 +72,6 @@ class DummyMessenger(
         }
     }
 
-    override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, Messenger.GetUnreadMessagesError> {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun sendMessage(
         id: MessageId,
         groupId: GroupId,

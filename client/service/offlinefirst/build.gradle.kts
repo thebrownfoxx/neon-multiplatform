@@ -19,8 +19,10 @@ kotlin {
             implementation(projects.common)
             implementation(projects.common.data)
             implementation(projects.common.data.websocket)
+            implementation(projects.server.model)
             implementation(projects.client.model)
             implementation(projects.client.repository)
+            implementation(projects.client.remote)
             implementation(projects.client.service)
             implementation(projects.client.converter)
         }

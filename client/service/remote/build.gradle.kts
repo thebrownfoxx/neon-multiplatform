@@ -21,11 +21,9 @@ kotlin {
             implementation(libs.ktor.client.websockets)
             implementation(projects.common)
             implementation(projects.common.data)
-            implementation(projects.common.data.websocket)
             implementation(projects.client.model)
             implementation(projects.client.service)
             implementation(projects.client.converter)
-            implementation(projects.client.websocket)
             implementation(projects.server.model)
             implementation(projects.server.route)
         }

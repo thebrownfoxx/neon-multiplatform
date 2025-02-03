@@ -1,7 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.group
 
+import com.thebrownfoxx.neon.client.remote.RemoteGroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.repository.LocalGroupMemberRepository
-import com.thebrownfoxx.neon.client.service.GroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.type.id.GroupId

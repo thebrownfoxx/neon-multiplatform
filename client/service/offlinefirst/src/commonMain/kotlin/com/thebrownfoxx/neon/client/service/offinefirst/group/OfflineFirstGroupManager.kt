@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.group
 
 import com.thebrownfoxx.neon.client.model.LocalGroup
+import com.thebrownfoxx.neon.client.remote.RemoteGroupManager
 import com.thebrownfoxx.neon.client.repository.LocalGroupMemberRepository
 import com.thebrownfoxx.neon.client.repository.LocalGroupRepository
 import com.thebrownfoxx.neon.client.service.GroupManager
@@ -19,7 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 class OfflineFirstGroupManager(
-    private val remoteGroupManager: GroupManager,
+    private val remoteGroupManager: RemoteGroupManager,
     private val localGroupRepository: LocalGroupRepository,
     private val localGroupMemberRepository: LocalGroupMemberRepository,
     externalScope: CoroutineScope,

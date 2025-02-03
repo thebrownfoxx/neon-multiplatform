@@ -1,10 +1,12 @@
 package com.thebrownfoxx.neon.client.service.offinefirst.member
 
+import com.thebrownfoxx.neon.client.converter.toLocalMember
 import com.thebrownfoxx.neon.client.model.LocalMember
+import com.thebrownfoxx.neon.client.remote.RemoteMemberManager.GetMemberError
 import com.thebrownfoxx.neon.client.repository.LocalMemberRepository
-import com.thebrownfoxx.neon.client.service.MemberManager.GetMemberError
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.server.model.Member
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -19,7 +21,7 @@ class MemberOfflineFirstHandler(
     override suspend fun updateLocal(newRemote: ServiceMember, oldLocal: RepositoryMember) {
         when (newRemote) {
             is Failure -> onRemoteFailure(newRemote.error, oldLocal)
-            is Success -> localMemberRepository.upsert(newRemote.value)
+            is Success -> localMemberRepository.upsert(newRemote.value.toLocalMember())
         }
     }
 
@@ -34,4 +36,4 @@ class MemberOfflineFirstHandler(
 }
 
 private typealias RepositoryMember = Outcome<LocalMember, GetError>
-private typealias ServiceMember = Outcome<LocalMember, GetMemberError>
+private typealias ServiceMember = Outcome<Member, GetMemberError>

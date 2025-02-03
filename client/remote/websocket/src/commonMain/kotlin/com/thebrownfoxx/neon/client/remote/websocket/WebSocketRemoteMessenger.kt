@@ -69,8 +69,8 @@ class WebSocketRemoteMessenger(
                 map<GetChatPreviewsUnexpectedError> {
                     Failure(GetChatPreviewsError.UnexpectedError)
                 }
-                map<GetChatPreviewsSuccessful> { Success(it) }
-            }
+                map<GetChatPreviewsSuccessful> { Success(it.chatPreviews) }
+            }.mirrorTo(this)
         }
 
     override fun getMessages(

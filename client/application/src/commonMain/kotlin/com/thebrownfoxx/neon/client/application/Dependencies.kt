@@ -1,9 +1,9 @@
 package com.thebrownfoxx.neon.client.application
 
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.thebrownfoxx.neon.client.remote.service.RemoteGroupManager
-import com.thebrownfoxx.neon.client.remote.service.RemoteMemberManager
-import com.thebrownfoxx.neon.client.remote.service.RemoteMessenger
+import com.thebrownfoxx.neon.client.remote.websocket.WebSocketRemoteGroupManager
+import com.thebrownfoxx.neon.client.remote.websocket.WebSocketRemoteMemberManager
+import com.thebrownfoxx.neon.client.remote.websocket.WebSocketRemoteMessenger
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalGroupMemberRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalGroupRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalMemberRepository
@@ -14,7 +14,7 @@ import com.thebrownfoxx.neon.client.service.default.DefaultAuthenticator
 import com.thebrownfoxx.neon.client.service.default.KtorClientWebSocketConnector
 import com.thebrownfoxx.neon.client.service.offinefirst.group.OfflineFirstGroupManager
 import com.thebrownfoxx.neon.client.service.offinefirst.member.OfflineFirstMemberManager
-import com.thebrownfoxx.neon.client.service.offinefirst.old.OldOfflineFirstMessenger
+import com.thebrownfoxx.neon.client.service.offinefirst.mesage.OfflineFirstMessenger
 import com.thebrownfoxx.neon.client.websocket.AutoConnectWebSocketSessionProvider
 import com.thebrownfoxx.neon.client.websocket.AutoRetryWebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.AutoRetryWebSocketSubscriber
@@ -61,7 +61,7 @@ class AppDependencies(
     private val webSocketRequester = AutoRetryWebSocketRequester(webSocketSessionProvider)
 
     override val groupManager = run {
-        val remoteGroupManager = RemoteGroupManager(
+        val remoteGroupManager = WebSocketRemoteGroupManager(
             subscriber = webSocketSubscriber,
             externalScope = externalScope,
         )
@@ -76,7 +76,7 @@ class AppDependencies(
     }
 
     override val memberManager = run {
-        val remoteMemberManager = RemoteMemberManager(
+        val remoteMemberManager = WebSocketRemoteMemberManager(
             subscriber = webSocketSubscriber,
             externalScope = externalScope,
         )
@@ -89,8 +89,7 @@ class AppDependencies(
     }
 
     override val messenger = run {
-        val remoteMessenger = RemoteMessenger(
-            authenticator = authenticator,
+        val remoteMessenger = WebSocketRemoteMessenger(
             subscriber = webSocketSubscriber,
             requester = webSocketRequester,
             externalScope = externalScope,
@@ -100,7 +99,7 @@ class AppDependencies(
             getMemberId = { authenticator.loggedInMemberId.filterNotNull().first() },
             externalScope = externalScope,
         )
-        OldOfflineFirstMessenger(
+        OfflineFirstMessenger(
             authenticator = authenticator,
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,

@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.seconds
 
+@Deprecated("Use OfflineFirstMessenger instead")
 class OldOfflineFirstMessenger(
     private val authenticator: Authenticator,
     private val remoteMessenger: Messenger,
@@ -126,11 +127,6 @@ class OldOfflineFirstMessenger(
             }
         }
     }
-
-    override suspend fun getUnreadMessages(groupId: GroupId): Outcome<Set<MessageId>, Messenger.GetUnreadMessagesError> {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun sendMessage(
         id: MessageId,
         groupId: GroupId,
