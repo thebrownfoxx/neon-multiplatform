@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+@Deprecated("Use CacheMap instead")
 class Cache<in K, V>(
     private val externalScope: CoroutineScope,
     private val removalDelay: Duration = 1.minutes,
@@ -56,6 +57,7 @@ class Cache<in K, V>(
     )
 }
 
+@Deprecated("You do not need a cache for a single element")
 class SingleCache<V>(
     private val externalScope: CoroutineScope,
     private val removalDelay: Duration = 1.minutes,
@@ -85,8 +87,6 @@ class SingleCache<V>(
         removeOnUnsubscribe(removalDelay) { remove() }
     }
 }
-
-private fun <V> cacheSharedFlow() = MutableSharedFlow<V>(replay = 1, extraBufferCapacity = 16)
 
 @OptIn(FlowPreview::class)
 private suspend fun <V> MutableSharedFlow<V>.removeOnUnsubscribe(
