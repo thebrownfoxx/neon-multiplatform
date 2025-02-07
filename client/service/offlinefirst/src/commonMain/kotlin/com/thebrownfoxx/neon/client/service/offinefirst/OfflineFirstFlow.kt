@@ -2,12 +2,13 @@ package com.thebrownfoxx.neon.client.service.offinefirst
 
 import com.thebrownfoxx.neon.common.extension.flow.channelFlow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
 /**
@@ -26,21 +27,16 @@ import kotlinx.coroutines.launch
  * [OfflineFirstHandler.updateLocal] is only called after [localFlow] has already emitted once, so
  * the caller can decide if/how to update local.
  */
+@Deprecated("Use OfflineFirstProvider instead")
 fun <TL, TR> offlineFirstFlow(
     localFlow: Flow<TL>,
     remoteFlow: Flow<TR>,
     handler: OfflineFirstHandler<TL, TR>,
 ): Flow<TL> {
     return channelFlow {
-        val local = MutableSharedFlow<TL>(replay = 1)
+        val local = localFlow.shareIn(this, SharingStarted.Eagerly, replay = 1)
         val updatedFromRemote = MutableStateFlow(false)
         with(handler) {
-            launch {
-                localFlow.collect { newLocal ->
-                    local.emit(newLocal)
-                    if (!hasLocalFailed(newLocal)) emit(newLocal)
-                }
-            }
             launch {
                 remoteFlow.collect { newRemote ->
                     updateLocal(newRemote, local.first())
@@ -48,8 +44,8 @@ fun <TL, TR> offlineFirstFlow(
                 }
             }
             launch {
-                combine(local, updatedFromRemote) { local, updatedFromRemote ->
-                    if (updatedFromRemote) emit(local)
+                combine(local, updatedFromRemote) { newLocal, updatedFromRemote ->
+                    if (!hasLocalFailed(newLocal)|| updatedFromRemote) emit(newLocal)
                 }.collect()
             }
         }
