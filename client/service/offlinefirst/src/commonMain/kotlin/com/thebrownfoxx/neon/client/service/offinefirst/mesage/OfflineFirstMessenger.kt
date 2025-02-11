@@ -30,6 +30,7 @@ import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.seconds
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.SendMessageError as RemoteSendMessageError
@@ -48,6 +49,10 @@ class OfflineFirstMessenger(
 
     private val messagesCache = createMessagesCache(externalScope)
     private val messageCache = createMessageCache(externalScope)
+
+    init {
+        externalScope.launch { sendOutgoingMessages() }
+    }
 
     override val chatPreviews: Flow<Outcome<LocalChatPreviews, GetChatPreviewsError>> =
         OfflineFirstProvider(

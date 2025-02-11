@@ -35,10 +35,12 @@ internal class MessageOfflineFirstHandler(
         remoteError: GetMessageError,
         oldLocal: RepositoryMessage,
     ) {
-        val deletableErrors = setOf(GetMessageError.Unauthorized, GetMessageError.NotFound)
-        if (remoteError in deletableErrors && oldLocal is Success) {
-            TODO("Delete ${oldLocal.value}")
-        }
+        // TODO: Remove deleted messages. However, we have to save local messages that have
+        //  not been sent yet
+//        val deletableErrors = setOf(GetMessageError.Unauthorized, GetMessageError.NotFound)
+//        if (remoteError in deletableErrors && oldLocal is Success) {
+//            TODO("Delete ${oldLocal.value}")
+//        }
     }
 }
 

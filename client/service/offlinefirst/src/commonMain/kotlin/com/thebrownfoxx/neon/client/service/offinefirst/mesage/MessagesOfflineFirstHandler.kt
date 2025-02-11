@@ -49,10 +49,12 @@ internal class MessagesOfflineFirstHandler(
         val localTimestampedIds = remoteMessages.map { it.toLocalTimestampedMessageId(groupId) }
         localMessageRepository.batchUpsertTimestampedIds(localTimestampedIds)
         oldLocal.onSuccess { localMessageIds ->
-            val removedMessages = localMessageIds.filter { localMessage ->
-                remoteMessages.none { it.id == localMessage.id }
-            }
-            if (removedMessages.isNotEmpty()) TODO("Removed $removedMessages")
+            // TODO: Remove deleted messages. However, we have to save local messages that have
+            //  not been sent yet
+//            val removedMessages = localMessageIds.filter { localMessage ->
+//                remoteMessages.none { it.id == localMessage.id }
+//            }
+//            if (removedMessages.isNotEmpty()) TODO("Remove $removedMessages")
         }
     }
 }

@@ -93,6 +93,12 @@ class ExposedMessageRepository(
             val sent = MessageTable.senderId eq memberId.toJavaUuid()
             val read = DeliveryTable.delivery eq Delivery.Read.name or sent
             MessageTable
+                .join(
+                    DeliveryTable,
+                    JoinType.FULL,
+                    onColumn = MessageTable.id,
+                    otherColumn = DeliveryTable.messageId,
+                )
                 .selectAll()
                 .where(MessageTable.groupId eq groupId.toJavaUuid() and not(read))
                 .map { MessageId(it[MessageTable.id].toCommonUuid()) }
@@ -132,9 +138,7 @@ class ExposedMessageRepository(
         val oldMessage = get(message.id)
             .getOrElse { return Failure(it.toUpdateError()).asReversible() }
 
-        return dataTransaction {
-            updateMessage(message)
-        }
+        return dataTransaction { updateMessage(message) }
             .mapUpdateTransaction()
             .asReversible {
                 dataTransaction { updateMessage(oldMessage) }
