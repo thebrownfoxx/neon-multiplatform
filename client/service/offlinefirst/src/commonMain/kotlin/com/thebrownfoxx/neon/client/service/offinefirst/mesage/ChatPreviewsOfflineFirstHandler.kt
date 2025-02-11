@@ -13,15 +13,15 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.map.onSuccess
 
-class ChatPreviewsOfflineFirstHandler(
+internal class ChatPreviewsOfflineFirstHandler(
     private val localMessageRepository: LocalMessageRepository,
-) : OfflineFirstHandler<RepositoryChatPreviews, ServiceChatPreviews> {
+) : OfflineFirstHandler<RepositoryChatPreviews, RemoteChatPreviews> {
     override fun hasLocalFailed(local: RepositoryChatPreviews): Boolean {
         return local !is Success || local.value.toFlatList().isEmpty()
     }
 
     override suspend fun updateLocal(
-        newRemote: ServiceChatPreviews,
+        newRemote: RemoteChatPreviews,
         oldLocal: RepositoryChatPreviews,
     ) {
         when (newRemote) {
@@ -55,4 +55,4 @@ class ChatPreviewsOfflineFirstHandler(
 }
 
 private typealias RepositoryChatPreviews = Outcome<LocalChatPreviews, DataOperationError>
-private typealias ServiceChatPreviews = Outcome<List<Message>, GetChatPreviewsError>
+private typealias RemoteChatPreviews = Outcome<List<Message>, GetChatPreviewsError>

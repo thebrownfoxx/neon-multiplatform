@@ -46,7 +46,7 @@ class SubscriptionHandler<R> private constructor(
     }
 
     @PublishedApi
-    internal val mutableResponse = MutableSharedFlow<R>(extraBufferCapacity = 16)
+    internal val mutableResponse = MutableSharedFlow<R>()
     val response = mutableResponse.asSharedFlow()
 
     @PublishedApi

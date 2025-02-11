@@ -3,6 +3,7 @@ package com.thebrownfoxx.neon.client.service.offinefirst.group
 import com.thebrownfoxx.neon.client.remote.RemoteGroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.repository.LocalGroupMemberRepository
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
+import com.thebrownfoxx.neon.client.service.offinefirst.offlineFirstCacheMap
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
@@ -10,16 +11,20 @@ import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import com.thebrownfoxx.outcome.map.onSuccess
+import kotlinx.coroutines.CoroutineScope
 
-class MembersOfflineFirstHandler(
+internal fun createMembersCache(externalScope: CoroutineScope) =
+    offlineFirstCacheMap<GroupId, RepositoryMembers, RemoteMembers>(externalScope)
+
+internal class MembersOfflineFirstHandler(
     private val groupId: GroupId,
     private val localGroupMemberRepository: LocalGroupMemberRepository,
-) : OfflineFirstHandler<RepositoryMembers, ServiceMembers> {
+) : OfflineFirstHandler<RepositoryMembers, RemoteMembers> {
     override fun hasLocalFailed(local: RepositoryMembers): Boolean {
         return local !is Success || local.value.isEmpty()
     }
 
-    override suspend fun updateLocal(newRemote: ServiceMembers, oldLocal: RepositoryMembers) {
+    override suspend fun updateLocal(newRemote: RemoteMembers, oldLocal: RepositoryMembers) {
         when (newRemote) {
             is Failure -> onRemoteFailure(newRemote.error, oldLocal)
             is Success -> onRemoteSuccess(newRemote.value, oldLocal)
@@ -48,4 +53,4 @@ class MembersOfflineFirstHandler(
 }
 
 private typealias RepositoryMembers = Outcome<Set<MemberId>, DataOperationError>
-private typealias ServiceMembers = Outcome<Set<MemberId>, GetMembersError>
+private typealias RemoteMembers = Outcome<Set<MemberId>, GetMembersError>

@@ -13,14 +13,11 @@ import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
 import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
 import com.thebrownfoxx.neon.client.service.Messenger.MarkAsReadError
 import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
-import com.thebrownfoxx.neon.client.service.offinefirst.offlineFirstFlow
-import com.thebrownfoxx.neon.common.data.Cache
+import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstProvider
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoff
 import com.thebrownfoxx.neon.common.extension.ExponentialBackoffValues
-import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.extension.loop
 import com.thebrownfoxx.neon.common.logError
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -41,7 +38,7 @@ class OfflineFirstMessenger(
     private val authenticator: Authenticator,
     private val remoteMessenger: RemoteMessenger,
     private val localMessageRepository: LocalMessageRepository,
-    externalScope: CoroutineScope,
+    private val externalScope: CoroutineScope,
 ) : Messenger {
     private val sendMessageExponentialBackoffValues = ExponentialBackoffValues(
         initialDelay = 1.seconds,
@@ -49,48 +46,44 @@ class OfflineFirstMessenger(
         factor = 2.0,
     )
 
-    // TODO: Maybe type-alias the Outcome<x, y>s? Something like GetChatPreviewsOutcome
-    private val chatPreviewsCache =
-        SingleCache<Outcome<LocalChatPreviews, GetChatPreviewsError>>(externalScope)
-    private val messagesCache =
-        Cache<GroupId, Outcome<List<LocalTimestampedMessageId>, GetMessagesError>>(externalScope)
-    private val messageCache =
-        Cache<MessageId, Outcome<LocalMessage, GetMessageError>>(externalScope)
+    private val messagesCache = createMessagesCache(externalScope)
+    private val messageCache = createMessageCache(externalScope)
 
     override val chatPreviews: Flow<Outcome<LocalChatPreviews, GetChatPreviewsError>> =
-        chatPreviewsCache.getOrInitialize {
-            offlineFirstFlow(
-                localFlow = localMessageRepository.chatPreviews,
-                remoteFlow = remoteMessenger.chatPreviews,
-                handler = ChatPreviewsOfflineFirstHandler(localMessageRepository),
-            ).mirrorTo(this) { chatPreviewsOutcome ->
-                chatPreviewsOutcome.mapError { it.toGetChatPreviewsError() }
-            }
+        OfflineFirstProvider(
+            localFlow = localMessageRepository.chatPreviews,
+            remoteFlow = remoteMessenger.chatPreviews,
+            handler = ChatPreviewsOfflineFirstHandler(localMessageRepository),
+            externalScope = externalScope,
+        ).getAsMappedFlow { chatPreviewsOutcome ->
+            chatPreviewsOutcome.mapError { it.toGetChatPreviewsError() }
         }
 
     override fun getMessages(
         groupId: GroupId,
     ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>> {
-        return messagesCache.getOrInitialize(groupId) {
-            offlineFirstFlow(
+        return messagesCache.getOrPut(groupId) {
+            OfflineFirstProvider(
                 localFlow = localMessageRepository.getMessagesAsFlow(groupId),
                 remoteFlow = remoteMessenger.getMessages(groupId),
                 handler = MessagesOfflineFirstHandler(groupId, localMessageRepository),
-            ).mirrorTo(this) { messagesOutcome ->
-                messagesOutcome.mapError { it.toGetMessagesError() }
-            }
+                externalScope = externalScope,
+            )
+        }.getAsMappedFlow {  messagesOutcome ->
+            messagesOutcome.mapError { it.toGetMessagesError() }
         }
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>> {
-        return messageCache.getOrInitialize(id) {
-            offlineFirstFlow(
+        return messageCache.getOrPut(id) {
+            OfflineFirstProvider(
                 localFlow = localMessageRepository.getMessageAsFlow(id),
                 remoteFlow = remoteMessenger.getMessage(id),
                 handler = MessageOfflineFirstHandler(localMessageRepository),
-            ).mirrorTo(this) { messageOutcome ->
-                messageOutcome.mapError { it.toGetMessageError() }
-            }
+                externalScope = externalScope,
+            )
+        }.getAsMappedFlow { messageOutcome ->
+            messageOutcome.mapError { it.toGetMessageError() }
         }
     }
 

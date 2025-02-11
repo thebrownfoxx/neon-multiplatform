@@ -39,5 +39,3 @@ enum class DeleteError {
     ConnectionError,
     UnexpectedError,
 }
-
-data object ConnectionError

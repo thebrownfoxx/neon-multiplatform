@@ -7,11 +7,9 @@ import com.thebrownfoxx.neon.client.repository.LocalGroupRepository
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.GroupManager.GetGroupError
 import com.thebrownfoxx.neon.client.service.GroupManager.GetMembersError
-import com.thebrownfoxx.neon.client.service.offinefirst.offlineFirstFlow
-import com.thebrownfoxx.neon.common.data.Cache
+import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstProvider
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
-import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.outcome.Outcome
@@ -23,33 +21,34 @@ class OfflineFirstGroupManager(
     private val remoteGroupManager: RemoteGroupManager,
     private val localGroupRepository: LocalGroupRepository,
     private val localGroupMemberRepository: LocalGroupMemberRepository,
-    externalScope: CoroutineScope,
+    private val externalScope: CoroutineScope,
 ) : GroupManager {
-    private val groupCache = Cache<GroupId, Outcome<LocalGroup, GetGroupError>>(externalScope)
-    private val membersCache =
-        Cache<GroupId, Outcome<Set<MemberId>, GetMembersError>>(externalScope)
+    private val groupCache = groupCache(externalScope)
+    private val membersCache = createMembersCache(externalScope)
 
     override fun getGroup(id: GroupId): Flow<Outcome<LocalGroup, GetGroupError>> {
-        return groupCache.getOrInitialize(id) {
-            offlineFirstFlow(
+        return groupCache.getOrPut(id) {
+            OfflineFirstProvider(
                 localFlow = localGroupRepository.getAsFlow(id),
                 remoteFlow = remoteGroupManager.getGroup(id),
                 handler = GroupOfflineFirstHandler(localGroupRepository),
-            ).mirrorTo(this) { groupOutcome ->
-                groupOutcome.mapError { it.toGetGroupError() }
-            }
+                externalScope = externalScope,
+            )
+        }.getAsMappedFlow { groupOutcome ->
+            groupOutcome.mapError { it.toGetGroupError() }
         }
     }
 
     override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>> {
-        return membersCache.getOrInitialize(groupId) {
-            offlineFirstFlow(
+        return membersCache.getOrPut(groupId) {
+            OfflineFirstProvider(
                 localFlow = localGroupMemberRepository.getMembersAsFlow(groupId),
                 remoteFlow = remoteGroupManager.getMembers(groupId),
                 handler = MembersOfflineFirstHandler(groupId, localGroupMemberRepository),
-            ).mirrorTo(this) { membersOutcome ->
-                membersOutcome.mapError { it.toGetMembersError() }
-            }
+                externalScope = externalScope,
+            )
+        }.getAsMappedFlow { memberOutcome ->
+            memberOutcome.mapError { it.toGetMembersError() }
         }
     }
 

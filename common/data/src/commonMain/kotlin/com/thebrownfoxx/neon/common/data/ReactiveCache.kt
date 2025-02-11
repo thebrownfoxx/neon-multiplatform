@@ -4,14 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.minutes
 
 class ReactiveCache<in K, out V>(
     private val externalScope: CoroutineScope,
     private val get: suspend (K) -> V,
 ) {
     private val cache = CacheMap<K, MutableSharedFlow<V>>(
-        EvictOnUnsubscribeStrategy(1.minutes),
+        EvictOnUnsubscribeStrategy(),
         externalScope,
     )
 
@@ -31,20 +30,20 @@ class ReactiveCache<in K, out V>(
 }
 
 class SingleReactiveCache<out V>(
-    private val externalScope: CoroutineScope,
+    externalScope: CoroutineScope,
     private val get: suspend () -> V,
 ) {
-    private val cache: MutableSharedFlow<V>? = null
+    private val cache: MutableSharedFlow<V> = cacheSharedFlow()
+
+    init {
+        externalScope.launch { cache.emit(get()) }
+    }
 
     fun getAsFlow(): Flow<V> {
-        return cache ?: cacheSharedFlow()
+        return cache
     }
 
     suspend fun update() {
-        cache?.emit(get())
-    }
-
-    private fun MutableSharedFlow<V>.emitValue() {
-        externalScope.launch { emit(get()) }
+        cache.emit(get())
     }
 }

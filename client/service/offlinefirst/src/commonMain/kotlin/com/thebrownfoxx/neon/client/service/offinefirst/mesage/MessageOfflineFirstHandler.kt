@@ -5,20 +5,26 @@ import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetMessageError
 import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstHandler
+import com.thebrownfoxx.neon.client.service.offinefirst.offlineFirstCacheMap
 import com.thebrownfoxx.neon.common.data.GetError
+import com.thebrownfoxx.neon.common.type.id.MessageId
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
+import kotlinx.coroutines.CoroutineScope
 
-class MessageOfflineFirstHandler(
+internal fun createMessageCache(externalScope: CoroutineScope) =
+    offlineFirstCacheMap<MessageId, RepositoryMessage, RemoteMessage>(externalScope)
+
+internal class MessageOfflineFirstHandler(
     private val localMessageRepository: LocalMessageRepository,
-) : OfflineFirstHandler<RepositoryMessage, ServiceMessage> {
+) : OfflineFirstHandler<RepositoryMessage, RemoteMessage> {
     override fun hasLocalFailed(local: RepositoryMessage): Boolean {
         return local is Failure
     }
 
-    override suspend fun updateLocal(newRemote: ServiceMessage, oldLocal: RepositoryMessage) {
+    override suspend fun updateLocal(newRemote: RemoteMessage, oldLocal: RepositoryMessage) {
         when (newRemote) {
             is Failure -> onRemoteFailure(newRemote.error, oldLocal)
             is Success -> localMessageRepository.upsert(newRemote.value.toLocalMessage())
@@ -37,4 +43,4 @@ class MessageOfflineFirstHandler(
 }
 
 private typealias RepositoryMessage = Outcome<LocalMessage, GetError>
-private typealias ServiceMessage = Outcome<Message, GetMessageError>
+private typealias RemoteMessage = Outcome<Message, GetMessageError>

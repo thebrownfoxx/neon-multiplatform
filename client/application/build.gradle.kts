@@ -71,7 +71,6 @@ kotlin {
             implementation(projects.client.remote.websocket)
             implementation(projects.client.service)
             implementation(projects.client.service.default)
-            implementation(projects.client.service.remote)
             implementation(projects.client.service.offlinefirst)
         }
 
