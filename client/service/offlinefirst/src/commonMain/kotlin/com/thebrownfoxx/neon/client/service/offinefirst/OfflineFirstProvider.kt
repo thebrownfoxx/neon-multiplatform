@@ -3,7 +3,7 @@ package com.thebrownfoxx.neon.client.service.offinefirst
 import com.thebrownfoxx.neon.common.data.CacheMap
 import com.thebrownfoxx.neon.common.data.EvictionStrategy
 import com.thebrownfoxx.neon.common.data.Evictor
-import com.thebrownfoxx.neon.common.data.cacheSharedFlow
+import com.thebrownfoxx.neon.common.data.cacheFlow
 import com.thebrownfoxx.neon.common.data.onUnsubscribe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +42,7 @@ class OfflineFirstProvider<TL, TR>(
     //  require localFlow to have a replay. Or maybe not. Maybe it's fine since we only have
     //  flows with replays anyway.
 
-    private val output = cacheSharedFlow<TL>()
+    private val output = cacheFlow<TL>()
     private val updatedFromRemote = MutableStateFlow(false)
 
     val subscriptionCount = output.subscriptionCount

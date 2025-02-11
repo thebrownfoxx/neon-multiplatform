@@ -2,6 +2,7 @@ package com.thebrownfoxx.neon.client.remote
 
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.outcome.Outcome
@@ -17,6 +18,8 @@ interface RemoteMessenger {
 
     fun getMessage(id: MessageId): Flow<Outcome<Message, GetMessageError>>
 
+    fun getDelivery(messageId: MessageId): Flow<Outcome<Delivery, GetDeliveryError>>
+
     suspend fun getUnreadMessages(
         groupId: GroupId,
     ): Outcome<Set<MessageId>, GetUnreadMessagesError>
@@ -26,6 +29,11 @@ interface RemoteMessenger {
         groupId: GroupId,
         content: String,
     ): UnitOutcome<SendMessageError>
+
+    suspend fun updateDelivery(
+        messageId: MessageId,
+        delivery: Delivery,
+    ): UnitOutcome<UpdateDeliveryError>
 
     enum class GetChatPreviewsError {
         MemberNotFound,
@@ -38,17 +46,23 @@ interface RemoteMessenger {
         UnexpectedError,
     }
 
+    enum class GetMessageError {
+        Unauthorized,
+        NotFound,
+        UnexpectedError,
+    }
+
+    enum class GetDeliveryError {
+        Unauthorized,
+        MessageNotFound,
+        UnexpectedError,
+    }
+
     enum class GetUnreadMessagesError {
         Unauthorized,
         GroupNotFound,
         UnexpectedError,
         RequestTimeout,
-    }
-
-    enum class GetMessageError {
-        Unauthorized,
-        NotFound,
-        UnexpectedError,
     }
 
     enum class SendMessageError {
@@ -57,5 +71,14 @@ interface RemoteMessenger {
         DuplicateId,
         UnexpectedError,
         RequestTimeout,
+    }
+
+    sealed interface UpdateDeliveryError {
+        data object Unauthorized : UpdateDeliveryError
+        data object MessageNotFound : UpdateDeliveryError
+        data class ReverseDelivery(val oldDelivery: Delivery) : UpdateDeliveryError
+        data object DeliveryAlreadySet : UpdateDeliveryError
+        data object UnexpectedError : UpdateDeliveryError
+        data object RequestTimeout : UpdateDeliveryError
     }
 }

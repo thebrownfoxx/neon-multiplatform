@@ -62,15 +62,15 @@ interface Messenger {
         UnexpectedError,
     }
 
-    enum class GetDeliveryError {
-        Unauthorized,
-        MessageNotFound,
-        UnexpectedError,
-    }
-
     enum class GetMessageError {
         Unauthorized,
         NotFound,
+        UnexpectedError,
+    }
+
+    enum class GetDeliveryError {
+        Unauthorized,
+        MessageNotFound,
         UnexpectedError,
     }
 

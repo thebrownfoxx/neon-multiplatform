@@ -26,7 +26,7 @@ class Cache<in K, V>(
 
     fun getOrInitialize(key: K, initialize: suspend FlowCollector<V>.() -> Unit): Flow<V> {
         return flows.getOrPut(key) {
-            cacheSharedFlow<V>().apply {
+            cacheFlow<V>().apply {
                 externalScope.launch { initialize() }
                 externalScope.launch { removeOnUnsubscribe(key) }
             }
@@ -65,7 +65,7 @@ class SingleCache<V>(
     private var flow: MutableSharedFlow<V>? = null
 
     fun getOrInitialize(initialize: suspend FlowCollector<V>.() -> Unit): Flow<V> {
-        val flow = flow ?: cacheSharedFlow<V>().apply {
+        val flow = flow ?: MutableSharedFlow<V>(replay = 1).apply {
             flow = this
             externalScope.launch { initialize() }
             externalScope.launch { removeOnUnsubscribe() }

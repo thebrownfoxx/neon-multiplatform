@@ -26,10 +26,12 @@ import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.common.data.Cache
 import com.thebrownfoxx.neon.common.data.JobManager
+import com.thebrownfoxx.neon.common.data.cacheFlow
+import com.thebrownfoxx.neon.common.data.flowCacheMap
 import com.thebrownfoxx.neon.common.extension.flatListOf
 import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
+import com.thebrownfoxx.neon.common.extension.flow.emitIn
 import com.thebrownfoxx.neon.common.extension.flow.flow
 import com.thebrownfoxx.neon.common.extension.flow.mirror
 import com.thebrownfoxx.neon.common.extension.toLocalDateTime
@@ -61,10 +63,11 @@ class ChatPreviewsStateHandler(
     private val messenger: Messenger,
     private val idMap: MutableMap<GroupId, ChatPreviewStateId>,
     lastVisibleGroupId: Flow<GroupId?>,
-    externalScope: CoroutineScope,
+    private val externalScope: CoroutineScope,
 ) {
     private val previewValuesMirrorJobManager = JobManager<GroupId>(externalScope)
-    private val previewValuesCache = Cache<GroupId, Loadable<ChatPreviewStateValues>>(externalScope)
+    private val previewValuesCache =
+        flowCacheMap<GroupId, Loadable<ChatPreviewStateValues>>(externalScope)
 
     private val groupAggregator = GroupAggregator(groupManager, memberManager)
 
@@ -199,13 +202,13 @@ class ChatPreviewsStateHandler(
         loggedInMemberId: MemberId?,
         mustBeLoaded: Boolean,
     ): Flow<Loadable<ChatPreviewStateValues>> {
-        return previewValuesCache.getOrInitialize(groupId) {
-            emit(Loading)
+        return previewValuesCache.getOrPut(groupId) {
+            cacheFlow<Loadable<ChatPreviewStateValues>>().apply { emitIn(externalScope, Loading) }
         }.also {
             if (!mustBeLoaded) return@also
             previewValuesMirrorJobManager[groupId] = {
                 val values = toChatPreviewStateValues(loggedInMemberId)
-                previewValuesCache.mirror(values) { Cache.Entry(groupId, Loaded(it)) }
+                it.mirror(values) { Loaded(it) }
             }
         }
     }

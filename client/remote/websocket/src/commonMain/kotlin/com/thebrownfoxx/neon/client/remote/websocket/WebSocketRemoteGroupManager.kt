@@ -5,8 +5,8 @@ import com.thebrownfoxx.neon.client.remote.RemoteGroupManager.GetGroupError
 import com.thebrownfoxx.neon.client.remote.RemoteGroupManager.GetMembersError
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
-import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
+import com.thebrownfoxx.neon.common.data.cacheIn
+import com.thebrownfoxx.neon.common.data.flowCacheMap
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MemberId
 import com.thebrownfoxx.neon.server.model.Group
@@ -24,33 +24,34 @@ import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class WebSocketRemoteGroupManager(
     private val subscriber: WebSocketSubscriber,
-    externalScope: CoroutineScope,
+    private val externalScope: CoroutineScope,
 ) : RemoteGroupManager {
-    private val groupCache = Cache<GroupId, Outcome<Group, GetGroupError>>(externalScope)
+    private val groupCache = flowCacheMap<GroupId, Outcome<Group, GetGroupError>>(externalScope)
     private val membersCache =
-        Cache<GroupId, Outcome<Set<MemberId>, GetMembersError>>(externalScope)
+        flowCacheMap<GroupId, Outcome<Set<MemberId>, GetMembersError>>(externalScope)
 
     override fun getGroup(id: GroupId): Flow<Outcome<Group, GetGroupError>> {
-        return groupCache.getOrInitialize(id) {
+        return groupCache.getOrPut(id) {
             subscriber.subscribeAsFlow(GetGroupRequest(id = id)) {
                 map<GetGroupNotFound> { Failure(GetGroupError.NotFound) }
                 map<GetGroupUnexpectedError> { Failure(GetGroupError.UnexpectedError) }
                 map<GetGroupSuccessfulChatGroup> { Success(it.chatGroup) }
                 map<GetGroupSuccessfulCommunity> { Success(it.community) }
-            }.mirrorTo(this)
-        }
+            }.cacheIn(externalScope)
+        }.asSharedFlow()
     }
 
     override fun getMembers(groupId: GroupId): Flow<Outcome<Set<MemberId>, GetMembersError>> {
-        return membersCache.getOrInitialize(groupId) {
+        return membersCache.getOrPut(groupId) {
             subscriber.subscribeAsFlow(GetGroupMembersRequest(groupId = groupId)) {
                 map<GetGroupMembersGroupNotFound> { Failure(GetMembersError.GroupNotFound) }
                 map<GetGroupMembersUnexpectedError> { Failure(GetMembersError.UnexpectedError) }
                 map<GetGroupMembersSuccessful> { Success(it.members) }
-            }.mirrorTo(this)
-        }
+            }.cacheIn(externalScope)
+        }.asSharedFlow()
     }
 }

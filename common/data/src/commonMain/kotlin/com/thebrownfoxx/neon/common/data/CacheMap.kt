@@ -1,7 +1,9 @@
 package com.thebrownfoxx.neon.common.data
 
+import com.thebrownfoxx.neon.common.extension.flow.mirror
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -39,6 +41,15 @@ fun <K, V> CacheMap(
 fun interface Evictor {
     fun evict()
 }
+
+fun <K, V> flowCacheMap(externalScope: CoroutineScope) =
+    CacheMap<K, MutableSharedFlow<V>>(
+        EvictOnUnsubscribeStrategy(),
+        externalScope,
+    )
+
+fun <T> Flow<T>.cacheIn(externalScope: CoroutineScope) =
+    cacheFlow<T>().also { it.mirror(externalScope, this) }
 
 fun interface EvictionStrategy<in V> {
     suspend fun Evictor.initializeEvictor(value: V)

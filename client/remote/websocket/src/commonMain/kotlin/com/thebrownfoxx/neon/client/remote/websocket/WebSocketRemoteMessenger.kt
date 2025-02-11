@@ -10,11 +10,11 @@ import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
 import com.thebrownfoxx.neon.client.websocket.subscribeAsFlow
-import com.thebrownfoxx.neon.common.data.Cache
-import com.thebrownfoxx.neon.common.data.SingleCache
-import com.thebrownfoxx.neon.common.extension.flow.mirrorTo
+import com.thebrownfoxx.neon.common.data.cacheIn
+import com.thebrownfoxx.neon.common.data.flowCacheMap
 import com.thebrownfoxx.neon.common.type.id.GroupId
 import com.thebrownfoxx.neon.common.type.id.MessageId
+import com.thebrownfoxx.neon.server.model.Delivery
 import com.thebrownfoxx.neon.server.model.Message
 import com.thebrownfoxx.neon.server.model.TimestampedMessageId
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMemberNotFound
@@ -49,34 +49,31 @@ import com.thebrownfoxx.outcome.UnitSuccess
 import com.thebrownfoxx.outcome.map.flatMapError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class WebSocketRemoteMessenger(
     private val subscriber: WebSocketSubscriber,
     private val requester: WebSocketRequester,
-    externalScope: CoroutineScope,
+    private val externalScope: CoroutineScope,
 ) : RemoteMessenger {
-    private val chatPreviewsCache =
-        SingleCache<Outcome<List<Message>, GetChatPreviewsError>>(externalScope)
     private val messagesCache =
-        Cache<GroupId, Outcome<List<TimestampedMessageId>, GetMessagesError>>(externalScope)
+        flowCacheMap<GroupId, Outcome<List<TimestampedMessageId>, GetMessagesError>>(externalScope)
     private val messageCache =
-        Cache<MessageId, Outcome<Message, GetMessageError>>(externalScope)
+        flowCacheMap<MessageId, Outcome<Message, GetMessageError>>(externalScope)
 
     override val chatPreviews: Flow<Outcome<List<Message>, GetChatPreviewsError>> =
-        chatPreviewsCache.getOrInitialize {
-            subscriber.subscribeAsFlow(GetChatPreviewsRequest()) {
-                map<GetChatPreviewsMemberNotFound> { Failure(GetChatPreviewsError.MemberNotFound) }
-                map<GetChatPreviewsUnexpectedError> {
-                    Failure(GetChatPreviewsError.UnexpectedError)
-                }
-                map<GetChatPreviewsSuccessful> { Success(it.chatPreviews) }
-            }.mirrorTo(this)
-        }
+        subscriber.subscribeAsFlow(GetChatPreviewsRequest()) {
+            map<GetChatPreviewsMemberNotFound> { Failure(GetChatPreviewsError.MemberNotFound) }
+            map<GetChatPreviewsUnexpectedError> {
+                Failure(GetChatPreviewsError.UnexpectedError)
+            }
+            map<GetChatPreviewsSuccessful> { Success(it.chatPreviews) }
+        }.cacheIn(externalScope).asSharedFlow()
 
     override fun getMessages(
         groupId: GroupId,
     ): Flow<Outcome<List<TimestampedMessageId>, GetMessagesError>> {
-        return messagesCache.getOrInitialize(groupId) {
+        return messagesCache.getOrPut(groupId) {
             subscriber.subscribeAsFlow(GetMessagesRequest(groupId = groupId)) {
                 map<GetMessagesUnauthorized> { Failure(GetMessagesError.Unauthorized) }
                 map<GetMessagesGroupNotFound> { Failure(GetMessagesError.GroupNotFound) }
@@ -84,19 +81,23 @@ class WebSocketRemoteMessenger(
                 map<GetMessagesSuccessful> { response ->
                     Success(response.messages.map { it })
                 }
-            }.mirrorTo(this)
-        }
+            }.cacheIn(externalScope)
+        }.asSharedFlow()
     }
 
     override fun getMessage(id: MessageId): Flow<Outcome<Message, GetMessageError>> {
-        return messageCache.getOrInitialize(id) {
+        return messageCache.getOrPut(id) {
             subscriber.subscribeAsFlow(GetMessageRequest(id = id)) {
                 map<GetMessageUnauthorized> { Failure(GetMessageError.Unauthorized) }
                 map<GetMessageNotFound> { Failure(GetMessageError.NotFound) }
                 map<GetMessageUnexpectedError> { Failure(GetMessageError.UnexpectedError) }
                 map<GetMessageSuccessful> { Success(it.message) }
-            }.mirrorTo(this)
-        }
+            }.cacheIn(externalScope)
+        }.asSharedFlow()
+    }
+
+    override fun getDelivery(messageId: MessageId): Flow<Outcome<Delivery, RemoteMessenger.GetDeliveryError>> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun getUnreadMessages(
@@ -131,5 +132,12 @@ class WebSocketRemoteMessenger(
             onInnerFailure = { it },
             onOuterFailure = { SendMessageError.RequestTimeout },
         )
+    }
+
+    override suspend fun updateDelivery(
+        messageId: MessageId,
+        delivery: Delivery,
+    ): UnitOutcome<RemoteMessenger.UpdateDeliveryError> {
+        TODO("Not yet implemented")
     }
 }

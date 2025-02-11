@@ -9,14 +9,11 @@ class ReactiveCache<in K, out V>(
     private val externalScope: CoroutineScope,
     private val get: suspend (K) -> V,
 ) {
-    private val cache = CacheMap<K, MutableSharedFlow<V>>(
-        EvictOnUnsubscribeStrategy(),
-        externalScope,
-    )
+    private val cache = flowCacheMap<K, V>(externalScope)
 
     fun getAsFlow(key: K): Flow<V> {
         return cache.getOrPut(key) {
-            cacheSharedFlow<V>().apply { emitValue(key) }
+            cacheFlow<V>().apply { emitValue(key) }
         }
     }
 
@@ -33,7 +30,7 @@ class SingleReactiveCache<out V>(
     externalScope: CoroutineScope,
     private val get: suspend () -> V,
 ) {
-    private val cache: MutableSharedFlow<V> = cacheSharedFlow()
+    private val cache: MutableSharedFlow<V> = MutableSharedFlow(replay = 1)
 
     init {
         externalScope.launch { cache.emit(get()) }
