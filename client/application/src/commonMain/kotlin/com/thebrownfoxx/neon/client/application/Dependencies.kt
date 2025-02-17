@@ -4,6 +4,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.thebrownfoxx.neon.client.remote.websocket.WebSocketRemoteGroupManager
 import com.thebrownfoxx.neon.client.remote.websocket.WebSocketRemoteMemberManager
 import com.thebrownfoxx.neon.client.remote.websocket.WebSocketRemoteMessenger
+import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalDeliveryRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalGroupMemberRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalGroupRepository
 import com.thebrownfoxx.neon.client.repository.exposed.ExposedLocalMemberRepository
@@ -99,10 +100,15 @@ class AppDependencies(
             getMemberId = { authenticator.loggedInMemberId.filterNotNull().first() },
             externalScope = externalScope,
         )
+        val localDeliveryRepository = ExposedLocalDeliveryRepository(
+            database = database,
+            externalScope = externalScope,
+        )
         OfflineFirstMessenger(
             authenticator = authenticator,
             remoteMessenger = remoteMessenger,
             localMessageRepository = localMessageRepository,
+            localDeliveryRepository = localDeliveryRepository,
             externalScope = externalScope,
         )
     }

@@ -26,7 +26,6 @@ import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.GroupManager
 import com.thebrownfoxx.neon.client.service.MemberManager
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.common.data.SingleCache
 import com.thebrownfoxx.neon.common.data.SingleJobManager
 import com.thebrownfoxx.neon.common.extension.coercedSubList
 import com.thebrownfoxx.neon.common.extension.flow.combineOrEmpty
@@ -45,6 +44,7 @@ import com.thebrownfoxx.outcome.map.getOrThrow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -67,16 +67,16 @@ class ConversationStateHandler(
     externalScope: CoroutineScope,
 ) {
     private val infoMirrorJobManager = SingleJobManager(externalScope)
-    private val infoCache = SingleCache<Loadable<ConversationInfoState>>(externalScope)
+    private val infoCache = MutableStateFlow<Loadable<ConversationInfoState>>(Loading)
 
     private val entriesMirrorJobManager = SingleJobManager(externalScope)
-    private val entriesCache = SingleCache<MessageListEntries>(externalScope)
+    private val entriesCache = MutableStateFlow(MessageListEntries.InitialValue)
 
     init {
         externalScope.launch {
             selectedConversationGroupId.collect {
-                infoCache.emit(Loading)
-                entriesCache.emit(MessageListEntries.InitialValue)
+                infoCache.value = Loading
+                entriesCache.value = MessageListEntries.InitialValue
             }
         }
     }
@@ -137,11 +137,9 @@ class ConversationStateHandler(
     private fun LocalGroup.getLoadableInfo(
         loggedInMemberId: MemberId?,
     ): Flow<Loadable<ConversationInfoState>> {
-        return infoCache.getOrInitialize {
-            emit(Loading)
-        }.also {
+        return infoCache.apply {
             infoMirrorJobManager.set {
-                infoCache.mirror(getInfo(loggedInMemberId)) { Loaded(it) }
+                mirror(getInfo(loggedInMemberId)) { Loaded(it) }
             }
         }
     }
@@ -187,11 +185,9 @@ class ConversationStateHandler(
         loggedInMemberId: MemberId?,
         lastVisibleMessageId: MessageId?,
     ): Flow<MessageListEntries> {
-        return entriesCache.getOrInitialize {
-            emit(MessageListEntries.InitialValue)
-        }.also {
+        return entriesCache.apply {
             entriesMirrorJobManager.set {
-                entriesCache.mirror(getMessagesListEntries(loggedInMemberId, lastVisibleMessageId))
+                mirror(getMessagesListEntries(loggedInMemberId, lastVisibleMessageId))
             }
         }
     }

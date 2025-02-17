@@ -38,6 +38,8 @@ class OfflineFirstProvider<TL, TR>(
     private val handler: OfflineFirstHandler<TL, TR>,
     externalScope: CoroutineScope,
 ) {
+    // TODO: Right now, remote errors are not being represented, but they should be
+
     // TODO: Find a way to synchronously copy the latest value of localFlow so we don't have to
     //  require localFlow to have a replay. Or maybe not. Maybe it's fine since we only have
     //  flows with replays anyway.

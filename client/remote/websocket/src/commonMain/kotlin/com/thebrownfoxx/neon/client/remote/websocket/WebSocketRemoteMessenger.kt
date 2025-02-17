@@ -2,10 +2,12 @@ package com.thebrownfoxx.neon.client.remote.websocket
 
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetChatPreviewsError
+import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetDeliveryError
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetMessageError
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetMessagesError
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.GetUnreadMessagesError
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.SendMessageError
+import com.thebrownfoxx.neon.client.remote.RemoteMessenger.UpdateDeliveryError
 import com.thebrownfoxx.neon.client.websocket.WebSocketRequester
 import com.thebrownfoxx.neon.client.websocket.WebSocketSubscriber
 import com.thebrownfoxx.neon.client.websocket.request
@@ -21,6 +23,11 @@ import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsMembe
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.GetChatPreviewsUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryMessageNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliverySuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.GetDeliveryUnexpectedError
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageNotFound
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.GetMessageSuccessful
@@ -41,6 +48,13 @@ import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageRequest
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageSuccessful
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnauthorized
 import com.thebrownfoxx.neon.server.route.websocket.message.SendMessageUnexpectedError
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryAlreadySet
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryMessageNotFound
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryRequest
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryReverseDelivery
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliverySuccessful
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryUnauthorized
+import com.thebrownfoxx.neon.server.route.websocket.message.UpdateDeliveryUnexpectedError
 import com.thebrownfoxx.outcome.Failure
 import com.thebrownfoxx.outcome.Outcome
 import com.thebrownfoxx.outcome.Success
@@ -60,6 +74,8 @@ class WebSocketRemoteMessenger(
         flowCacheMap<GroupId, Outcome<List<TimestampedMessageId>, GetMessagesError>>(externalScope)
     private val messageCache =
         flowCacheMap<MessageId, Outcome<Message, GetMessageError>>(externalScope)
+    private val deliveryCache =
+        flowCacheMap<MessageId, Outcome<Delivery, GetDeliveryError>>(externalScope)
 
     override val chatPreviews: Flow<Outcome<List<Message>, GetChatPreviewsError>> =
         subscriber.subscribeAsFlow(GetChatPreviewsRequest()) {
@@ -96,8 +112,15 @@ class WebSocketRemoteMessenger(
         }.asSharedFlow()
     }
 
-    override fun getDelivery(messageId: MessageId): Flow<Outcome<Delivery, RemoteMessenger.GetDeliveryError>> {
-        TODO("Not yet implemented")
+    override fun getDelivery(messageId: MessageId): Flow<Outcome<Delivery, GetDeliveryError>> {
+        return deliveryCache.getOrPut(messageId) {
+            subscriber.subscribeAsFlow(GetDeliveryRequest(messageId = messageId)) {
+                map<GetDeliveryUnauthorized> { Failure(GetDeliveryError.Unauthorized) }
+                map<GetDeliveryMessageNotFound> { Failure(GetDeliveryError.MessageNotFound) }
+                map<GetDeliveryUnexpectedError> { Failure(GetDeliveryError.UnexpectedError) }
+                map<GetDeliverySuccessful> { Success(it.delivery) }
+            }.cacheIn(externalScope)
+        }.asSharedFlow()
     }
 
     override suspend fun getUnreadMessages(
@@ -137,7 +160,18 @@ class WebSocketRemoteMessenger(
     override suspend fun updateDelivery(
         messageId: MessageId,
         delivery: Delivery,
-    ): UnitOutcome<RemoteMessenger.UpdateDeliveryError> {
-        TODO("Not yet implemented")
+    ): UnitOutcome<UpdateDeliveryError> {
+        val request = UpdateDeliveryRequest(messageId = messageId, delivery = delivery)
+        return requester.request(request) {
+            map<UpdateDeliveryUnauthorized> { Failure(UpdateDeliveryError.Unauthorized) }
+            map<UpdateDeliveryReverseDelivery> { Failure(UpdateDeliveryError.ReverseDelivery(it.oldDelivery)) }
+            map<UpdateDeliveryAlreadySet> { Failure(UpdateDeliveryError.DeliveryAlreadySet) }
+            map<UpdateDeliveryMessageNotFound> { Failure(UpdateDeliveryError.MessageNotFound) }
+            map<UpdateDeliveryUnexpectedError> { Failure(UpdateDeliveryError.UnexpectedError) }
+            map<UpdateDeliverySuccessful> { UnitSuccess }
+        }.flatMapError(
+            onInnerFailure = { it },
+            onOuterFailure = { UpdateDeliveryError.RequestTimeout },
+        )
     }
 }

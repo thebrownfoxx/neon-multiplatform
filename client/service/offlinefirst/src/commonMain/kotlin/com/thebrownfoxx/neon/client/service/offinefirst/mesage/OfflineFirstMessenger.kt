@@ -5,14 +5,11 @@ import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger
+import com.thebrownfoxx.neon.client.repository.LocalDeliveryRepository
 import com.thebrownfoxx.neon.client.repository.LocalMessageRepository
 import com.thebrownfoxx.neon.client.service.Authenticator
 import com.thebrownfoxx.neon.client.service.Messenger
-import com.thebrownfoxx.neon.client.service.Messenger.GetChatPreviewsError
-import com.thebrownfoxx.neon.client.service.Messenger.GetMessageError
-import com.thebrownfoxx.neon.client.service.Messenger.GetMessagesError
-import com.thebrownfoxx.neon.client.service.Messenger.MarkAsReadError
-import com.thebrownfoxx.neon.client.service.Messenger.SendMessageError
+import com.thebrownfoxx.neon.client.service.Messenger.*
 import com.thebrownfoxx.neon.client.service.offinefirst.OfflineFirstProvider
 import com.thebrownfoxx.neon.common.data.DataOperationError
 import com.thebrownfoxx.neon.common.data.GetError
@@ -29,16 +26,21 @@ import com.thebrownfoxx.outcome.map.mapError
 import com.thebrownfoxx.outcome.map.onFailure
 import com.thebrownfoxx.outcome.map.onSuccess
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.seconds
 import com.thebrownfoxx.neon.client.remote.RemoteMessenger.SendMessageError as RemoteSendMessageError
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class OfflineFirstMessenger(
     private val authenticator: Authenticator,
     private val remoteMessenger: RemoteMessenger,
     private val localMessageRepository: LocalMessageRepository,
+    private val localDeliveryRepository: LocalDeliveryRepository,
     private val externalScope: CoroutineScope,
 ) : Messenger {
     private val sendMessageExponentialBackoffValues = ExponentialBackoffValues(
@@ -49,6 +51,7 @@ class OfflineFirstMessenger(
 
     private val messagesCache = createMessagesCache(externalScope)
     private val messageCache = createMessageCache(externalScope)
+    private val deliveryCache = createDeliveryCache(externalScope)
 
     init {
         externalScope.launch { sendOutgoingMessages() }
@@ -89,6 +92,24 @@ class OfflineFirstMessenger(
             )
         }.getAsMappedFlow { messageOutcome ->
             messageOutcome.mapError { it.toGetMessageError() }
+        }
+    }
+
+    override fun getDelivery(id: MessageId): Flow<Outcome<LocalDelivery, GetDeliveryError>> {
+        return authenticator.loggedInMemberId.flatMapLatest { memberId ->
+            if (memberId == null)
+                return@flatMapLatest flowOf(Failure(GetDeliveryError.Unauthorized))
+
+            deliveryCache.getOrPut(id) {
+                OfflineFirstProvider(
+                    localFlow = localDeliveryRepository.getAsFlow(id, memberId),
+                    remoteFlow = remoteMessenger.getDelivery(id),
+                    handler = DeliveryOfflineFirstHandler(id, memberId, localDeliveryRepository),
+                    externalScope = externalScope,
+                )
+            }.getAsMappedFlow { deliveryOutcome ->
+                deliveryOutcome.mapError { it.toGetDeliveryError() }
+            }
         }
     }
 
@@ -163,5 +184,10 @@ class OfflineFirstMessenger(
     private fun GetError.toGetMessageError() = when (this) {
         GetError.NotFound -> GetMessageError.NotFound
         GetError.ConnectionError, GetError.UnexpectedError -> GetMessageError.UnexpectedError
+    }
+
+    private fun DataOperationError.toGetDeliveryError() = when (this) {
+        DataOperationError.ConnectionError, DataOperationError.UnexpectedError ->
+            GetDeliveryError.UnexpectedError
     }
 }

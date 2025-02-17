@@ -127,6 +127,11 @@ class OldOfflineFirstMessenger(
             }
         }
     }
+
+    override fun getDelivery(id: MessageId): Flow<Outcome<LocalDelivery, Messenger.GetDeliveryError>> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun sendMessage(
         id: MessageId,
         groupId: GroupId,

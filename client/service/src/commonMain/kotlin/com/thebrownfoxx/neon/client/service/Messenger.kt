@@ -1,6 +1,7 @@
 package com.thebrownfoxx.neon.client.service
 
 import com.thebrownfoxx.neon.client.model.LocalChatPreviews
+import com.thebrownfoxx.neon.client.model.LocalDelivery
 import com.thebrownfoxx.neon.client.model.LocalMessage
 import com.thebrownfoxx.neon.client.model.LocalTimestampedMessageId
 import com.thebrownfoxx.neon.common.type.id.GroupId
@@ -19,6 +20,8 @@ interface Messenger {
     ): Flow<Outcome<List<LocalTimestampedMessageId>, GetMessagesError>>
 
     fun getMessage(id: MessageId): Flow<Outcome<LocalMessage, GetMessageError>>
+
+    fun getDelivery(id: MessageId): Flow<Outcome<LocalDelivery, GetDeliveryError>>
 
     suspend fun sendMessage(
         id: MessageId = MessageId(),
@@ -39,16 +42,15 @@ interface Messenger {
         UnexpectedError,
     }
 
-    enum class GetUnreadMessagesError {
-        Unauthorized,
-        GroupNotFound,
-        UnexpectedError,
-        RequestTimeout,
-    }
-
     enum class GetMessageError {
         Unauthorized,
         NotFound,
+        UnexpectedError,
+    }
+
+    enum class GetDeliveryError {
+        Unauthorized,
+        MessageNotFound,
         UnexpectedError,
     }
 
